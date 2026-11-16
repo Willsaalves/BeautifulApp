@@ -13,4 +13,10 @@ public interface IdentityApi {
 
     /** Registra aceite (ex: "terms", "privacy", "image_use") com a versão do texto aceito. */
     void recordConsent(UUID accountId, String kind, String version);
+
+    /** Aceite em vigor (não revogado) deste tipo; com versão, só conta se for a mesma versão. */
+    boolean hasConsent(UUID accountId, String kind, String versionOrNull);
+
+    /** Revoga o aceite deste tipo (ex: "image_use"). */
+    void revokeConsent(UUID accountId, String kind);
 }

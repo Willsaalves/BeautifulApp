@@ -18,8 +18,14 @@ class Consent {
     private String version;
     @Column(name = "accepted_at", nullable = false)
     private Instant acceptedAt;
+    @Column(name = "revoked_at")
+    private Instant revokedAt;
 
     protected Consent() {}
+
+    String version() { return version; }
+    boolean active() { return revokedAt == null; }
+    void revoke(Instant now) { if (revokedAt == null) revokedAt = now; }
 
     Consent(UUID id, UUID accountId, String kind, String version, Instant acceptedAt) {
         this.id = id;

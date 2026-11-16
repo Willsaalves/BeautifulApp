@@ -96,6 +96,13 @@ export default function ClientePerfil() {
       ))}
 
       <SectionTitle title="Privacidade e segurança" />
+      <Card onPress={() => router.push('/config/privacidade')}>
+        <Row>
+          <Ionicons name="shield-checkmark-outline" size={20} />
+          <T v="h3" style={{ flex: 1 }}>Privacidade, termos e dados</T>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Row>
+      </Card>
       <Card onPress={() => router.push('/config/bloqueados')}>
         <Row>
           <Ionicons name="hand-left-outline" size={20} />

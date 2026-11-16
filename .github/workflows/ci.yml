@@ -37,4 +37,6 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
       - run: npm run api:gen && git diff --exit-code src/api/schema.d.ts
+      - name: Textos legais iguais aos do backend?
+        run: npm run legal:gen && git diff --exit-code src/legal/docs.ts
       - run: npx tsc --noEmit

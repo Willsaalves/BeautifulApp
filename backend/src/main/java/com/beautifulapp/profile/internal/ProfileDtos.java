@@ -12,7 +12,16 @@ import jakarta.validation.constraints.*;
 final class ProfileDtos {
     private ProfileDtos() {}
 
-    record Me(UUID accountId, String phone, String email, Set<Role> roles, ClientDto client, ProfessionalDto professional, List<UUID> favorites) {}
+    record Me(UUID accountId, String phone, String email, Set<Role> roles, ClientDto client, ProfessionalDto professional, List<UUID> favorites,
+              LegalStatus legal) {}
+
+    /** version: versão em vigor; accepted: aceitou essa versão dos Termos e da Política; imageConsent: autoriza uso de imagem. */
+    record LegalStatus(String version, boolean accepted, boolean imageConsent) {}
+
+    enum ConsentKind { TERMS, IMAGE_USE }
+
+    /** TERMS + granted=true aceita a versão em vigor dos Termos e da Política; IMAGE_USE liga/desliga o uso de imagem. */
+    record ConsentInput(@jakarta.validation.constraints.NotNull ConsentKind kind, boolean granted) {}
 
     record ClientDto(String name, String handle, String bio, String photoKey, String photoUrl, String coverKey, String coverUrl) {}
 

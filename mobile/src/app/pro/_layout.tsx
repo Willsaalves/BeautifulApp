@@ -4,12 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProSync } from '@/api/use-pro-sync';
 import { useSocialSync } from '@/api/use-social-sync';
 import { AppTabs } from '@/components/tab-bar';
+import { useLegalGate } from '@/legal/use-legal-gate';
 import { usePushRegistration } from '@/lib/push';
 import { T } from '@/components/ui';
 import { colors } from '@/theme';
 
 export default function ProLayout() {
   const { saving, error } = useProSync();
+  useLegalGate();
   useSocialSync();
   usePushRegistration(true);
   const insets = useSafeAreaInsets();

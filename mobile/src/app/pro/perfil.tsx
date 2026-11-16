@@ -124,6 +124,8 @@ export default function ProPerfil() {
         onPress={() => router.push('/config/fidelidade')} />
 
       <SectionTitle title="Privacidade e segurança" />
+      <Item icon="shield-checkmark-outline" title="Privacidade, termos e dados" sub="Uso de imagem, Termos de Uso e Política de Privacidade"
+        onPress={() => router.push('/config/privacidade')} />
       <Item icon="hand-left-outline" title="Pessoas bloqueadas" sub="Clientes que não podem agendar nem mandar mensagem"
         onPress={() => router.push('/config/bloqueados')} />
       <Item icon="trash-outline" title="Excluir conta" sub="Apaga seu perfil e tira sua página do ar"

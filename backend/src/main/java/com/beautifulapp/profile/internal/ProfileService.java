@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -14,6 +13,7 @@ import com.beautifulapp.common.ApiException;
 import com.beautifulapp.common.Ids;
 import com.beautifulapp.identity.AccountView;
 import com.beautifulapp.identity.IdentityApi;
+import com.beautifulapp.legal.LegalApi;
 import com.beautifulapp.identity.Role;
 import com.beautifulapp.media.MediaApi;
 import com.beautifulapp.media.MediaKind;
@@ -27,17 +27,17 @@ class ProfileService {
     private final ProfessionalRepository professionals;
     private final FavoriteRepository favorites;
     private final Clock clock;
-    private final String legalVersion;
+    private final LegalApi legal;
 
     ProfileService(IdentityApi identity, MediaApi media, ClientProfileRepository clients, ProfessionalRepository professionals,
-                   FavoriteRepository favorites, Clock clock, @Value("${app.legal.version}") String legalVersion) {
+                   FavoriteRepository favorites, Clock clock, LegalApi legal) {
         this.identity = identity;
         this.media = media;
         this.clients = clients;
         this.professionals = professionals;
         this.favorites = favorites;
         this.clock = clock;
-        this.legalVersion = legalVersion;
+        this.legal = legal;
     }
 
     @Transactional(readOnly = true)
@@ -47,7 +47,10 @@ class ProfileService {
         ClientDto client = clients.findById(accountId).map(this::dto).orElse(null);
         ProfessionalDto pro = professionals.findByAccountId(accountId).map(this::dto).orElse(null);
         List<UUID> favs = favorites.findByClientAccountIdOrderByCreatedAtDesc(accountId).stream().map(Favorite::professionalId).toList();
-        return new Me(acc.id(), acc.phone(), acc.email(), acc.roles(), client, pro, favs);
+        String version = legal.version();
+        boolean accepted = identity.hasConsent(accountId, "terms", version) && identity.hasConsent(accountId, "privacy", version);
+        return new Me(acc.id(), acc.phone(), acc.email(), acc.roles(), client, pro, favs,
+                new LegalStatus(version, accepted, identity.hasConsent(accountId, "image_use", null)));
     }
 
     @Transactional
@@ -87,9 +90,26 @@ class ProfileService {
 
         identity.grantRole(accountId, in.role());
         if (StringUtils.hasText(in.email())) identity.updateEmail(accountId, in.email().trim());
-        identity.recordConsent(accountId, "terms", legalVersion);
-        identity.recordConsent(accountId, "privacy", legalVersion);
-        if (Boolean.TRUE.equals(in.imageConsent())) identity.recordConsent(accountId, "image_use", legalVersion);
+        identity.recordConsent(accountId, "terms", legal.version());
+        identity.recordConsent(accountId, "privacy", legal.version());
+        if (Boolean.TRUE.equals(in.imageConsent())) identity.recordConsent(accountId, "image_use", legal.version());
+        return me(accountId);
+    }
+
+    @Transactional
+    Me consent(UUID accountId, ConsentInput in) {
+        String version = legal.version();
+        if (in.kind() == ConsentKind.TERMS) {
+            if (!in.granted()) {
+                throw ApiException.badRequest("TERMS_REQUIRED", "Para usar o app é preciso aceitar os Termos. Se preferir, exclua sua conta.");
+            }
+            identity.recordConsent(accountId, "terms", version);
+            identity.recordConsent(accountId, "privacy", version);
+        } else if (in.granted()) {
+            identity.recordConsent(accountId, "image_use", version);
+        } else {
+            identity.revokeConsent(accountId, "image_use");
+        }
         return me(accountId);
     }
 

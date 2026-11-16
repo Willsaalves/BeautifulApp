@@ -37,8 +37,6 @@ springdoc:
 app:
   cors:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}
-  legal:
-    version: ${APP_LEGAL_VERSION:2026-11}
   identity:
     jwt:
       issuer: ${APP_JWT_ISSUER:https://api.beautifulapp.dev}

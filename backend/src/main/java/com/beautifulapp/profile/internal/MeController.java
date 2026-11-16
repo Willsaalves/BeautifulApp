@@ -29,6 +29,12 @@ class MeController {
         return profiles.onboard(CurrentAccount.id(), body);
     }
 
+    @Operation(summary = "Aceitar a versão nova dos Termos/Política (TERMS) ou ligar/desligar o uso de imagem (IMAGE_USE)")
+    @PostMapping("/consents")
+    Me consent(@Valid @RequestBody ConsentInput body) {
+        return profiles.consent(CurrentAccount.id(), body);
+    }
+
     @Operation(summary = "Edita o perfil de cliente (nome, bio, foto, capa)")
     @PatchMapping("/client-profile")
     Me patchClient(@Valid @RequestBody ClientPatch body) {

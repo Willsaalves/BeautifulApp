@@ -1,10 +1,12 @@
 import { useClientSync } from '@/api/use-client-sync';
 import { useSocialSync } from '@/api/use-social-sync';
 import { AppTabs } from '@/components/tab-bar';
+import { useLegalGate } from '@/legal/use-legal-gate';
 import { usePushRegistration } from '@/lib/push';
 
 export default function ClienteLayout() {
   useClientSync();
+  useLegalGate();
   useSocialSync();
   usePushRegistration(true);
   return (

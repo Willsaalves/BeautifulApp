@@ -49,6 +49,21 @@ class IdentityApiImpl implements IdentityApi {
         consents.save(new Consent(Ids.newId(), accountId, kind, version, clock.instant()));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasConsent(UUID accountId, String kind, String versionOrNull) {
+        return consents.history(accountId, kind).stream().findFirst()
+                .filter(Consent::active)
+                .filter(c -> versionOrNull == null || versionOrNull.equals(c.version()))
+                .isPresent();
+    }
+
+    @Override
+    @Transactional
+    public void revokeConsent(UUID accountId, String kind) {
+        consents.history(accountId, kind).forEach(c -> c.revoke(clock.instant()));
+    }
+
     private Account load(UUID id) {
         return accounts.findById(id).orElseThrow(() -> ApiException.notFound("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
     }

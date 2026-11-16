@@ -215,7 +215,7 @@ export default function Cadastro() {
 
           <Pressable onPress={() => setTerms(!terms)} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
             <Ionicons name={terms ? 'checkbox' : 'square-outline'} size={22} color={terms ? colors.black : colors.textMuted} />
-            <T v="small" style={{ flex: 1 }}>Li e aceito os <T v="small" style={{ fontWeight: '800', textDecorationLine: 'underline' }}>Termos de Uso</T> e a <T v="small" style={{ fontWeight: '800', textDecorationLine: 'underline' }}>Política de Privacidade</T> (LGPD).</T>
+            <T v="small" style={{ flex: 1 }}>Tenho 18 anos ou mais, li e aceito os <T v="small" style={{ fontWeight: '800', textDecorationLine: 'underline' }} onPress={() => router.push('/legal/termos')}>Termos de Uso</T> e a <T v="small" style={{ fontWeight: '800', textDecorationLine: 'underline' }} onPress={() => router.push('/legal/privacidade')}>Política de Privacidade</T> (LGPD).</T>
           </Pressable>
           <Pressable onPress={() => setImageConsent(!imageConsent)} style={{ flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' }}>
             <Ionicons name={imageConsent ? 'checkbox' : 'square-outline'} size={22} color={imageConsent ? colors.black : colors.textMuted} />

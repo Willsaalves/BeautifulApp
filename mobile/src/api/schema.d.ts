@@ -373,6 +373,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aceitar a versão nova dos Termos/Política (TERMS) ou ligar/desligar o uso de imagem (IMAGE_USE) */
+        post: operations["consent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/blocks": {
         parameters: {
             query?: never;
@@ -972,6 +989,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/legal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versão em vigor e links dos textos legais */
+        get: operations["info"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/legal/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Página pública (HTML) do texto: use a URL de /legal/privacidade na App Store e na Play Store */
+        get: operations["page_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/designs/trending": {
         parameters: {
             query?: never;
@@ -1366,6 +1417,11 @@ export interface components {
             coverKey?: string;
             coverUrl?: string;
         };
+        LegalStatus: {
+            version?: string;
+            accepted?: boolean;
+            imageConsent?: boolean;
+        };
         Me: {
             /** Format: uuid */
             accountId?: string;
@@ -1375,6 +1431,7 @@ export interface components {
             client?: components["schemas"]["ClientDto"];
             professional?: components["schemas"]["ProfessionalDto"];
             favorites?: string[];
+            legal?: components["schemas"]["LegalStatus"];
         };
         ProfessionalDto: {
             /** Format: uuid */
@@ -1402,6 +1459,11 @@ export interface components {
         DeviceInput: {
             expoPushToken: string;
             platform?: string;
+        };
+        ConsentInput: {
+            /** @enum {string} */
+            kind: "TERMS" | "IMAGE_USE";
+            granted?: boolean;
         };
         BlockInput: {
             /** Format: date-time */
@@ -1805,6 +1867,15 @@ export interface components {
             lastAt?: string;
             /** Format: int32 */
             daysLate?: number;
+        };
+        LegalDocInfo: {
+            slug?: string;
+            title?: string;
+            url?: string;
+        };
+        LegalInfo: {
+            version?: string;
+            documents?: components["schemas"]["LegalDocInfo"][];
         };
         TrendingDesign: {
             /** Format: uuid */
@@ -2572,6 +2643,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DesignView"];
+                };
+            };
+        };
+    };
+    consent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Me"];
                 };
             };
         };
@@ -3450,6 +3545,48 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AppointmentView"][];
+                };
+            };
+        };
+    };
+    info: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LegalInfo"];
+                };
+            };
+        };
+    };
+    page_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
                 };
             };
         };

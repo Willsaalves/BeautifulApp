@@ -60,6 +60,7 @@ interface State {
   blocks: TimeBlock[];           // bloqueios da profissional logada
   blockedPros: string[];         // profissionais bloqueadas (somem da busca)
   blockedAccounts: string[];     // contas bloqueadas (stories e mensagens somem)
+  legal: { version: string; accepted: boolean; imageConsent: boolean } | null; // aceite dos Termos (com API)
 }
 
 const initial: State = {
@@ -83,6 +84,7 @@ const initial: State = {
   blocks: [],
   blockedPros: [],
   blockedAccounts: [],
+  legal: null,
 };
 
 type Action =
@@ -640,7 +642,8 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
           : roles.includes('PROFESSIONAL') ? 'profissional'
           : roles.includes('CLIENT') ? 'cliente'
           : null;
-        dispatch({ type: 'set', patch: { clients, professionals, clientId, proId, role } });
+        const legal = me.legal ? { version: me.legal.version ?? '', accepted: !!me.legal.accepted, imageConsent: !!me.legal.imageConsent } : null;
+        dispatch({ type: 'set', patch: { clients, professionals, clientId, proId, role, legal } });
         return role;
       },
 
@@ -862,6 +865,10 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
         if (kind === 'story') dispatch({ type: 'set', patch: { stories: st.stories.filter((x) => x.id !== id) } });
         if (kind === 'review') dispatch({ type: 'set', patch: { feedbacks: st.feedbacks.filter((x) => x.id !== id) } });
         if (kind === 'message') dispatch({ type: 'set', patch: { messages: st.messages.filter((x) => x.id !== id) } });
+      },
+
+      setLegal(legal: State['legal']) {
+        dispatch({ type: 'set', patch: { legal } });
       },
 
       setUnread(unread: number) {

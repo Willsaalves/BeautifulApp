@@ -139,6 +139,13 @@ AWAITING_DEPOSIT ──comprovante──► RECEIPT_SENT ──confirmar──�
 - Story: `expires_at = created_at + 24h`. O feed filtra por `expires_at > now()` e um job remove os arquivos antigos do S3.
 - Chat: v1 via REST + push. v2 via WebSocket (STOMP), com relay em Redis/RabbitMQ se houver mais de uma instância.
 
+### legal (Termos de Uso e Política de Privacidade)
+- **Fonte única:** os textos ficam em `backend/src/main/resources/legal/` (`termos.md`, `privacidade.md`); os dados da empresa e a versão, em `_dados.yml`.
+- **Páginas públicas:** a API publica `/legal/termos` e `/legal/privacidade`. Use a URL da política na App Store e na Play Store.
+- **No app:** `npm run legal:gen` copia os textos para dentro do app, que assim funciona offline. A CI falha se o app ficar com texto diferente do backend.
+- **Nova versão:** ao trocar a `versao` no `_dados.yml`, quem aceitou a versão anterior vê a tela "Atualizamos nossos termos" ao abrir o app (`GET /me` → `legal.accepted`, aceite em `POST /me/consents`).
+- **Uso de imagem:** é um consentimento separado, que a usuária liga e desliga em Perfil → Privacidade (revogação registrada, LGPD art. 8º §5º).
+
 ### moderation e exclusão de conta (exigências das lojas)
 - **Excluir conta** (`DELETE /me`): numa transação só, cada módulo apaga ou anonimiza o que é dele (evento `AccountDeleted`):
   - perfil vira "Conta excluída" (sem foto, capa, bio, Pix e localização);
@@ -313,4 +320,4 @@ Ambientes: `dev` (local com Docker Compose: Postgres + PostGIS, Redis, LocalStac
 3. **Região AWS**: `sa-east-1` (latência, dados no Brasil) ou `us-east-1` (custo).
 4. Uma profissional com **equipe** (várias agendas) entra na v1? A sugestão do mapa de telas é deixar para a fase 4.
 5. Política de cancelamento: só expirar o sinal, ou também ter regras de reembolso por antecedência?
-6. Quem é o **encarregado (DPO)** da LGPD e onde ficam os textos de termos e privacidade.
+6. Quem é o **encarregado (DPO)** da LGPD. Os textos de termos e privacidade já existem (rascunho), mas faltam a razão social, o CNPJ, o endereço e o DPO em `legal/_dados.yml`, além da revisão de um advogado.

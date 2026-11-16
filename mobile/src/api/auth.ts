@@ -40,3 +40,8 @@ export async function logout() {
 export async function hasSession() {
   return (await loadSession()) != null;
 }
+
+/** TERMS: aceita a versão em vigor dos Termos e da Política. IMAGE_USE: autoriza/revoga o uso de imagem. */
+export async function saveConsent(kind: 'TERMS' | 'IMAGE_USE', granted: boolean): Promise<Me> {
+  return unwrap(api.POST('/me/consents', { body: { kind, granted } }));
+}
