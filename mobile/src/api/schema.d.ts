@@ -93,6 +93,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/next-procedures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus próximos procedimentos */
+        get: operations["list_1"];
+        /** Salva a lista inteira (ordem, feitos e datas) */
+        put: operations["replace_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/loyalty-program": {
         parameters: {
             query?: never;
@@ -147,6 +165,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stories ativos (últimas 24h), mais recentes primeiro; filtra por profissional se informado */
+        get: operations["list_2"];
+        put?: never;
+        /** Postar story (cliente: só marcando profissional que já a atendeu; profissional: só a si mesma) */
+        post: operations["post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/upload-url": {
         parameters: {
             query?: never;
@@ -190,7 +226,7 @@ export interface paths {
             cookie?: never;
         };
         /** Meus produtos (low = no mínimo ou abaixo) */
-        get: operations["list_1"];
+        get: operations["list_3"];
         put?: never;
         /** Cadastrar produto */
         post: operations["create_1"];
@@ -245,6 +281,57 @@ export interface paths {
         put?: never;
         /** Cadastro: cria o perfil de cliente ou de profissional e registra os consentimentos */
         post: operations["onboarding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marcar todas como lidas */
+        post: operations["readAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Registrar este celular para push (token do Expo) */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/devices/unregister": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Parar push neste celular (logout) */
+        post: operations["unregister"];
         delete?: never;
         options?: never;
         head?: never;
@@ -417,6 +504,24 @@ export interface paths {
         put?: never;
         /** Enviar comprovante do Pix (receiptKey de upload kind=RECEIPT) */
         post: operations["receipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mensagens do agendamento (só cliente e profissional dele) */
+        get: operations["list_4"];
+        put?: never;
+        /** Enviar mensagem (a outra parte recebe notificação) */
+        post: operations["send"];
         delete?: never;
         options?: never;
         head?: never;
@@ -601,7 +706,7 @@ export interface paths {
             cookie?: never;
         };
         /** Avaliações de uma profissional */
-        get: operations["list_2"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -695,6 +800,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Minhas notificações (unread = não lidas) */
+        get: operations["inbox"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/loyalty": {
         parameters: {
             query?: never;
@@ -720,7 +842,7 @@ export interface paths {
             cookie?: never;
         };
         /** Ids das profissionais favoritas (mais recentes primeiro) */
-        get: operations["list_3"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -843,6 +965,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Apagar meu story */
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1021,6 +1160,16 @@ export interface components {
             target?: string;
             body?: string;
         };
+        Item: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            niche: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            label: string;
+            /** Format: date */
+            targetDate: string;
+            done?: boolean;
+        };
         ProgramInput: {
             enabled?: boolean;
             /** Format: int64 */
@@ -1055,6 +1204,33 @@ export interface components {
             imageUrl?: string;
             /** Format: int64 */
             priceDeltaCents?: number;
+        };
+        StoryInput: {
+            /** Format: uuid */
+            professionalId: string;
+            imageKey: string;
+            caption?: string;
+            serviceName?: string;
+        };
+        StoryView: {
+            /** Format: uuid */
+            id?: string;
+            authorType?: string;
+            /** Format: uuid */
+            authorAccountId?: string;
+            authorName?: string;
+            authorPhotoUrl?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            professionalStudio?: string;
+            serviceName?: string;
+            imageUrl?: string;
+            caption?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            mine?: boolean;
         };
         UploadRequest: {
             /** @enum {string} */
@@ -1147,6 +1323,10 @@ export interface components {
             pixKey?: string;
             /** Format: int32 */
             depositDeadlineHours?: number;
+        };
+        DeviceInput: {
+            expoPushToken: string;
+            platform?: string;
         };
         BlockInput: {
             /** Format: date-time */
@@ -1315,6 +1495,18 @@ export interface components {
         ReceiptInput: {
             receiptKey: string;
         };
+        MessageInput: {
+            text: string;
+        };
+        MessageView: {
+            /** Format: uuid */
+            id?: string;
+            from?: string;
+            text?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            mine?: boolean;
+        };
         AdjustmentInput: {
             /** Format: int64 */
             newPriceCents?: number;
@@ -1440,6 +1632,23 @@ export interface components {
             /** Format: int32 */
             rating?: number;
             comment?: string;
+        };
+        Inbox: {
+            /** Format: int64 */
+            unread?: number;
+            items?: components["schemas"]["NotificationView"][];
+        };
+        NotificationView: {
+            /** Format: uuid */
+            id?: string;
+            kind?: string;
+            title?: string;
+            body?: string;
+            /** Format: uuid */
+            appointmentId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            read?: boolean;
         };
         CardView: {
             /** Format: uuid */
@@ -1738,6 +1947,50 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Item"][];
+                };
+            };
+        };
+    };
+    replace_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Item"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Item"][];
+                };
+            };
+        };
+    };
     program: {
         parameters: {
             query?: never;
@@ -1868,6 +2121,52 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: {
+                professionalId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StoryView"][];
+                };
+            };
+        };
+    };
+    post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StoryView"];
+                };
+            };
+        };
+    };
     uploadUrl: {
         parameters: {
             query?: never;
@@ -1936,7 +2235,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2053,6 +2352,68 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["Me"];
                 };
+            };
+        };
+    };
+    readAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceInput"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unregister: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceInput"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2336,6 +2697,54 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageView"][];
+                };
+            };
+        };
+    };
+    send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageView"];
+                };
+            };
+        };
+    };
     confirm: {
         parameters: {
             query?: never;
@@ -2569,7 +2978,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_5: {
         parameters: {
             query?: {
                 limit?: number;
@@ -2700,6 +3109,28 @@ export interface operations {
             };
         };
     };
+    inbox: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Inbox"];
+                };
+            };
+        };
+    };
     cards: {
         parameters: {
             query?: never;
@@ -2720,7 +3151,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2890,6 +3321,26 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["AppointmentView"];
                 };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

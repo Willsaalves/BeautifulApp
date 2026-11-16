@@ -1,4 +1,6 @@
 import { api, unwrap, type Me, type Schemas } from './client';
+import { unregisterPush } from '@/lib/push';
+
 import { loadSession, saveSession } from './tokens';
 
 export async function requestOtp(phone: string) {
@@ -29,6 +31,7 @@ export async function patchProfessional(body: Schemas['ProfessionalPatch']): Pro
 }
 
 export async function logout() {
+  await unregisterPush();
   const s = await loadSession();
   await saveSession(null);
   if (s) await api.POST('/auth/logout', { body: { refreshToken: s.refreshToken } }).catch(() => undefined);

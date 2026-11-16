@@ -98,6 +98,7 @@ class Appointment {
     @Column(name = "adj_note") String adjNote;
     @Column(name = "adj_status") String adjStatus;
     @Column(name = "cancelled_by") String cancelledBy;
+    @Column(name = "deposit_reminded_at") Instant depositRemindedAt;
     @Column(name = "created_at", nullable = false) Instant createdAt;
     @Column(name = "updated_at", nullable = false) Instant updatedAt;
     @Version int version;

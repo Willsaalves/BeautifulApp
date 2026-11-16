@@ -35,4 +35,9 @@ interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
 
     /** Política de cancelamento: sinal não pago até o prazo libera o horário. */
     List<Appointment> findByStatusAndDepositDueAtBefore(AppointmentStatus status, Instant now);
+
+    /** Sinais que vencem em breve e ainda não foram lembrados. */
+    List<Appointment> findByStatusAndDepositRemindedAtIsNullAndDepositDueAtBetween(AppointmentStatus status, Instant from, Instant to);
+
+    boolean existsByClientAccountIdAndProfessionalIdAndStatus(UUID client, UUID pro, AppointmentStatus status);
 }

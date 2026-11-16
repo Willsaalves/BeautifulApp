@@ -10,6 +10,7 @@ import { patchClient } from '@/api/auth';
 import { professionalFromCard, professionalFromPublic, publicPage, serviceFromApi, trendingDesigns } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
 import { uploadImage } from '@/api/media';
+import { Bell } from '@/components/bell';
 import { StoriesRow, Thumb } from '@/components/media';
 import {
   Avatar,
@@ -156,10 +157,7 @@ export default function ClienteHome() {
           <Pressable accessibilityLabel="Trocar foto do banner" onPress={changeHero} disabled={savingHero} style={styles.glassBtn}>
             {savingHero ? <ActivityIndicator color={colors.cardSolid} /> : <Ionicons name="camera-outline" size={20} color={colors.cardSolid} />}
           </Pressable>
-          <Pressable accessibilityLabel="Notificações" style={styles.glassBtn}>
-            <Ionicons name="notifications-outline" size={20} color={colors.cardSolid} />
-            <View style={styles.dot} />
-          </Pressable>
+          <Bell style={styles.glassBtn} color={colors.cardSolid} />
           <Pressable accessibilityLabel="Meu perfil" onPress={() => router.push('/cliente/perfil')}>
             <Avatar name={me.name} color={me.avatar} photo={me.photo} />
           </Pressable>

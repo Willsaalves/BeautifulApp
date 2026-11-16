@@ -47,6 +47,12 @@
         {
           "locationWhenInUsePermission": "Usamos sua localização para mostrar profissionais perto de você."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#221A20"
+        }
       ]
     ],
     "experiments": {

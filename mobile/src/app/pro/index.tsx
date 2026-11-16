@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { useProStats } from '@/api/use-pro-stats';
+import { Bell } from '@/components/bell';
 import { StoriesRow } from '@/components/media';
 import { Avatar, Badge, Card, IconCircle, ProgressBar, Row, Screen, SectionTitle, Stat, StatusBadge, T } from '@/components/ui';
 import { brl, fmtTime, isLowStock } from '@/domain/rules';
@@ -29,8 +30,11 @@ export default function ProHome() {
   return (
     <Screen>
       <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
-        <T v="display">OLÁ,{'\n'}{me.name.split(' ')[0].toUpperCase()}! ✨</T>
-        <Avatar name={me.name} color={me.avatar} photo={me.photo} size={48} />
+        <T v="display">OLÁ,{'\n'}{(me.ownerName ?? me.name).split(' ')[0].toUpperCase()}! ✨</T>
+        <Row>
+          <Bell style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }} />
+          <Avatar name={me.name} color={me.avatar} photo={me.photo} size={48} />
+        </Row>
       </Row>
 
       <StoriesRow onlyPro={me.id} />

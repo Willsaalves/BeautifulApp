@@ -54,6 +54,12 @@ class AvailabilityService implements SchedulingApi {
                 a.serviceId, a.serviceName, a.status.name(), a.startsAt, a.priceCents - a.discountCents));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasCompletedWith(UUID client, UUID pro) {
+        return appointments.existsByClientAccountIdAndProfessionalIdAndStatus(client, pro, AppointmentStatus.COMPLETED);
+    }
+
     static int weekday(LocalDate date) {
         return date.getDayOfWeek().getValue() % 7; // segunda=1 … domingo=0
     }

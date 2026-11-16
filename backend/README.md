@@ -47,6 +47,9 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | `loyalty` | Programa de fidelidade (meta R$ → % OFF), saldo por cliente, vouchers (fidelidade e bônus mensal por avaliação), uso no agendamento |
 | `review` | Avaliação de atendimento concluído (1 por atendimento), nota média na busca e na página |
 | `analytics` | Painel de lucratividade (faturamento − custo real das baixas) e clientes atrasadas para retorno |
+| `notification` | Caixa de entrada + push (Expo) para cada mudança do agendamento, mensagem nova e sinal vencendo em < 1h; push só depois do commit |
+| `chat` | Conversa por agendamento (só cliente e profissional dele) |
+| `story` | Stories de 24h; cliente só marca profissional que já a atendeu |
 | `media` | URL pré-assinada para upload direto ao storage; prefixos públicos (avatar, capa, portfólio, story, design) e privados (comprovante, referência); valida o dono da chave |
 | `common` | Erros RFC 7807 com `code`, UUID v7, normalização de celular |
 
@@ -84,6 +87,11 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | GET | `/me/loyalty` · `/me/vouchers` | Cartões e vouchers da cliente |
 | POST | `/appointments/{id}/review` · GET `/me/reviews` · `/professionals/{id}/reviews` | Avaliações |
 | GET | `/me/analytics/profit?from&to` · `/me/analytics/overdue-clients` | Relatórios |
+| GET | `/me/notifications` · POST `/me/notifications/read-all` | Caixa de entrada (unread = contador do sino) |
+| POST | `/me/devices` · `/me/devices/unregister` | Registrar / remover celular para push |
+| GET/POST | `/appointments/{id}/messages` | Chat do agendamento |
+| GET/POST/DELETE | `/stories` | Stories (GET ?professionalId=) |
+| GET/PUT | `/me/next-procedures` | "Seus próximos procedimentos" |
 
 ## Variáveis de ambiente (deploy de testes / produção)
 
@@ -96,6 +104,7 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | `APP_OTP_PEPPER` | segredo aleatório | |
 | `APP_MEDIA_ENDPOINT` / `_BUCKET` / `_ACCESS_KEY` / `_SECRET_KEY` / `_PUBLIC_URL` | Cloudflare R2, Supabase Storage ou S3 | Endpoint vazio = AWS S3 |
 | `APP_CORS_ORIGINS` | `https://app.exemplo.com` | Só para o app web |
+| `APP_PUSH_SENDER` | `log` (padrão) ou `expo` | `expo` envia push de verdade pela API da Expo |
 
 Gerar o par de chaves:
 

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Thumb } from '@/components/media';
+import { API_ENABLED } from '@/api/client';
+import { postStory } from '@/api/social';
 import { pickImage } from '@/lib/pick-image';
 import { Avatar, Button, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { useLookup, useStore } from '@/store/app-store';
@@ -18,7 +20,8 @@ export default function NovoStory() {
   const appt = params.appointmentId ? L.appointment(params.appointmentId) : undefined;
 
   // cliente marca profissionais com quem já fez atendimento (ou favoritas); profissional marca a si mesma
-  const options = isPro
+  const attendedBy = Array.from(new Set(s.appointments.filter((a) => a.clientId === s.clientId && a.status === 'concluido').map((a) => a.professionalId)));
+  const options = API_ENABLED && !isPro ? attendedBy : isPro
     ? [s.proId]
     : Array.from(new Set([
         ...s.appointments.filter((a) => a.clientId === s.clientId && a.status === 'concluido').map((a) => a.professionalId),
@@ -28,7 +31,29 @@ export default function NovoStory() {
   const [image, setImage] = useState<string | undefined>();
   const [caption, setCaption] = useState('');
 
-  const post = () => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const post = async () => {
+    if (API_ENABLED && image && proId) {
+      setBusy(true);
+      setError('');
+      try {
+        const st = await postStory({
+          professionalId: proId,
+          imageUri: image,
+          caption,
+          serviceName: appt ? appt.serviceName ?? s.services.find((x) => x.id === appt.serviceId)?.name : undefined,
+        });
+        s.setRemoteStories([st, ...s.stories.filter((x) => x.id !== st.id)]);
+        router.replace(`/story/${proId}`);
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     if (!image || !proId) return;
     s.postStory({ professionalId: proId, serviceId: appt?.serviceId, image, caption });
     router.replace(`/story/${proId}`);
@@ -68,8 +93,12 @@ export default function NovoStory() {
         </>
       ) : null}
       {appt ? <Chip icon="💅" label={L.service(appt.serviceId).name} selected /> : null}
+      {!isPro && options.length === 0 ? (
+        <T v="small" color={colors.danger}>Você poderá postar e marcar a profissional depois do seu primeiro atendimento concluído pelo app.</T>
+      ) : null}
       <T v="small" muted>O story fica visível por 24h na sua página inicial e na página da profissional marcada.</T>
-      <Button title="Publicar story" icon="paper-plane" disabled={!image || !proId} onPress={post} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      <Button title={busy ? 'Publicando…' : 'Publicar story'} icon="paper-plane" disabled={!image || !proId || busy} onPress={post} />
     </Screen>
   );
 }

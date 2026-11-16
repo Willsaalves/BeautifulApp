@@ -5,7 +5,9 @@ import { Pressable, View } from 'react-native';
 
 import { Avatar, Button, Card, Chip, Field, Header, ProgressBar, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { NICHE_ICON, NICHE_LABEL, daysBetween, dreamsProgress, fmtDate } from '@/domain/rules';
-import type { Niche } from '@/domain/types';
+import type { Dream, Niche } from '@/domain/types';
+import { API_ENABLED } from '@/api/client';
+import { saveNextProcedures } from '@/api/social';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, space } from '@/theme';
 
@@ -27,11 +29,20 @@ export default function ProximosProcedimentos() {
   const add = () => {
     const d = new Date();
     d.setDate(d.getDate() + horizon);
-    s.setDreams([...dreams, { id: s.newId('d'), niche, label: label || NICHE_LABEL[niche], targetDate: d.toISOString(), done: false }]);
+    save([...dreams, { id: s.newId('d'), niche, label: label || NICHE_LABEL[niche], targetDate: d.toISOString(), done: false }]);
     setLabel('');
   };
-  const toggle = (id: string) => s.setDreams(dreams.map((d) => (d.id === id ? { ...d, done: !d.done } : d)));
-  const remove = (id: string) => s.setDreams(dreams.filter((d) => d.id !== id));
+  const [error, setError] = useState('');
+  /** Atualiza na hora e salva na conta (com a API ligada). */
+  const save = (next: Dream[]) => {
+    s.setDreams(next);
+    if (!API_ENABLED) return;
+    saveNextProcedures(next)
+      .then((saved) => { s.setDreams(saved); setError(''); })
+      .catch((e) => setError((e as Error).message));
+  };
+  const toggle = (id: string) => save(dreams.map((d) => (d.id === id ? { ...d, done: !d.done } : d)));
+  const remove = (id: string) => save(dreams.filter((d) => d.id !== id));
   const pct = dreamsProgress(dreams);
 
   return (
@@ -86,6 +97,7 @@ export default function ProximosProcedimentos() {
         );
       })}
 
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
       <SectionTitle title="Adicionar procedimento" />
       <Card>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>

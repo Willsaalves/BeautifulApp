@@ -55,6 +55,7 @@ interface State {
   designs: Design[];
   stories: Story[];
   loyaltyCards: LoyaltyCard[];   // progresso calculado no servidor (cliente com API)
+  unread: number;                // notificações não lidas (sino)
 }
 
 const initial: State = {
@@ -74,6 +75,7 @@ const initial: State = {
   designs: mock.designs,
   stories: mock.stories,
   loyaltyCards: [],
+  unread: 0,
 };
 
 type Action =
@@ -604,6 +606,7 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
           const p: Professional = {
             ...base,
             name: ap.studio ?? ap.name ?? '',
+            ownerName: ap.name,
             niche: (ap.niche?.toLowerCase() ?? 'unha') as Professional['niche'],
             headline: ap.bio ?? '',
             city: ap.city ?? '',
@@ -769,6 +772,27 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
             feedbacks: [...stateRef.current.feedbacks.filter((f) => !(f.professionalId === professionalId && f.clientName !== undefined)), ...reviews],
           },
         });
+      },
+
+      /** Stories ativos vindos da API (substituem os de exemplo) + profissionais marcadas. */
+      setRemoteStories(stories: Story[]) {
+        let professionals = stateRef.current.professionals;
+        for (const st of stories) {
+          if (professionals.some((p) => p.id === st.professionalId)) continue;
+          professionals = [...professionals, professionalFromCard({ id: st.professionalId, studio: st.professionalStudio })];
+        }
+        dispatch({ type: 'set', patch: { stories, professionals } });
+      },
+
+      setMessages(appointmentId: string, list: ChatMessage[]) {
+        dispatch({
+          type: 'set',
+          patch: { messages: [...stateRef.current.messages.filter((m) => m.appointmentId !== appointmentId), ...list] },
+        });
+      },
+
+      setUnread(unread: number) {
+        if (unread !== stateRef.current.unread) dispatch({ type: 'set', patch: { unread } });
       },
 
       removeServiceLocal(id: string) {

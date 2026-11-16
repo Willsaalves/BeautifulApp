@@ -18,6 +18,7 @@ import {
   rejectReceipt,
   sendReceipt,
 } from '@/api/scheduling';
+import { listMessages, sendMessage } from '@/api/social';
 import { refreshStock } from '@/api/use-pro-sync';
 import { maskPhone } from '@/components/auth';
 import { Avatar, Button, Card, Divider, Empty, Field, Header, Row, Screen, SectionTitle, StatusBadge, T } from '@/components/ui';
@@ -67,6 +68,29 @@ export default function Agendamento() {
     if (!remote) return;
     getAppointment(id).then((v) => latest.current.mergeAppointments([v])).catch((e) => setError((e as Error).message));
   }, [remote, id]);
+
+  // chat: carrega ao abrir e atualiza a cada 10s enquanto a tela está aberta
+  useEffect(() => {
+    if (!remote) return;
+    const load = () => listMessages(id).then((list) => latest.current.setMessages(id, list)).catch(() => undefined);
+    load();
+    const t = setInterval(load, 10_000);
+    return () => clearInterval(t);
+  }, [remote, id]);
+
+  const send = async () => {
+    const text = msg.trim();
+    if (!text) return;
+    setMsg('');
+    if (!remote) return s.sendMessage(id, isPro ? 'profissional' : 'cliente', text);
+    try {
+      const m = await sendMessage(id, text);
+      s.setMessages(id, [...s.messages.filter((x) => x.appointmentId === id), m]);
+    } catch (e) {
+      setMsg(text);
+      setError((e as Error).message);
+    }
+  };
 
   /** Executa a ação na API (se ligada) e aplica a resposta; senão usa a regra local do protótipo. */
   const run = async (apiCall: () => Promise<Schemas['AppointmentView']>, local: () => void) => {
@@ -350,7 +374,7 @@ export default function Agendamento() {
               />
               <Pressable
                 accessibilityLabel="Enviar"
-                onPress={() => { if (msg.trim()) { s.sendMessage(a.id, isPro ? 'profissional' : 'cliente', msg.trim()); setMsg(''); } }}
+                onPress={send}
                 style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name="send" size={16} color={colors.cardSolid} />
               </Pressable>

@@ -1,8 +1,12 @@
 import { useClientSync } from '@/api/use-client-sync';
+import { useSocialSync } from '@/api/use-social-sync';
 import { AppTabs } from '@/components/tab-bar';
+import { usePushRegistration } from '@/lib/push';
 
 export default function ClienteLayout() {
   useClientSync();
+  useSocialSync();
+  usePushRegistration(true);
   return (
     <AppTabs
       tabs={[

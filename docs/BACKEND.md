@@ -278,7 +278,7 @@ Ambientes: `dev` (local com Docker Compose: Postgres + PostGIS, Redis, LocalStac
 | 2 ✅ | catalog + page + discovery | A página da profissional e a busca vêm da API |
 | 3 ✅ | scheduling + payment v1 (comprovante) + jobs de expiração | Agendar, pagar sinal e expirar funcionam fim a fim |
 | 4 ✅ | inventory + loyalty + review + analytics | Concluir dá baixa no estoque, avança a fidelidade e o painel bate |
-| 5 | story + chat + notification (push/WhatsApp) | |
+| 5 ✅ | story + chat + notification (push) | Stories, chat, caixa de notificações e push (WhatsApp fica para produção) |
 | 6 | Terraform AWS, staging, observabilidade, testes de carga | Deploy automático em staging |
 | 7 | Payment v2 (PSP Pix + webhook) | Sinal confirmado sem comprovante |
 

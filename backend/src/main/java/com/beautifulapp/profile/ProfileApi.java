@@ -9,6 +9,9 @@ public interface ProfileApi {
 
     Optional<PublicProfessional> publicProfessional(UUID professionalId);
 
+    /** Conta (login) da profissional, para notificar e checar participação no chat. */
+    Optional<UUID> accountOfProfessional(UUID professionalId);
+
     /** Nome, foto e celular da cliente (para a agenda da profissional). */
     Optional<ClientSummary> clientSummary(UUID accountId);
 

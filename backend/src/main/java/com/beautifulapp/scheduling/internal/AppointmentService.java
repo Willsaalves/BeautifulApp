@@ -27,6 +27,7 @@ import com.beautifulapp.media.MediaKind;
 import com.beautifulapp.profile.ProfileApi;
 import com.beautifulapp.profile.PublicProfessional;
 import com.beautifulapp.common.AppointmentCompleted;
+import com.beautifulapp.common.AppointmentEvent;
 import com.beautifulapp.scheduling.internal.SchedulingDtos.*;
 
 @Service
@@ -123,6 +124,7 @@ class AppointmentService {
             // pedido simultâneo pegou o mesmo horário: a exclusion constraint do banco barrou
             throw ApiException.conflict("SLOT_UNAVAILABLE", "Esse horário acabou de ser ocupado. Escolha outro.");
         }
+        publish(AppointmentEvent.Kind.CREATED, a);
         return view(a);
     }
 
@@ -164,6 +166,7 @@ class AppointmentService {
         String key = media.normalizeKey(receiptKey);
         media.assertOwned(key, clientAccountId, MediaKind.RECEIPT);
         a.receiptKey = key;
+        publish(AppointmentEvent.Kind.RECEIPT_SENT, a);
         return transition(a, AppointmentStatus.RECEIPT_SENT);
     }
 
@@ -171,6 +174,7 @@ class AppointmentService {
     AppointmentView confirmDeposit(UUID professionalId, UUID id) {
         Appointment a = ownedByPro(professionalId, id);
         require(a, AppointmentStatus.RECEIPT_SENT);
+        publish(AppointmentEvent.Kind.DEPOSIT_CONFIRMED, a);
         return transition(a, AppointmentStatus.CONFIRMED);
     }
 
@@ -182,6 +186,8 @@ class AppointmentService {
         a.receiptKey = null;
         Instant extended = clock.instant().plus(Duration.ofHours(2));
         if (a.depositDueAt == null || a.depositDueAt.isBefore(extended)) a.depositDueAt = extended.isBefore(a.startsAt) ? extended : a.startsAt;
+        a.depositRemindedAt = null;
+        publish(AppointmentEvent.Kind.RECEIPT_REJECTED, a);
         return transition(a, AppointmentStatus.AWAITING_DEPOSIT);
     }
 
@@ -195,6 +201,7 @@ class AppointmentService {
         a.adjNewPriceCents = in.newPriceCents();
         a.adjNote = StringUtils.hasText(in.note()) ? in.note().trim() : null;
         a.adjStatus = "PENDING";
+        publish(AppointmentEvent.Kind.ADJUSTMENT_PROPOSED, a);
         return transition(a, AppointmentStatus.ADJUSTMENT_PENDING);
     }
 
@@ -206,6 +213,7 @@ class AppointmentService {
         a.adjStatus = accept ? "ACCEPTED" : "DECLINED";
         AppointmentStatus back = a.previousStatus != null ? a.previousStatus : AppointmentStatus.AWAITING_DEPOSIT;
         a.previousStatus = null;
+        publish(accept ? AppointmentEvent.Kind.ADJUSTMENT_ACCEPTED : AppointmentEvent.Kind.ADJUSTMENT_DECLINED, a);
         return transition(a, back);
     }
 
@@ -217,6 +225,7 @@ class AppointmentService {
         require(a, AppointmentStatus.CONFIRMED);
         AppointmentView v = transition(a, AppointmentStatus.COMPLETED);
         events.publishEvent(new AppointmentCompleted(a.id, a.professionalId, a.clientAccountId, a.serviceId, a.priceCents - a.discountCents));
+        publish(AppointmentEvent.Kind.COMPLETED, a);
         return v;
     }
 
@@ -228,6 +237,7 @@ class AppointmentService {
         if (!a.status.active()) throw invalidState(a);
         a.cancelledBy = client ? "CLIENT" : "PROFESSIONAL";
         if (a.discountCents > 0) loyalty.release(a.id);
+        publish(client ? AppointmentEvent.Kind.CANCELLED_BY_CLIENT : AppointmentEvent.Kind.CANCELLED_BY_PROFESSIONAL, a);
         return transition(a, AppointmentStatus.CANCELLED);
     }
 
@@ -239,8 +249,27 @@ class AppointmentService {
         for (Appointment a : overdue) {
             if (a.discountCents > 0) loyalty.release(a.id);
             transition(a, AppointmentStatus.EXPIRED);
+            publish(AppointmentEvent.Kind.EXPIRED, a);
         }
         return overdue.size();
+    }
+
+    /** A cada 5 min: avisa a cliente quando falta menos de 1h para o sinal vencer (uma vez por agendamento). */
+    @Scheduled(fixedDelayString = "${app.scheduling.reminder-interval:300000}", initialDelay = 20_000)
+    @Transactional
+    public int remindDepositsDueSoon() {
+        Instant now = clock.instant();
+        var soon = appointments.findByStatusAndDepositRemindedAtIsNullAndDepositDueAtBetween(
+                AppointmentStatus.AWAITING_DEPOSIT, now, now.plus(Duration.ofHours(1)));
+        for (Appointment a : soon) {
+            a.depositRemindedAt = now;
+            publish(AppointmentEvent.Kind.DEPOSIT_DUE_SOON, a);
+        }
+        return soon.size();
+    }
+
+    private void publish(AppointmentEvent.Kind kind, Appointment a) {
+        events.publishEvent(new AppointmentEvent(kind, a.id, a.clientAccountId, a.professionalId, a.serviceName, a.startsAt, a.depositDueAt));
     }
 
     // ---------- apoio ----------

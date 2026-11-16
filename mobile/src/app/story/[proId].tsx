@@ -43,7 +43,10 @@ export default function StoryViewer() {
   const st = list[i];
   if (!st) return null;
   const pro = L.pro(proId);
-  const author = st.authorType === 'profissional' ? L.pro(st.authorId) : L.client(st.authorId);
+  // com a API o story já traz nome e foto de quem postou; no protótipo, busca no estado
+  const local = st.authorType === 'profissional' ? s.professionals.find((p) => p.id === st.authorId) : s.clients.find((c) => c.id === st.authorId);
+  const author = { name: st.authorName ?? local?.name ?? '', avatar: local?.avatar ?? colors.lilac, photo: st.authorPhoto ?? local?.photo };
+  const serviceLabel = st.serviceName ?? (st.serviceId ? s.services.find((x) => x.id === st.serviceId)?.name : undefined);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.black }}>
@@ -61,7 +64,7 @@ export default function StoryViewer() {
             <Avatar name={author.name} color={author.avatar} photo={author.photo} size={36} />
             <View style={{ flex: 1 }}>
               <T v="h3" color={colors.cardSolid}>{author.name} <T v="small" color={colors.offWhite}>· {ago(st.createdAt)}</T></T>
-              {st.authorType === 'cliente' ? <T v="small" color={colors.lilac}>com {pro.name}{st.serviceId ? ` · ${L.service(st.serviceId).name}` : ''}</T> : null}
+              {st.authorType === 'cliente' ? <T v="small" color={colors.lilac}>com {pro.name}{serviceLabel ? ` · ${serviceLabel}` : ''}</T> : null}
             </View>
             <Pressable onPress={close} hitSlop={12} accessibilityLabel="Fechar">
               <Ionicons name="close" size={28} color={colors.cardSolid} />

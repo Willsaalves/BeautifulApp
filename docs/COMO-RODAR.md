@@ -133,6 +133,16 @@ Leia o QR code com o Expo Go, de qualquer rede.
 
 ---
 
+## Notificações push (opcional)
+
+A caixa de notificações (sino) funciona sempre. Para o **push** chegar no celular:
+
+1. Crie o projeto no EAS (uma vez): `cd mobile` e `npx eas-cli@latest init`. Isso grava o `projectId` no `app.json`.
+2. Suba a API com `$env:APP_PUSH_SENDER="expo"` antes do `.\gradlew.bat bootRun`.
+3. Abra o app no celular e permita as notificações.
+
+> No **Android**, o Expo Go não recebe push desde o SDK 53: é preciso um *development build* (`npx eas-cli@latest build --profile development --platform android`). No **iPhone**, o Expo Go funciona.
+
 ## Desligar tudo
 
 - Em cada terminal: **Ctrl + C**

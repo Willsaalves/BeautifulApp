@@ -76,6 +76,7 @@ export interface Professional {
   longitude?: number;
   minPrice?: number;     // "a partir de" (vem da busca da API)
   remote?: boolean;      // veio da API (não é dado de exemplo)
+  ownerName?: string;    // nome da pessoa (name = nome do estúdio)
 }
 
 export interface WorkDay {
@@ -246,4 +247,9 @@ export interface Story {
   image: string;                 // URI ou emoji (placeholder)
   caption: string;
   createdAt: string;
+  authorName?: string;           // vem da API
+  professionalStudio?: string;
+  authorPhoto?: string;
+  serviceName?: string;
+  mine?: boolean;
 }

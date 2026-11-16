@@ -6,6 +6,7 @@ import { API_ENABLED } from './client';
 import { myLoyaltyCards, myReviews, myVouchers } from './business';
 import { professionalFromCard } from './catalog';
 import { myAppointments } from './scheduling';
+import { myNextProcedures } from './social';
 
 /** Área da cliente com API: carrega os agendamentos e atualiza a cada 30s (confirmação do sinal, novo valor…). */
 export function useClientSync() {
@@ -35,6 +36,7 @@ export function useClientSync() {
         .catch(() => undefined);
     };
     load();
+    myNextProcedures().then((d) => !cancelled && latest.current.setDreams(d)).catch(() => undefined);
     const t = setInterval(load, 30_000);
     return () => {
       cancelled = true;
