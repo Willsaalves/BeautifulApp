@@ -1,5 +1,5 @@
 // Dados de exemplo enquanto o backend não existe. Datas relativas a "agora".
-import type { Appointment, Client, Feedback, Product, Professional, Service, Voucher } from '@/domain/types';
+import type { Appointment, Client, Design, Feedback, Product, Professional, Service, StockMovement, Story, Voucher, Widget } from '@/domain/types';
 
 const now = new Date();
 const at = (days: number, h: number, m = 0) => {
@@ -12,7 +12,7 @@ const at = (days: number, h: number, m = 0) => {
 export const ME_CLIENT_ID = 'c1';
 export const ME_PRO_ID = 'p1';
 
-export const professionals: Professional[] = [
+const baseProfessionals: Omit<Professional, 'widgets'>[] = [
   {
     id: 'p1',
     name: 'Camila Rocha',
@@ -84,14 +84,14 @@ export const professionals: Professional[] = [
 ];
 
 export const products: Product[] = [
-  { id: 'pr1', name: 'Gel construtor', unit: 'g', quantity: 42, minQuantity: 15 },
-  { id: 'pr2', name: 'Tips de alongamento', unit: 'un', quantity: 180, minQuantity: 50 },
-  { id: 'pr3', name: 'Lixa descartável', unit: 'un', quantity: 18, minQuantity: 20 },
-  { id: 'pr4', name: 'Pincel de sobrancelha', unit: 'un', quantity: 150, minQuantity: 20 },
-  { id: 'pr5', name: 'Esmalte em gel', unit: 'ml', quantity: 120, minQuantity: 30 },
+  { id: 'pr1', unitCost: 1.8, name: 'Gel construtor', unit: 'g', quantity: 42, minQuantity: 15 },
+  { id: 'pr2', unitCost: 0.35, name: 'Tips de alongamento', unit: 'un', quantity: 180, minQuantity: 50 },
+  { id: 'pr3', unitCost: 0.9, name: 'Lixa descartável', unit: 'un', quantity: 18, minQuantity: 20 },
+  { id: 'pr4', unitCost: 1.2, name: 'Pincel de sobrancelha', unit: 'un', quantity: 150, minQuantity: 20 },
+  { id: 'pr5', unitCost: 0.8, name: 'Esmalte em gel', unit: 'ml', quantity: 120, minQuantity: 30 },
   // estética (p2)
-  { id: 'pr6', name: 'Ácido hialurônico', unit: 'ml', quantity: 7, minQuantity: 4, lot: 'HA-2291', expiresAt: at(180, 0) },
-  { id: 'pr7', name: 'Toxina botulínica (U)', unit: 'un', quantity: 300, minQuantity: 100, lot: 'TB-0912', expiresAt: at(90, 0) },
+  { id: 'pr6', unitCost: 380, name: 'Ácido hialurônico', unit: 'ml', quantity: 7, minQuantity: 4, lot: 'HA-2291', expiresAt: at(180, 0) },
+  { id: 'pr7', unitCost: 4.5, name: 'Toxina botulínica (U)', unit: 'un', quantity: 300, minQuantity: 100, lot: 'TB-0912', expiresAt: at(90, 0) },
 ];
 
 /** Estoque por profissional (cada uma vê só o seu). */
@@ -291,3 +291,54 @@ export const feedbacks: Feedback[] = [
 ];
 
 export const vouchers: Voucher[] = [];
+
+/** Página padrão: capa + blocos fixos (serviços, agenda). Cada profissional personaliza o resto. */
+export function defaultWidgets(p: { id: string; name: string; headline: string; avatar: string }): Widget[] {
+  return [
+    { id: `w_${p.id}_capa`, type: 'capa', title: p.name.toUpperCase(), subtitle: p.headline, color: p.avatar },
+    { id: `w_${p.id}_servicos`, type: 'servicos', fixed: true, title: 'Serviços' },
+    { id: `w_${p.id}_agenda`, type: 'agenda', fixed: true, title: 'Próximos horários livres' },
+    { id: `w_${p.id}_galeria`, type: 'galeria', title: 'Portfólio', images: [] },
+    { id: `w_${p.id}_avaliacoes`, type: 'avaliacoes', title: 'Depoimentos' },
+  ];
+}
+
+const camilaWidgets: Widget[] = [
+  { id: 'w_p1_capa', type: 'capa', title: 'CAMILA NAILS', subtitle: 'Alongamento em gel e nail art em Pinheiros', color: '#CDBCE7' },
+  { id: 'w_p1_contagem', type: 'contagem', title: 'Black Friday: 20% OFF em nail art', subtitle: 'Termina em', target: at(9, 23, 59) },
+  { id: 'w_p1_trending', type: 'trending', title: 'Trending Designs' },
+  { id: 'w_p1_servicos', type: 'servicos', fixed: true, title: 'Serviços' },
+  { id: 'w_p1_agenda', type: 'agenda', fixed: true, title: 'Próximos horários livres' },
+  { id: 'w_p1_pct', type: 'porcentagem', title: 'Agenda de dezembro', subtitle: 'já preenchida — garanta seu horário', value: 82 },
+  { id: 'w_p1_galeria', type: 'galeria', title: 'Portfólio', images: ['💅', '✨', '🌸', '💎', '🤍', '🦋'] },
+  { id: 'w_p1_texto', type: 'texto', title: 'Sobre mim', body: 'Nail designer há 6 anos. Atendo com hora marcada, material esterilizado e muito carinho. 💜' },
+  { id: 'w_p1_fidelidade', type: 'fidelidade', title: 'Cartão fidelidade' },
+  { id: 'w_p1_avaliacoes', type: 'avaliacoes', title: 'Depoimentos' },
+];
+
+export const professionals: Professional[] = baseProfessionals.map((p) => ({
+  ...p,
+  widgets: p.id === 'p1' ? camilaWidgets : defaultWidgets(p),
+}));
+
+export const designs: Design[] = [
+  { id: 'dz1', professionalId: 'p1', serviceId: 's1', name: 'PINK', image: '🩷', priceDelta: 0 },
+  { id: 'dz2', professionalId: 'p1', serviceId: 's1', name: 'MEGA', image: '💎', priceDelta: 35 },
+  { id: 'dz3', professionalId: 'p1', serviceId: 's1', name: 'FRANCESINHA GLOW', image: '🤍', priceDelta: 15 },
+  { id: 'dz4', professionalId: 'p1', serviceId: 's1', name: 'BORBOLETA', image: '🦋', priceDelta: 25 },
+  { id: 'dz5', professionalId: 'p3', serviceId: 's6', name: 'EFEITO GATINHO', image: '🐈‍⬛', priceDelta: 0 },
+];
+
+const hoursAgo = (h: number) => new Date(now.getTime() - h * 3600_000).toISOString();
+export const stories: Story[] = [
+  { id: 'st1', authorType: 'cliente', authorId: 'c2', professionalId: 'p1', serviceId: 's2', image: '💅', caption: 'Manutenção feita, amei! 💜', createdAt: hoursAgo(3) },
+  { id: 'st2', authorType: 'profissional', authorId: 'p1', professionalId: 'p1', serviceId: 's1', image: '💎', caption: 'Design MEGA de hoje ✨', createdAt: hoursAgo(5) },
+  { id: 'st3', authorType: 'cliente', authorId: 'c4', professionalId: 'p2', serviceId: 's4', image: '👄', caption: 'Lábios dos sonhos 😍', createdAt: hoursAgo(8) },
+  { id: 'st4', authorType: 'profissional', authorId: 'p3', professionalId: 'p3', serviceId: 's6', image: '👁️', caption: 'Volume russo efeito gatinho', createdAt: hoursAgo(12) },
+];
+
+/** Compras do mês (para o painel de lucratividade). */
+export const movements: StockMovement[] = [
+  { id: 'mv0a', productId: 'pr1', delta: 50, reason: 'compra', unitCost: 1.8, createdAt: at(-6, 11) },
+  { id: 'mv0b', productId: 'pr3', delta: 30, reason: 'compra', unitCost: 0.9, createdAt: at(-6, 11) },
+];

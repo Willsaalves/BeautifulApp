@@ -7,8 +7,9 @@ export default function ProLayout() {
         { name: 'index', href: '/pro', label: 'Home', icon: 'home' },
         { name: 'agenda', href: '/pro/agenda', label: 'Agenda', icon: 'calendar' },
         { name: 'clientes', href: '/pro/clientes', label: 'Clientes', icon: 'people' },
+        { name: 'lucro', href: '/pro/lucro', label: 'Lucro', icon: 'trending-up' },
         { name: 'estoque', href: '/pro/estoque', label: 'Estoque', icon: 'cube' },
-        { name: 'mais', href: '/pro/mais', label: 'Mais', icon: 'grid' },
+        { name: 'perfil', href: '/pro/perfil', label: 'Perfil', icon: 'color-palette' },
       ]}
     />
   );

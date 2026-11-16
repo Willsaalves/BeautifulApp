@@ -29,8 +29,8 @@ export const NICHE_ICON: Record<string, string> = {
 };
 
 /** Preço final = base + acréscimos das opções escolhidas (formato, tamanho, decoração…). */
-export function computePrice(service: Service, selections: Record<string, string>): number {
-  let total = service.price;
+export function computePrice(service: Service, selections: Record<string, string>, extra = 0): number {
+  let total = service.price + extra;
   for (const opt of service.options) {
     const choice = opt.choices.find((c) => c.id === selections[opt.id]);
     if (choice) total += choice.priceDelta;
@@ -233,3 +233,56 @@ export const STATUS_LABEL: Record<string, { label: string; tone: 'warning' | 'su
   cancelado: { label: 'Cancelado', tone: 'danger' },
   expirado: { label: 'Expirado (sinal não pago)', tone: 'danger' },
 };
+
+/** Custo de material de um atendimento, a partir do consumo cadastrado e do custo médio. */
+export function materialCost(service: Service, products: Product[]): number {
+  return service.consumption.reduce((sum, c) => {
+    const p = products.find((x) => x.id === c.productId);
+    return sum + (p?.unitCost ?? 0) * c.amount;
+  }, 0);
+}
+
+/** Painel de lucratividade de um período. */
+export function profitability(
+  appointments: Appointment[],
+  services: Service[],
+  products: Product[],
+  movements: StockMovement[],
+  professionalId: string,
+  from: Date,
+  to: Date,
+) {
+  const done = appointments.filter((a) => {
+    const d = new Date(a.startsAt);
+    return a.professionalId === professionalId && a.status === 'concluido' && d >= from && d < to;
+  });
+  const byService = new Map<string, { service: Service; count: number; revenue: number; cost: number }>();
+  for (const a of done) {
+    const svc = services.find((s) => s.id === a.serviceId)!;
+    const row = byService.get(svc.id) ?? { service: svc, count: 0, revenue: 0, cost: 0 };
+    row.count += 1;
+    row.revenue += a.price - (a.discountApplied ?? 0);
+    row.cost += materialCost(svc, products);
+    byService.set(svc.id, row);
+  }
+  const rows = [...byService.values()].sort((a, b) => b.revenue - b.cost - (a.revenue - a.cost));
+  const revenue = rows.reduce((s, r) => s + r.revenue, 0);
+  const cost = rows.reduce((s, r) => s + r.cost, 0);
+  const ownIds = new Set(products.map((p) => p.id));
+  const purchases = movements
+    .filter((m) => m.reason === 'compra' && ownIds.has(m.productId) && new Date(m.createdAt) >= from && new Date(m.createdAt) < to)
+    .reduce((s, m) => s + m.delta * (m.unitCost ?? 0), 0);
+  return {
+    count: done.length,
+    revenue,
+    cost,
+    profit: revenue - cost,
+    margin: revenue ? Math.round(((revenue - cost) / revenue) * 100) : 0,
+    ticket: done.length ? revenue / done.length : 0,
+    purchases,
+    rows,
+  };
+}
+
+export const STORY_TTL_MS = 24 * 3600_000;
+export const isUri = (s?: string) => !!s && /^(file:|blob:|data:|https?:|content:|ph:)/.test(s);

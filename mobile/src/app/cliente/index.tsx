@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { StoriesRow } from '@/components/media';
 import {
   Avatar,
   Badge,
@@ -70,6 +71,8 @@ export default function ClienteHome() {
           </Pressable>
         </Row>
       </Row>
+
+      <StoriesRow />
 
       {/* Procedimentos dos sonhos */}
       <Card>

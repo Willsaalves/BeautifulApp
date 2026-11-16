@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
+import { StoriesRow } from '@/components/media';
 import { Avatar, Badge, Card, IconCircle, ProgressBar, Row, Screen, SectionTitle, Stat, StatusBadge, T } from '@/components/ui';
 import { brl, fmtTime, isLowStock, overdueClients } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
@@ -34,7 +35,9 @@ export default function ProHome() {
         <Avatar name={me.name} color={me.avatar} size={48} />
       </Row>
 
-      <Card>
+      <StoriesRow onlyPro={me.id} />
+
+      <Card onPress={() => router.push('/pro/lucro')}>
         <T v="overline" style={{ textAlign: 'center' }}>Seu mês até agora</T>
         <Row style={{ marginTop: space.sm }}>
           <Stat label="Faturamento" value={brl(monthRevenue)} sub={`meta ${brl(MONTH_GOAL)}`} />
@@ -119,7 +122,7 @@ export default function ProHome() {
       <Row style={{ justifyContent: 'space-between' }}>
         {[
           { icon: 'cart' as const, label: 'Compra', go: () => router.push('/estoque/compra') },
-          { icon: 'sparkles' as const, label: 'Serviços', go: () => router.push('/pro/mais') },
+          { icon: 'sparkles' as const, label: 'Serviços', go: () => router.push('/pro/perfil') },
           { icon: 'heart' as const, label: 'Fidelidade', go: () => router.push('/config/fidelidade') },
           { icon: 'eye' as const, label: 'Meu perfil', go: () => router.push(`/profissional/${me.id}`) },
         ].map((x) => (

@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, TextInput, View } from 'react-native';
 
+import { Thumb } from '@/components/media';
 import { Avatar, Button, Card, Divider, Empty, Field, Header, Row, Screen, SectionTitle, StatusBadge, T } from '@/components/ui';
 import { brl, fmtDateTime, fmtTime, isLowStock } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
@@ -98,6 +99,12 @@ export default function Agendamento() {
             })}
           </>
         ) : null}
+        {a.designId ? (
+          <Row style={{ justifyContent: 'space-between' }}>
+            <T muted>Design</T>
+            <T style={{ fontWeight: '800' }}>{s.designs.find((d) => d.id === a.designId)?.name}</T>
+          </Row>
+        ) : null}
         {a.notes ? <T v="small" muted>Obs.: {a.notes}</T> : null}
         <Divider />
         <Row style={{ justifyContent: 'space-between' }}><T muted>Total</T><T v="h3">{brl(total)}</T></Row>
@@ -107,7 +114,7 @@ export default function Agendamento() {
       {a.referenceImage ? (
         <>
           <SectionTitle title="Referência da cliente" />
-          <Image source={{ uri: a.referenceImage }} style={{ height: 220, borderRadius: radius.lg }} contentFit="cover" />
+          <Thumb src={a.referenceImage} style={{ height: 220, borderRadius: radius.lg }} emojiSize={80} />
         </>
       ) : null}
 
@@ -230,6 +237,10 @@ export default function Agendamento() {
       ) : null}
       {!isPro && a.status === 'concluido' ? (
         <Button title="Repetir este serviço" icon="repeat" onPress={() => router.push(`/agendar/${svc.id}?repeat=${a.id}`)} />
+      ) : null}
+      {a.status === 'concluido' ? (
+        <Button title={isPro ? 'Postar resultado no story' : 'Postar no meu story'} icon="camera" variant="outline"
+          onPress={() => router.push(`/story/novo?appointmentId=${a.id}`)} />
       ) : null}
       {!isPro && (a.status === 'expirado' || a.status === 'cancelado') ? (
         <Button title="Agendar de novo" icon="calendar" onPress={() => router.replace(`/agendar/${svc.id}?repeat=${a.id}`)} />

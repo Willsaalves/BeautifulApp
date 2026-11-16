@@ -10,6 +10,7 @@ export interface Product {
   unit: Unit;
   quantity: number;      // saldo atual em estoque
   minQuantity: number;   // abaixo disso: alerta de recompra
+  unitCost?: number;     // custo médio por unidade (para lucratividade)
   lot?: string;
   expiresAt?: string;    // ISO
 }
@@ -65,6 +66,7 @@ export interface Professional {
   depositDeadlineHours: number;  // prazo para pagar o sinal
   loyalty: LoyaltyProgram;
   workHours: { start: string; end: string; days: number[] }; // 0=dom
+  widgets: Widget[];
 }
 
 export interface LoyaltyProgram {
@@ -96,6 +98,7 @@ export interface Appointment {
   startsAt: string;                       // ISO
   selections: Record<string, string>;     // optionId -> choiceId
   referenceImage?: string;
+  designId?: string;
   notes?: string;
   price: number;
   depositAmount: number;
@@ -150,5 +153,54 @@ export interface ChatMessage {
   appointmentId: string;
   from: 'cliente' | 'profissional';
   text: string;
+  createdAt: string;
+}
+
+// ---------- Página personalizável (widgets) ----------
+export type WidgetType =
+  | 'capa'
+  | 'galeria'
+  | 'porcentagem'
+  | 'contagem'
+  | 'texto'
+  | 'trending'
+  | 'fidelidade'
+  | 'avaliacoes'
+  | 'servicos'   // fixo
+  | 'agenda';    // fixo
+
+export interface Widget {
+  id: string;
+  type: WidgetType;
+  fixed?: boolean;               // itens padrão do app: não podem ser removidos
+  title?: string;
+  subtitle?: string;
+  color?: string;
+  image?: string;                // capa
+  images?: string[];             // galeria
+  value?: number;                // porcentagem
+  target?: string;               // contagem regressiva (ISO)
+  body?: string;                 // texto
+}
+
+/** Trending Designs: cada profissional dá o próprio nome (ex: PINK, MEGA). */
+export interface Design {
+  id: string;
+  professionalId: string;
+  serviceId: string;
+  name: string;
+  image: string;                 // URI da foto ou emoji (placeholder)
+  priceDelta: number;
+}
+
+// ---------- Stories ----------
+export interface Story {
+  id: string;
+  authorType: 'cliente' | 'profissional';
+  authorId: string;
+  professionalId: string;        // profissional marcada
+  serviceId?: string;
+  image: string;                 // URI ou emoji (placeholder)
+  caption: string;
   createdAt: string;
 }

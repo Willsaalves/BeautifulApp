@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { Thumb } from '@/components/media';
 import { Avatar, Button, Card, Chip, Divider, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, freeSlots, fmtTime } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
@@ -13,7 +14,7 @@ import { colors, radius, space } from '@/theme';
 const WEEK = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 
 export default function Agendar() {
-  const { serviceId, repeat } = useLocalSearchParams<{ serviceId: string; repeat?: string }>();
+  const { serviceId, repeat, designId: designParam } = useLocalSearchParams<{ serviceId: string; repeat?: string; designId?: string }>();
   const s = useStore();
   const L = useLookup();
   const service = L.service(serviceId);
@@ -23,7 +24,10 @@ export default function Agendar() {
   const [selections, setSelections] = useState<Record<string, string>>(
     previous?.selections ?? Object.fromEntries(service.options.map((o) => [o.id, o.choices[0].id])),
   );
-  const [reference, setReference] = useState<string | undefined>(previous?.referenceImage);
+  const [reference, setReference] = useState<string | undefined>(previous?.designId ? undefined : previous?.referenceImage);
+  const [designId, setDesignId] = useState<string | undefined>(designParam ?? previous?.designId);
+  const designs = s.designs.filter((d) => d.serviceId === serviceId);
+  const design = designs.find((d) => d.id === designId);
   const [notes, setNotes] = useState('');
   const [dayIdx, setDayIdx] = useState(0);
   const [slot, setSlot] = useState<Date | null>(null);
@@ -49,15 +53,15 @@ export default function Agendar() {
     (v) => v.clientId === s.clientId && !v.used && (!v.professionalId || v.professionalId === pro.id),
   );
   const voucher = vouchers.find((v) => v.id === voucherId);
-  const price = computePrice(service, selections);
+  const price = computePrice(service, selections, design?.priceDelta ?? 0);
   const discount = voucher ? Math.round(price * voucher.percent) / 100 : 0;
   const deposit = computeDeposit(price - discount, service.depositPercent);
-  const needsRef = service.requiresReference && !reference;
+  const needsRef = service.requiresReference && !reference && !design;
   const canSubmit = !!slot && !needsRef;
 
   const submit = () => {
     if (!slot) return;
-    const id = s.createAppointment({ serviceId, startsAt: slot, selections, referenceImage: reference, notes, voucherId });
+    const id = s.createAppointment({ serviceId, startsAt: slot, selections, referenceImage: reference, designId, notes, voucherId });
     router.replace(`/agendamento/${id}`);
   };
 
@@ -90,7 +94,25 @@ export default function Agendar() {
         </View>
       ))}
 
-      <SectionTitle title={`Referência visual${service.requiresReference ? ' (obrigatória)' : ''}`} />
+      {designs.length ? (
+        <>
+          <SectionTitle title="🔥 Trending Designs" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }}>
+            {designs.map((d) => {
+              const sel = designId === d.id;
+              return (
+                <Pressable key={d.id} onPress={() => setDesignId(sel ? undefined : d.id)} style={{ width: 120 }}>
+                  <Thumb src={d.image} style={{ width: 120, height: 140, borderRadius: radius.lg, borderWidth: sel ? 3 : 0, borderColor: colors.black }} emojiSize={44} />
+                  <T v="small" style={{ fontWeight: '800', marginTop: 4 }} numberOfLines={1}>{sel ? '✓ ' : ''}{d.name}</T>
+                  <T v="small" muted>{d.priceDelta ? `+${brl(d.priceDelta)}` : 'sem acréscimo'}</T>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </>
+      ) : null}
+
+      <SectionTitle title={`Sua referência visual${service.requiresReference && !design ? ' (obrigatória)' : ' (opcional)'}`} />
       <Pressable
         onPress={async () => { const uri = await pickImage(); if (uri) setReference(uri); }}
         style={{ height: reference ? 200 : 110, borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.lilacDeep, backgroundColor: colors.lilacSoft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -141,6 +163,7 @@ export default function Agendar() {
 
       <Card>
         <T v="overline">Resumo</T>
+        {design ? <Row style={{ justifyContent: 'space-between' }}><T muted>Design</T><T>{design.name}</T></Row> : null}
         <Row style={{ justifyContent: 'space-between' }}><T muted>Valor do procedimento</T><T>{brl(price)}</T></Row>
         {discount ? <Row style={{ justifyContent: 'space-between' }}><T muted>Desconto</T><T color={colors.success}>- {brl(discount)}</T></Row> : null}
         <Divider />
@@ -153,7 +176,7 @@ export default function Agendar() {
         <T v="small" muted>Restante ({brl(price - discount - deposit)}) é pago no dia do atendimento.</T>
       </Card>
 
-      {needsRef ? <T v="small" color={colors.danger}>Anexe uma referência visual para continuar.</T> : null}
+      {needsRef ? <T v="small" color={colors.danger}>Escolha um Trending Design ou anexe sua referência para continuar.</T> : null}
       <Button title="Confirmar e pagar sinal" icon="flash" disabled={!canSubmit} onPress={submit} />
     </Screen>
   );

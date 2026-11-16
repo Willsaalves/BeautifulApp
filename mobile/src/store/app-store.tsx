@@ -16,13 +16,17 @@ import type {
   Appointment,
   ChatMessage,
   Client,
+  Design,
   Dream,
   Feedback,
   Product,
   Professional,
   Service,
   StockMovement,
+  Story,
   Voucher,
+  Widget,
+  WidgetType,
 } from '@/domain/types';
 
 export type Role = 'cliente' | 'profissional';
@@ -41,6 +45,8 @@ interface State {
   feedbacks: Feedback[];
   vouchers: Voucher[];
   messages: ChatMessage[];
+  designs: Design[];
+  stories: Story[];
 }
 
 const initial: State = {
@@ -51,12 +57,14 @@ const initial: State = {
   services: mock.services,
   products: mock.products,
   productOwner: mock.productOwner,
-  movements: [],
+  movements: mock.movements,
   clients: mock.clients,
   appointments: mock.appointments,
   feedbacks: mock.feedbacks,
   vouchers: mock.vouchers,
   messages: [],
+  designs: mock.designs,
+  stories: mock.stories,
 };
 
 type Action =
@@ -105,13 +113,15 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         startsAt: Date;
         selections: Record<string, string>;
         referenceImage?: string;
+        designId?: string;
         notes?: string;
         voucherId?: string;
       }) {
         const service = svc(input.serviceId);
         const p = pro(service.professionalId);
         const now = new Date();
-        let price = computePrice(service, input.selections);
+        const design = state.designs.find((d) => d.id === input.designId);
+        const price = computePrice(service, input.selections, design?.priceDelta ?? 0);
         let discountApplied = 0;
         const voucher = state.vouchers.find((v) => v.id === input.voucherId && !v.used);
         if (voucher) {
@@ -129,7 +139,8 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           serviceId: service.id,
           startsAt: input.startsAt.toISOString(),
           selections: input.selections,
-          referenceImage: input.referenceImage,
+          referenceImage: input.referenceImage ?? design?.image,
+          designId: design?.id,
           notes: input.notes,
           price,
           discountApplied,
@@ -314,11 +325,17 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           ];
           productOwner = { ...productOwner, [productId]: state.proId };
         }
-        products = products.map((p) =>
-          p.id === productId
-            ? { ...p, quantity: p.quantity + input.quantity, lot: input.lot ?? p.lot, expiresAt: input.expiresAt ?? p.expiresAt }
-            : p,
-        );
+        products = products.map((p) => {
+          if (p.id !== productId) return p;
+          // custo médio ponderado
+          const unitCost =
+            input.unitCost == null
+              ? p.unitCost
+              : p.unitCost == null || p.quantity <= 0
+                ? input.unitCost
+                : (p.unitCost * p.quantity + input.unitCost * input.quantity) / (p.quantity + input.quantity);
+          return { ...p, quantity: p.quantity + input.quantity, unitCost, lot: input.lot ?? p.lot, expiresAt: input.expiresAt ?? p.expiresAt };
+        });
         const mv: StockMovement = {
           id: uid('mv'),
           productId,
@@ -351,6 +368,83 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           type: 'set',
           patch: { professionals: state.professionals.map((p) => (p.id === state.proId ? { ...p, ...patch } : p)) },
         });
+      },
+
+      // ---------- Página (widgets) ----------
+      addWidget(type: WidgetType) {
+        const me = pro(state.proId);
+        const defaults: Record<string, Partial<Widget>> = {
+          capa: { title: me.name.toUpperCase(), subtitle: me.headline, color: me.avatar },
+          galeria: { title: 'Galeria', images: [] },
+          porcentagem: { title: 'Agenda do mês', subtitle: 'já preenchida', value: 50 },
+          contagem: { title: 'Promoção', subtitle: 'Termina em', target: new Date(Date.now() + 7 * 86400_000).toISOString() },
+          texto: { title: 'Sobre mim', body: '' },
+          trending: { title: 'Trending Designs' },
+          fidelidade: { title: 'Cartão fidelidade' },
+          avaliacoes: { title: 'Depoimentos' },
+        };
+        const w: Widget = { id: uid('w'), type, ...defaults[type] };
+        // entra logo depois da capa
+        const ws = [...me.widgets];
+        const capaIdx = ws.findIndex((x) => x.type === 'capa');
+        ws.splice(capaIdx + 1, 0, w);
+        dispatch({ type: 'set', patch: { professionals: state.professionals.map((p) => (p.id === me.id ? { ...p, widgets: ws } : p)) } });
+        return w.id;
+      },
+      updateWidget(id: string, patch: Partial<Widget>) {
+        dispatch({
+          type: 'set',
+          patch: {
+            professionals: state.professionals.map((p) =>
+              p.id === state.proId ? { ...p, widgets: p.widgets.map((w) => (w.id === id ? { ...w, ...patch } : w)) } : p,
+            ),
+          },
+        });
+      },
+      removeWidget(id: string) {
+        dispatch({
+          type: 'set',
+          patch: {
+            professionals: state.professionals.map((p) =>
+              p.id === state.proId ? { ...p, widgets: p.widgets.filter((w) => w.id !== id || w.fixed) } : p,
+            ),
+          },
+        });
+      },
+      moveWidget(id: string, dir: -1 | 1) {
+        const me = pro(state.proId);
+        const ws = [...me.widgets];
+        const i = ws.findIndex((w) => w.id === id);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= ws.length) return;
+        [ws[i], ws[j]] = [ws[j], ws[i]];
+        dispatch({ type: 'set', patch: { professionals: state.professionals.map((p) => (p.id === me.id ? { ...p, widgets: ws } : p)) } });
+      },
+
+      // ---------- Trending Designs ----------
+      upsertDesign(d: Design) {
+        const exists = state.designs.some((x) => x.id === d.id);
+        dispatch({
+          type: 'set',
+          patch: { designs: exists ? state.designs.map((x) => (x.id === d.id ? d : x)) : [...state.designs, d] },
+        });
+      },
+      removeDesign(id: string) {
+        dispatch({ type: 'set', patch: { designs: state.designs.filter((x) => x.id !== id) } });
+      },
+
+      // ---------- Stories ----------
+      postStory(input: Omit<Story, 'id' | 'createdAt' | 'authorType' | 'authorId'>) {
+        const isPro = state.role === 'profissional';
+        const st: Story = {
+          ...input,
+          id: uid('st'),
+          authorType: isPro ? 'profissional' : 'cliente',
+          authorId: isPro ? state.proId : state.clientId,
+          createdAt: new Date().toISOString(),
+        };
+        dispatch({ type: 'set', patch: { stories: [st, ...state.stories] } });
+        return st.id;
       },
 
       newId: uid,

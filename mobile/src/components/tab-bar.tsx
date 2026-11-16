@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 10,
   },
-  btn: { height: 46, minWidth: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 12 },
-  btnActive: { backgroundColor: colors.lilac, paddingHorizontal: 16 },
+  btn: { height: 46, minWidth: 42, borderRadius: 23, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 10 },
+  btnActive: { backgroundColor: colors.lilac, paddingHorizontal: 14 },
   label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: colors.black },
 });
