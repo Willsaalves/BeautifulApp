@@ -183,6 +183,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Denunciar perfil, story, avaliação ou mensagem (revisão em até 24h) */
+        post: operations["report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/upload-url": {
         parameters: {
             query?: never;
@@ -368,6 +385,24 @@ export interface paths {
         put?: never;
         /** Bloquear um período (folga, almoço…) */
         post: operations["addBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/blocked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pessoas que eu bloqueei */
+        get: operations["blocked"];
+        put?: never;
+        /** Bloquear uma cliente (accountId) ou profissional (professionalId): uma some para a outra e não dá para agendar nem conversar */
+        post: operations["block"];
         delete?: never;
         options?: never;
         head?: never;
@@ -743,7 +778,8 @@ export interface paths {
         get: operations["me"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Excluir minha conta (apaga perfil, fotos, stories e favoritas; cancela agendamentos futuros) */
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -981,7 +1017,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Apagar meu story */
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -999,6 +1035,23 @@ export interface paths {
         post?: never;
         /** Remover bloqueio */
         delete: operations["removeBlock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/blocked/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Desbloquear */
+        delete: operations["unblock"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1232,6 +1285,28 @@ export interface components {
             expiresAt?: string;
             mine?: boolean;
         };
+        ReportBody: {
+            /** @enum {string} */
+            targetType: "PROFESSIONAL" | "CLIENT" | "STORY" | "REVIEW" | "MESSAGE";
+            /** Format: uuid */
+            targetId: string;
+            /** @enum {string} */
+            reason: "SPAM" | "INAPPROPRIATE" | "HARASSMENT" | "FAKE" | "OTHER";
+            details?: string;
+        };
+        ReportView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            targetType?: "PROFESSIONAL" | "CLIENT" | "STORY" | "REVIEW" | "MESSAGE";
+            /** Format: uuid */
+            targetId?: string;
+            /** @enum {string} */
+            reason?: "SPAM" | "INAPPROPRIATE" | "HARASSMENT" | "FAKE" | "OTHER";
+            status?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         UploadRequest: {
             /** @enum {string} */
             kind: "AVATAR" | "COVER" | "PORTFOLIO" | "STORY" | "DESIGN" | "RECEIPT" | "REFERENCE";
@@ -1343,6 +1418,22 @@ export interface components {
             /** Format: date-time */
             endsAt?: string;
             reason?: string;
+        };
+        BlockBody: {
+            /** Format: uuid */
+            accountId?: string;
+            /** Format: uuid */
+            professionalId?: string;
+        };
+        BlockedView: {
+            /** Format: uuid */
+            accountId?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            name?: string;
+            photoUrl?: string;
+            /** Format: date-time */
+            blockedAt?: string;
         };
         RefreshRequest: {
             refreshToken: string;
@@ -2167,6 +2258,30 @@ export interface operations {
             };
         };
     };
+    report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReportView"];
+                };
+            };
+        };
+    };
     uploadUrl: {
         parameters: {
             query?: never;
@@ -2501,6 +2616,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["BlockView"];
+                };
+            };
+        };
+    };
+    blocked: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BlockedView"][];
+                };
+            };
+        };
+    };
+    block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BlockedView"];
                 };
             };
         };
@@ -3047,6 +3206,24 @@ export interface operations {
             };
         };
     };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     vouchers: {
         parameters: {
             query?: never;
@@ -3324,7 +3501,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3350,6 +3527,26 @@ export interface operations {
             header?: never;
             path: {
                 id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unblock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
             };
             cookie?: never;
         };

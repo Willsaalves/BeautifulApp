@@ -39,5 +39,8 @@ interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
     /** Sinais que vencem em breve e ainda não foram lembrados. */
     List<Appointment> findByStatusAndDepositRemindedAtIsNullAndDepositDueAtBetween(AppointmentStatus status, Instant from, Instant to);
 
+    @Query("select a from Appointment a where (a.clientAccountId = :account or a.professionalId = :pro) and a.status in :statuses")
+    List<Appointment> activeOf(UUID account, UUID pro, Collection<AppointmentStatus> statuses);
+
     boolean existsByClientAccountIdAndProfessionalIdAndStatus(UUID client, UUID pro, AppointmentStatus status);
 }

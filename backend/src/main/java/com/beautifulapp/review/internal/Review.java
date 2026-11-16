@@ -20,6 +20,7 @@ class Review {
     @Column(nullable = false) int rating;
     String comment;
     @Column(name = "created_at", nullable = false) Instant createdAt;
+    @Column(name = "hidden_at") Instant hiddenAt;
 
     protected Review() {}
 
@@ -37,10 +38,10 @@ class Review {
 interface ReviewRepository extends JpaRepository<Review, UUID> {
     boolean existsByAppointmentId(UUID appointmentId);
 
-    List<Review> findByProfessionalIdOrderByCreatedAtDesc(UUID professionalId, Pageable page);
+    List<Review> findByProfessionalIdAndHiddenAtIsNullOrderByCreatedAtDesc(UUID professionalId, Pageable page);
 
     List<Review> findByClientAccountIdOrderByCreatedAtDesc(UUID clientAccountId);
 
-    @Query("select coalesce(avg(r.rating), 0), count(r) from Review r where r.professionalId = :pro")
+    @Query("select coalesce(avg(r.rating), 0), count(r) from Review r where r.professionalId = :pro and r.hiddenAt is null")
     List<Object[]> summary(UUID pro);
 }

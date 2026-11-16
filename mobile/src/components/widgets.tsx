@@ -197,7 +197,15 @@ function Avaliacoes({ w, pro }: { w: Widget; pro: Professional }) {
         <Card key={r.id} tone="soft">
           <T v="small">{'⭐'.repeat(r.rating)}</T>
           <T>“{r.comment}”</T>
-          <T v="small" muted>— {r.clientName ?? s.clients.find((c) => c.id === r.clientId)?.name ?? 'Cliente'}</T>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <T v="small" muted>— {r.clientName ?? s.clients.find((c) => c.id === r.clientId)?.name ?? 'Cliente'}</T>
+            {r.clientId !== s.clientId || s.role !== 'cliente' ? (
+              <Pressable hitSlop={8} accessibilityLabel="Denunciar avaliação"
+                onPress={() => router.push({ pathname: '/denunciar', params: { type: 'REVIEW', id: r.id } })}>
+                <T v="small" muted style={{ textDecorationLine: 'underline' }}>Denunciar</T>
+              </Pressable>
+            ) : null}
+          </Row>
         </Card>
       ))}
     </View>

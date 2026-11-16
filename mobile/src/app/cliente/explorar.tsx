@@ -53,7 +53,7 @@ export default function Explorar() {
     return () => clearTimeout(t);
   }, [niche, q, coords]);
 
-  const list = API_ENABLED
+  const list = (API_ENABLED
     ? (remoteIds ?? [])
         .map((id) => s.professionals.find((p) => p.id === id)!)
         .filter(Boolean)
@@ -62,7 +62,8 @@ export default function Explorar() {
         .filter((p) => !niche || p.niche === niche || s.services.some((x) => x.professionalId === p.id && x.niche === niche))
         .filter((p) => !onlyFav || L.me.favorites.includes(p.id))
         .filter((p) => !q || `${p.name} ${p.headline} ${p.neighborhood}`.toLowerCase().includes(q.toLowerCase()))
-        .sort((a, b) => a.distanceKm - b.distanceKm);
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+  ).filter((p) => !s.blockedPros.includes(p.id));
 
   return (
     <Screen>

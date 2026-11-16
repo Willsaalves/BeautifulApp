@@ -47,6 +47,15 @@ class Account {
     boolean isNew() { return roles.isEmpty(); }
     void grant(Role role) { roles.add(role); }
     void email(String email) { this.email = email; }
+    boolean deleted() { return deletedAt != null; }
+
+    /** Anonimiza: o celular é liberado (pode criar conta nova) e o e-mail some. */
+    void markDeleted(Instant now) {
+        this.phone = "del:" + id.toString().replace("-", "").substring(16);
+        this.email = null;
+        this.roles.clear();
+        this.deletedAt = now;
+    }
 
     AccountView view() {
         return new AccountView(id, phone, email, Set.copyOf(roles), createdAt);

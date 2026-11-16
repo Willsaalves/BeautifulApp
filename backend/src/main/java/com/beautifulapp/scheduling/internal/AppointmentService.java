@@ -23,6 +23,7 @@ import com.beautifulapp.common.ApiException;
 import com.beautifulapp.common.Ids;
 import com.beautifulapp.loyalty.LoyaltyApi;
 import com.beautifulapp.media.MediaApi;
+import com.beautifulapp.moderation.ModerationApi;
 import com.beautifulapp.media.MediaKind;
 import com.beautifulapp.profile.ProfileApi;
 import com.beautifulapp.profile.PublicProfessional;
@@ -40,9 +41,11 @@ class AppointmentService {
     private final LoyaltyApi loyalty;
     private final ApplicationEventPublisher events;
     private final Clock clock;
+    private final ModerationApi moderation;
 
     AppointmentService(AppointmentRepository appointments, AvailabilityService availability, CatalogApi catalog, ProfileApi profiles,
-                       MediaApi media, LoyaltyApi loyalty, ApplicationEventPublisher events, Clock clock) {
+                       MediaApi media, LoyaltyApi loyalty, ApplicationEventPublisher events, Clock clock, ModerationApi moderation) {
+        this.moderation = moderation;
         this.appointments = appointments;
         this.availability = availability;
         this.catalog = catalog;
@@ -62,6 +65,9 @@ class AppointmentService {
         ServiceView svc = catalog.activeService(in.serviceId())
                 .orElseThrow(() -> ApiException.notFound("SERVICE_NOT_FOUND", "Serviço não encontrado."));
         PublicProfessional pro = profiles.publicProfessional(svc.professionalId()).orElseThrow();
+        if (moderation.blockedBetween(clientAccountId, profiles.accountOfProfessional(svc.professionalId()).orElse(null))) {
+            throw ApiException.forbidden("BLOCKED", "Não é possível agendar com esta profissional.");
+        }
 
         Instant start = in.startsAt();
         Instant end = start.plus(Duration.ofMinutes(svc.durationMin()));
@@ -239,6 +245,19 @@ class AppointmentService {
         if (a.discountCents > 0) loyalty.release(a.id);
         publish(client ? AppointmentEvent.Kind.CANCELLED_BY_CLIENT : AppointmentEvent.Kind.CANCELLED_BY_PROFESSIONAL, a);
         return transition(a, AppointmentStatus.CANCELLED);
+    }
+
+    /** Exclusão de conta: cancela tudo que está em andamento dela (como cliente ou como profissional) e avisa o outro lado. */
+    @Transactional
+    void cancelAllOf(UUID accountId, UUID professionalIdOrNull) {
+        UUID pro = professionalIdOrNull != null ? professionalIdOrNull : new UUID(0, 0);
+        for (Appointment a : appointments.activeOf(accountId, pro, AppointmentStatus.ACTIVE)) {
+            boolean client = a.clientAccountId.equals(accountId);
+            a.cancelledBy = client ? "CLIENT" : "PROFESSIONAL";
+            if (a.discountCents > 0) loyalty.release(a.id);
+            publish(client ? AppointmentEvent.Kind.CANCELLED_BY_CLIENT : AppointmentEvent.Kind.CANCELLED_BY_PROFESSIONAL, a);
+            transition(a, AppointmentStatus.CANCELLED);
+        }
     }
 
     /** Roda a cada minuto: expira sinais vencidos e libera o horário. */

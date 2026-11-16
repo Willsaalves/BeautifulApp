@@ -12,8 +12,10 @@ import org.springframework.util.StringUtils;
 
 import com.beautifulapp.catalog.CatalogApi;
 import com.beautifulapp.common.ApiException;
+import com.beautifulapp.common.CurrentAccount;
 import com.beautifulapp.discovery.internal.DiscoveryDtos.*;
 import com.beautifulapp.media.MediaApi;
+import com.beautifulapp.moderation.ModerationApi;
 import com.beautifulapp.page.PageApi;
 import com.beautifulapp.profile.Niche;
 import com.beautifulapp.profile.ProfileApi;
@@ -29,8 +31,11 @@ class DiscoveryService {
     private final PageApi page;
     private final SchedulingApi scheduling;
     private final ReviewApi reviews;
+    private final ModerationApi moderation;
 
-    DiscoveryService(JdbcClient jdbc, MediaApi media, ProfileApi profiles, CatalogApi catalog, PageApi page, SchedulingApi scheduling, ReviewApi reviews) {
+    DiscoveryService(JdbcClient jdbc, MediaApi media, ProfileApi profiles, CatalogApi catalog, PageApi page, SchedulingApi scheduling, ReviewApi reviews,
+                     ModerationApi moderation) {
+        this.moderation = moderation;
         this.jdbc = jdbc;
         this.media = media;
         this.profiles = profiles;
@@ -55,11 +60,12 @@ class DiscoveryService {
                        %s AS distance_km,
                        (SELECT min(s.price_cents) FROM service s WHERE s.professional_id = p.id AND s.active) AS min_price,
                        (SELECT count(*) FROM service s WHERE s.professional_id = p.id AND s.active) AS services_count,
-                       (SELECT avg(r.rating) FROM review r WHERE r.professional_id = p.id) AS rating,
-                       (SELECT count(*) FROM review r WHERE r.professional_id = p.id) AS reviews
+                       (SELECT avg(r.rating) FROM review r WHERE r.professional_id = p.id AND r.hidden_at IS NULL) AS rating,
+                       (SELECT count(*) FROM review r WHERE r.professional_id = p.id AND r.hidden_at IS NULL) AS reviews
                   FROM professional p
-                 WHERE 1 = 1
+                 WHERE p.deleted_at IS NULL
                 """.formatted(distance));
+        excludeBlocked(sql, params);
         if (geo) {
             params.put("lat", in.lat());
             params.put("lng", in.lng());
@@ -92,7 +98,9 @@ class DiscoveryService {
 
     @Transactional(readOnly = true)
     PublicPage page(UUID professionalId) {
-        var pro = profiles.publicProfessional(professionalId)
+        boolean visible = jdbc.sql("SELECT account_id FROM professional WHERE id = :id AND deleted_at IS NULL").param("id", professionalId)
+                .query(UUID.class).optional().filter(acc -> !moderation.blockedBetween(CurrentAccount.id(), acc)).isPresent();
+        var pro = profiles.publicProfessional(professionalId).filter(x -> visible)
                 .orElseThrow(() -> ApiException.notFound("PROFESSIONAL_NOT_FOUND", "Profissional não encontrada."));
         return new PublicPage(pro, catalog.activeServices(professionalId), catalog.designs(professionalId), page.widgets(professionalId),
                 scheduling.workHours(professionalId), reviews.summary(professionalId), reviews.recent(professionalId, 10));
@@ -109,8 +117,9 @@ class DiscoveryService {
                   FROM design d
                   JOIN service s ON s.id = d.service_id AND s.active
                   JOIN professional p ON p.id = d.professional_id
-                 WHERE 1 = 1
+                 WHERE p.deleted_at IS NULL
                 """.formatted(distance));
+        excludeBlocked(sql, params);
         if (geo) {
             params.put("lat", lat);
             params.put("lng", lng);
@@ -127,6 +136,14 @@ class DiscoveryService {
                 media.publicUrl(rs.getString("photo_key")), rs.getObject("service_id", UUID.class), rs.getString("service_name"),
                 rs.getString("name"), media.publicUrl(rs.getString("image_key")), rs.getLong("price_delta_cents"),
                 round(rs.getObject("distance_km", Double.class)))).list();
+    }
+
+    /** Quem eu bloqueei ou me bloqueou não aparece na busca nem na vitrine. */
+    private void excludeBlocked(StringBuilder sql, Map<String, Object> params) {
+        var blocked = moderation.blockedWith(CurrentAccount.id());
+        if (blocked.isEmpty()) return;
+        sql.append(" AND p.account_id NOT IN (:blocked)");
+        params.put("blocked", blocked);
     }
 
     private static Double round(Double km) {

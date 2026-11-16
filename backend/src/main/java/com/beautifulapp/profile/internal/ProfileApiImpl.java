@@ -41,6 +41,12 @@ class ProfileApiImpl implements ProfileApi {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<UUID> professionalIdOf(UUID accountId) {
+        return professionals.findByAccountId(accountId).map(p -> p.id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<ClientSummary> clientSummary(UUID accountId) {
         String phone = identity.find(accountId).map(a -> a.phone()).orElse(null);
         return clients.findById(accountId)

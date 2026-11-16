@@ -68,7 +68,7 @@ class ReviewService implements ReviewApi {
     @Override
     @Transactional(readOnly = true)
     public List<ReviewView> recent(UUID professionalId, int limit) {
-        return reviews.findByProfessionalIdOrderByCreatedAtDesc(professionalId, PageRequest.of(0, Math.min(Math.max(limit, 1), 50)))
+        return reviews.findByProfessionalIdAndHiddenAtIsNullOrderByCreatedAtDesc(professionalId, PageRequest.of(0, Math.min(Math.max(limit, 1), 50)))
                 .stream().map(this::view).toList();
     }
 

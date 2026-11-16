@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 import { logout } from '@/api/auth';
@@ -93,6 +94,22 @@ export default function ClientePerfil() {
           </Row>
         </Card>
       ))}
+
+      <SectionTitle title="Privacidade e segurança" />
+      <Card onPress={() => router.push('/config/bloqueados')}>
+        <Row>
+          <Ionicons name="hand-left-outline" size={20} />
+          <T v="h3" style={{ flex: 1 }}>Pessoas bloqueadas</T>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Row>
+      </Card>
+      <Card onPress={() => router.push('/config/excluir-conta')}>
+        <Row>
+          <Ionicons name="trash-outline" size={20} color={colors.danger} />
+          <T v="h3" color={colors.danger} style={{ flex: 1 }}>Excluir conta</T>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Row>
+      </Card>
 
       <Button title="Trocar para área da profissional" variant="outline" icon="swap-horizontal" style={{ marginTop: space.lg }}
         onPress={() => { s.setRole('profissional'); router.replace('/pro'); }} />

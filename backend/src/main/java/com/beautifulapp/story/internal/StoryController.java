@@ -3,7 +3,10 @@ package com.beautifulapp.story.internal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +26,7 @@ import com.beautifulapp.common.CurrentAccount;
 import com.beautifulapp.common.Ids;
 import com.beautifulapp.media.MediaApi;
 import com.beautifulapp.media.MediaKind;
+import com.beautifulapp.moderation.ModerationApi;
 import com.beautifulapp.profile.ProfileApi;
 import com.beautifulapp.scheduling.SchedulingApi;
 
@@ -46,15 +50,16 @@ class Story {
     String caption;
     @Column(name = "created_at", nullable = false) Instant createdAt;
     @Column(name = "expires_at", nullable = false) Instant expiresAt;
+    @Column(name = "hidden_at") Instant hiddenAt;
 
     protected Story() {}
 }
 
 interface StoryRepository extends JpaRepository<Story, UUID> {
-    @Query("select s from Story s where s.expiresAt > :now order by s.createdAt desc")
+    @Query("select s from Story s where s.expiresAt > :now and s.hiddenAt is null order by s.createdAt desc")
     List<Story> active(Instant now, Pageable page);
 
-    @Query("select s from Story s where s.professionalId = :pro and s.expiresAt > :now order by s.createdAt")
+    @Query("select s from Story s where s.professionalId = :pro and s.expiresAt > :now and s.hiddenAt is null order by s.createdAt")
     List<Story> activeOf(UUID pro, Instant now);
 
     @Modifying
@@ -90,8 +95,10 @@ class StoryController {
     private final SchedulingApi scheduling;
     private final MediaApi media;
     private final Clock clock;
+    private final ModerationApi moderation;
 
-    StoryController(StoryRepository stories, ProfileApi profiles, SchedulingApi scheduling, MediaApi media, Clock clock) {
+    StoryController(StoryRepository stories, ProfileApi profiles, SchedulingApi scheduling, MediaApi media, Clock clock, ModerationApi moderation) {
+        this.moderation = moderation;
         this.stories = stories;
         this.profiles = profiles;
         this.scheduling = scheduling;
@@ -143,7 +150,12 @@ class StoryController {
         UUID me = CurrentAccount.id();
         Instant now = clock.instant();
         var list = professionalId != null ? stories.activeOf(professionalId, now) : stories.active(now, PageRequest.of(0, 100));
-        return list.stream().map(s -> view(s, me)).toList();
+        Set<UUID> blocked = moderation.blockedWith(me);
+        Map<UUID, UUID> proAccount = new HashMap<>();
+        return list.stream()
+                .filter(s -> blocked.isEmpty() || !blocked.contains(s.authorAccountId)
+                        && !blocked.contains(proAccount.computeIfAbsent(s.professionalId, id -> profiles.accountOfProfessional(id).orElse(null))))
+                .map(s -> view(s, me)).toList();
     }
 
     @Operation(summary = "Apagar meu story")

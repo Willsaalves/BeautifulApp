@@ -68,9 +68,15 @@ export default function PerfilProfissional() {
               <Ionicons name="create-outline" size={24} />
             </Pressable>
           ) : (
-            <Pressable onPress={() => s.toggleFavorite(id)} hitSlop={10} accessibilityLabel="Favoritar">
-              <Ionicons name={fav ? 'heart' : 'heart-outline'} size={26} color={fav ? colors.danger : colors.text} />
-            </Pressable>
+            <Row gap={16}>
+              <Pressable onPress={() => s.toggleFavorite(id)} hitSlop={10} accessibilityLabel="Favoritar">
+                <Ionicons name={fav ? 'heart' : 'heart-outline'} size={26} color={fav ? colors.danger : colors.text} />
+              </Pressable>
+              <Pressable hitSlop={10} accessibilityLabel="Denunciar ou bloquear"
+                onPress={() => router.push({ pathname: '/denunciar', params: { type: 'PROFESSIONAL', id, label: p.name, blockPro: id } })}>
+                <Ionicons name="ellipsis-horizontal" size={24} color={colors.text} />
+              </Pressable>
+            </Row>
           )
         }
       />

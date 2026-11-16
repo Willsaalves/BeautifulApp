@@ -58,6 +58,8 @@ interface State {
   loyaltyCards: LoyaltyCard[];   // progresso calculado no servidor (cliente com API)
   unread: number;                // notificações não lidas (sino)
   blocks: TimeBlock[];           // bloqueios da profissional logada
+  blockedPros: string[];         // profissionais bloqueadas (somem da busca)
+  blockedAccounts: string[];     // contas bloqueadas (stories e mensagens somem)
 }
 
 const initial: State = {
@@ -79,6 +81,8 @@ const initial: State = {
   loyaltyCards: [],
   unread: 0,
   blocks: [],
+  blockedPros: [],
+  blockedAccounts: [],
 };
 
 type Action =
@@ -822,6 +826,42 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
             services: st.services.map((sv) => ({ ...sv, consumption: sv.consumption.filter((c) => c.productId !== productId) })),
           },
         });
+      },
+
+      /** Bloqueio: some da busca, dos stories e das favoritas na hora (o servidor também filtra). */
+      applyBlock(target: { accountId?: string; professionalId?: string }) {
+        const st = stateRef.current;
+        const { accountId, professionalId } = target;
+        dispatch({
+          type: 'set',
+          patch: {
+            blockedPros: professionalId && !st.blockedPros.includes(professionalId) ? [...st.blockedPros, professionalId] : st.blockedPros,
+            blockedAccounts: accountId && !st.blockedAccounts.includes(accountId) ? [...st.blockedAccounts, accountId] : st.blockedAccounts,
+            stories: st.stories.filter((x) => x.authorId !== accountId && (!professionalId || x.professionalId !== professionalId)),
+            clients: professionalId
+              ? st.clients.map((c) => (c.id === st.clientId ? { ...c, favorites: c.favorites.filter((f) => f !== professionalId) } : c))
+              : st.clients,
+          },
+        });
+      },
+
+      removeBlock(target: { accountId?: string; professionalId?: string }) {
+        const st = stateRef.current;
+        dispatch({
+          type: 'set',
+          patch: {
+            blockedPros: st.blockedPros.filter((x) => x !== target.professionalId),
+            blockedAccounts: st.blockedAccounts.filter((x) => x !== target.accountId),
+          },
+        });
+      },
+
+      /** Conteúdo denunciado some para quem denunciou. */
+      hideContent(kind: 'story' | 'review' | 'message', id: string) {
+        const st = stateRef.current;
+        if (kind === 'story') dispatch({ type: 'set', patch: { stories: st.stories.filter((x) => x.id !== id) } });
+        if (kind === 'review') dispatch({ type: 'set', patch: { feedbacks: st.feedbacks.filter((x) => x.id !== id) } });
+        if (kind === 'message') dispatch({ type: 'set', patch: { messages: st.messages.filter((x) => x.id !== id) } });
       },
 
       setUnread(unread: number) {

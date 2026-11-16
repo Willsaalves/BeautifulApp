@@ -139,6 +139,30 @@ AWAITING_DEPOSIT ──comprovante──► RECEIPT_SENT ──confirmar──�
 - Story: `expires_at = created_at + 24h`. O feed filtra por `expires_at > now()` e um job remove os arquivos antigos do S3.
 - Chat: v1 via REST + push. v2 via WebSocket (STOMP), com relay em Redis/RabbitMQ se houver mais de uma instância.
 
+### moderation e exclusão de conta (exigências das lojas)
+- **Excluir conta** (`DELETE /me`): numa transação só, cada módulo apaga ou anonimiza o que é dele (evento `AccountDeleted`):
+  - perfil vira "Conta excluída" (sem foto, capa, bio, Pix e localização);
+  - a profissional sai da busca, da vitrine e da página pública, e os serviços dela saem do ar;
+  - favoritas, stories, aparelhos de push, notificações, saldo de fidelidade e vouchers não usados são apagados;
+  - agendamentos em andamento são cancelados, e a outra parte é avisada;
+  - fotos públicas são apagadas do storage depois do commit;
+  - o celular fica livre para uma conta nova, e o token de acesso deixa de valer na hora.
+
+  Ficam, sem dados pessoais: atendimentos concluídos, avaliações e comprovantes (registro da outra parte).
+- **Denunciar** (`POST /reports`): perfil, cliente, story, avaliação ou mensagem, com motivo (spam, conteúdo impróprio, assédio, golpe, outro).
+  - Com **3 denúncias de pessoas diferentes**, o story ou a avaliação sai do ar até a revisão (evento `ContentFlagged`).
+  - Cada denúncia aparece no log como `[DENÚNCIA]`.
+- **Bloquear** (`POST /me/blocked`, `DELETE /me/blocked/{accountId}`, `GET /me/blocked`): vale nos dois sentidos. Uma não vê a outra na busca, na vitrine, na página e nos stories, e não consegue agendar nem mandar mensagem.
+- **Revisão das denúncias** (a Apple pede ação em até 24h): até existir o painel de administração, a revisão é feita direto no banco:
+  ```sql
+  SELECT created_at, target_type, target_id, reason, details FROM report WHERE status = 'OPEN' ORDER BY created_at;
+  -- conteúdo ok: devolve ao ar e fecha a denúncia
+  UPDATE story SET hidden_at = NULL WHERE id = '...';
+  UPDATE report SET status = 'DISMISSED', reviewed_at = now() WHERE target_id = '...';
+  -- conteúdo removido: fecha como ACTIONED (e, se for o caso, exclui o story ou a conta)
+  UPDATE report SET status = 'ACTIONED', reviewed_at = now() WHERE target_id = '...';
+  ```
+
 ### discovery
 - `GET /professionals?niche=unha&lat=&lng=&radiusKm=5&q=`, usando `ST_DWithin` + `pg_trgm` para o texto.
 - Ordenação: distância, nota e favoritas primeiro.

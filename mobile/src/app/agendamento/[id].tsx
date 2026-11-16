@@ -118,6 +118,8 @@ export default function Agendamento() {
   const client = L.client(a.clientId);
   const total = a.price - (a.discountApplied ?? 0);
   const messages = s.messages.filter((m) => m.appointmentId === a.id);
+  const otherName = isPro ? client.name : pro.name;
+  const blockOther = isPro ? { blockAccount: a.clientId } : { blockPro: a.professionalId };
   const feedback = s.feedbacks.find((f) => f.appointmentId === a.id);
   const open = ['aguardando_sinal', 'sinal_enviado', 'confirmado', 'ajuste_pendente'].includes(a.status);
 
@@ -358,10 +360,12 @@ export default function Agendamento() {
             {messages.map((m) => {
               const mine = (m.from === 'profissional') === isPro;
               return (
-                <View key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%', backgroundColor: mine ? colors.black : colors.lilacSoft, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
+                <Pressable key={m.id} disabled={mine} delayLongPress={400} accessibilityHint={mine ? undefined : 'Toque e segure para denunciar'}
+                  onLongPress={() => router.push({ pathname: '/denunciar', params: { type: 'MESSAGE', id: m.id, label: otherName, ...blockOther } })}
+                  style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%', backgroundColor: mine ? colors.black : colors.lilacSoft, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
                   <T color={mine ? colors.cardSolid : colors.text}>{m.text}</T>
                   <T v="small" color={mine ? colors.offWhite : colors.textMuted} style={{ fontSize: 10, textAlign: 'right' }}>{fmtTime(m.createdAt)}</T>
-                </View>
+                </Pressable>
               );
             })}
             <Row>
@@ -381,6 +385,10 @@ export default function Agendamento() {
             </Row>
           </Card>
           <Button title="Cancelar agendamento" variant="ghost" onPress={() => run(() => cancelAppointment(a.id), () => s.cancelAppointment(a.id))} />
+          <Pressable style={{ alignItems: 'center', paddingVertical: space.sm }} accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/denunciar', params: { type: isPro ? 'CLIENT' : 'PROFESSIONAL', id: isPro ? a.clientId : a.professionalId, label: otherName, ...blockOther } })}>
+            <T v="small" muted style={{ textDecorationLine: 'underline' }}>Denunciar ou bloquear {otherName}</T>
+          </Pressable>
         </>
       ) : null}
     </Screen>

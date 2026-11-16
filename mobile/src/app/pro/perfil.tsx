@@ -123,6 +123,12 @@ export default function ProPerfil() {
         sub={`${me.loyalty.enabled ? `${brl(me.loyalty.goalAmount)} → ${me.loyalty.discountPercent}% OFF` : 'Fidelidade desativada'} · sinal em ${me.depositDeadlineHours}h`}
         onPress={() => router.push('/config/fidelidade')} />
 
+      <SectionTitle title="Privacidade e segurança" />
+      <Item icon="hand-left-outline" title="Pessoas bloqueadas" sub="Clientes que não podem agendar nem mandar mensagem"
+        onPress={() => router.push('/config/bloqueados')} />
+      <Item icon="trash-outline" title="Excluir conta" sub="Apaga seu perfil e tira sua página do ar"
+        onPress={() => router.push('/config/excluir-conta')} />
+
       <Button title="Trocar para área da cliente" variant="outline" icon="swap-horizontal" style={{ marginTop: space.lg }}
         onPress={() => { s.setRole('cliente'); router.replace('/cliente'); }} />
       <Button title="Sair" variant="ghost" onPress={async () => { await logout(); s.setRole(null); router.replace('/'); }} />

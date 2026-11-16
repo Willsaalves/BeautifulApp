@@ -66,6 +66,15 @@ export default function StoryViewer() {
               <T v="h3" color={colors.cardSolid}>{author.name} <T v="small" color={colors.offWhite}>· {ago(st.createdAt)}</T></T>
               {st.authorType === 'cliente' ? <T v="small" color={colors.lilac}>com {pro.name}{serviceLabel ? ` · ${serviceLabel}` : ''}</T> : null}
             </View>
+            {!st.mine && !(s.role === 'profissional' && st.professionalId === s.proId && st.authorType === 'profissional') ? (
+              <Pressable hitSlop={12} accessibilityLabel="Denunciar story"
+                onPress={() => router.push({ pathname: '/denunciar', params: {
+                  type: 'STORY', id: st.id, label: author.name,
+                  ...(st.authorType === 'profissional' ? { blockPro: st.professionalId } : { blockAccount: st.authorId }),
+                } })}>
+                <Ionicons name="flag-outline" size={22} color={colors.cardSolid} />
+              </Pressable>
+            ) : null}
             <Pressable onPress={close} hitSlop={12} accessibilityLabel="Fechar">
               <Ionicons name="close" size={28} color={colors.cardSolid} />
             </Pressable>
