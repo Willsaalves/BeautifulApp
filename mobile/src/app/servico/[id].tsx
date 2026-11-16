@@ -1,0 +1,102 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, TextInput, View } from 'react-native';
+
+import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { NICHE_ICON, NICHE_LABEL } from '@/domain/rules';
+import type { Consumption, Niche, Service } from '@/domain/types';
+import { useLookup, useStore } from '@/store/app-store';
+import { colors, radius, space } from '@/theme';
+
+const num = (v: string) => Number(v.replace(',', '.')) || 0;
+
+export default function EditarServico() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const s = useStore();
+  const L = useLookup();
+  const existing = id !== 'novo' ? L.service(id) : undefined;
+  const [name, setName] = useState(existing?.name ?? '');
+  const [niche, setNiche] = useState<Niche>(existing?.niche ?? L.myPro.niche);
+  const [price, setPrice] = useState(String(existing?.price ?? ''));
+  const [duration, setDuration] = useState(String(existing?.durationMin ?? 60));
+  const [deposit, setDeposit] = useState(String(existing?.depositPercent ?? 30));
+  const [ret, setRet] = useState(String(existing?.returnIntervalDays ?? 21));
+  const [consumption, setConsumption] = useState<Consumption[]>(existing?.consumption ?? []);
+  const [needsRef, setNeedsRef] = useState(existing?.requiresReference ?? false);
+
+  const unused = L.myProducts.filter((p) => !consumption.some((c) => c.productId === p.id));
+
+  const save = () => {
+    const svc: Service = {
+      id: existing?.id ?? s.newId('s'),
+      professionalId: s.proId,
+      name: name.trim(),
+      niche,
+      price: num(price),
+      durationMin: num(duration),
+      depositPercent: num(deposit),
+      returnIntervalDays: num(ret),
+      options: existing?.options ?? [],
+      consumption: consumption.filter((c) => c.amount > 0),
+      requiresReference: needsRef,
+    };
+    s.upsertService(svc);
+    router.back();
+  };
+
+  return (
+    <Screen bottomInset={40}>
+      <Header title={existing ? 'Editar serviço' : 'Novo serviço'} />
+      <Card>
+        <Field label="Nome" value={name} onChangeText={setName} placeholder="Ex: Preenchimento labial 2ml" />
+        <T v="overline" muted>Nicho</T>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+          {(Object.keys(NICHE_LABEL) as Niche[]).map((n) => <Chip key={n} icon={NICHE_ICON[n]} label={NICHE_LABEL[n]} selected={niche === n} onPress={() => setNiche(n)} />)}
+        </View>
+        <Row>
+          <View style={{ flex: 1 }}><Field label="Preço (R$)" keyboardType="decimal-pad" value={price} onChangeText={setPrice} /></View>
+          <View style={{ flex: 1 }}><Field label="Duração (min)" keyboardType="numeric" value={duration} onChangeText={setDuration} /></View>
+        </Row>
+        <Row>
+          <View style={{ flex: 1 }}><Field label="Sinal (%)" keyboardType="numeric" value={deposit} onChangeText={setDeposit} /></View>
+          <View style={{ flex: 1 }}><Field label="Retorno (dias)" keyboardType="numeric" value={ret} onChangeText={setRet} /></View>
+        </Row>
+        <Chip label="Exigir foto de referência da cliente" icon={needsRef ? '✅' : '⬜'} selected={needsRef} onPress={() => setNeedsRef(!needsRef)} />
+      </Card>
+
+      <SectionTitle title="Consumo por atendimento" />
+      <T v="small" muted>O que sai do estoque toda vez que este serviço é concluído.</T>
+      <Card>
+        {consumption.length === 0 ? <T v="small" muted>Nenhum produto vinculado.</T> : null}
+        {consumption.map((c) => {
+          const p = L.product(c.productId);
+          return (
+            <Row key={c.productId}>
+              <T style={{ flex: 1 }}>{p?.name}</T>
+              <TextInput
+                keyboardType="decimal-pad"
+                value={String(c.amount)}
+                onChangeText={(v) => setConsumption(consumption.map((x) => (x.productId === c.productId ? { ...x, amount: num(v) } : x)))}
+                style={{ width: 70, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 8, color: colors.text }}
+              />
+              <T v="small" muted style={{ width: 22 }}>{p?.unit}</T>
+              <Pressable hitSlop={8} onPress={() => setConsumption(consumption.filter((x) => x.productId !== c.productId))} accessibilityLabel="Remover produto">
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </Pressable>
+            </Row>
+          );
+        })}
+        {unused.length ? (
+          <>
+            <T v="overline" muted style={{ marginTop: space.sm }}>Adicionar produto</T>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+              {unused.map((p) => <Chip key={p.id} label={`+ ${p.name}`} onPress={() => setConsumption([...consumption, { productId: p.id, amount: 1 }])} />)}
+            </View>
+          </>
+        ) : null}
+      </Card>
+      <Button title="Salvar serviço" disabled={!name.trim() || !num(price)} onPress={save} />
+    </Screen>
+  );
+}
