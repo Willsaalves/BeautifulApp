@@ -18,6 +18,7 @@ import {
   rejectReceipt,
   sendReceipt,
 } from '@/api/scheduling';
+import { refreshStock } from '@/api/use-pro-sync';
 import { maskPhone } from '@/components/auth';
 import { Avatar, Button, Card, Divider, Empty, Field, Header, Row, Screen, SectionTitle, StatusBadge, T } from '@/components/ui';
 import { brl, fmtDateTime, fmtTime, isLowStock } from '@/domain/rules';
@@ -103,8 +104,18 @@ export default function Agendamento() {
       } catch (e) {
         return setError((e as Error).message);
       }
-      // estoque e fidelidade ainda são locais (fase 4)
-      if (!L.service(a.serviceId)) return notify('Atendimento concluído');
+      // baixa no estoque e fidelidade acontecem no servidor; aqui só mostramos o resultado
+      try {
+        const products = await refreshStock(s);
+        const used = (L.service(a.serviceId)?.consumption ?? []).map((c) => {
+          const p = products.find((x) => x.id === c.productId);
+          return p ? `• ${p.name}: -${c.amount} ${p.unit} (resta ${p.quantity}${isLowStock(p) ? ' ⚠️ comprar mais' : ''})` : null;
+        }).filter(Boolean);
+        notify('Atendimento concluído', used.length ? `Baixa automática no estoque:\n${used.join('\n')}` : 'Sem consumo de estoque cadastrado para este serviço.');
+      } catch {
+        notify('Atendimento concluído');
+      }
+      return;
     }
     const { reached, movements } = s.completeAppointment(a.id);
     const lines = movements.map((m) => {

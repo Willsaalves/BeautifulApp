@@ -22,6 +22,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/services/{serviceId}/consumption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Define o consumo de um serviço (substitui a lista) */
+        put: operations["setConsumption"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/services/{id}": {
         parameters: {
             query?: never;
@@ -40,6 +57,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Editar produto */
+        put: operations["update_1"];
+        post?: never;
+        /** Remover produto */
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/page/widgets": {
         parameters: {
             query?: never;
@@ -51,6 +86,24 @@ export interface paths {
         get: operations["list"];
         /** Salva a página inteira na ordem enviada (precisa ter SERVICOS e AGENDA) */
         put: operations["replace"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/loyalty-program": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meu programa de fidelidade (profissional) */
+        get: operations["program"];
+        /** Configurar fidelidade: gastar X (centavos) → Y% OFF */
+        put: operations["save"];
         post?: never;
         delete?: never;
         options?: never;
@@ -123,6 +176,58 @@ export interface paths {
         put?: never;
         /** Criar serviço */
         post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus produtos (low = no mínimo ou abaixo) */
+        get: operations["list_1"];
+        put?: never;
+        /** Cadastrar produto */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/products/{id}/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Registrar compra (entrada + custo médio) */
+        post: operations["purchase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/products/{id}/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ajuste manual (perda, contagem) */
+        post: operations["adjust"];
         delete?: never;
         options?: never;
         head?: never;
@@ -260,7 +365,24 @@ export interface paths {
         get?: never;
         put?: never;
         /** Agendar (preço e sinal calculados no servidor) */
-        post: operations["create_1"];
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Avaliar atendimento concluído (a 1ª do mês ganha voucher do app) */
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -362,7 +484,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Propor novo valor */
-        post: operations["adjust"];
+        post: operations["adjust_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -471,6 +593,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/professionals/{id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Avaliações de uma profissional */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/professionals/{id}/availability": {
         parameters: {
             query?: never;
@@ -505,6 +644,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/vouchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus vouchers (cliente) */
+        get: operations["vouchers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/stock-movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Últimas movimentações */
+        get: operations["movements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Minhas avaliações (cliente) */
+        get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/loyalty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus cartões fidelidade (cliente) */
+        get: operations["cards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/favorites": {
         parameters: {
             query?: never;
@@ -513,7 +720,24 @@ export interface paths {
             cookie?: never;
         };
         /** Ids das profissionais favoritas (mais recentes primeiro) */
-        get: operations["list_1"];
+        get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/consumption": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consumo por atendimento de todos os meus serviços */
+        get: operations["consumption"];
         put?: never;
         post?: never;
         delete?: never;
@@ -530,7 +754,41 @@ export interface paths {
             cookie?: never;
         };
         /** Meus agendamentos (cliente) */
-        get: operations["mine"];
+        get: operations["mine_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/analytics/profit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Painel de lucratividade no período (padrão: mês atual) */
+        get: operations["profit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/analytics/overdue-clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes atrasadas para retorno (último atendimento + intervalo do serviço já passou e nada marcado) */
+        get: operations["overdue"];
         put?: never;
         post?: never;
         delete?: never;
@@ -627,6 +885,20 @@ export interface components {
             /** Format: time-local */
             end?: string;
         };
+        ConsumptionInput: {
+            /** Format: uuid */
+            productId: string;
+            /** Format: double */
+            amount?: number;
+        };
+        ConsumptionView: {
+            /** Format: uuid */
+            serviceId?: string;
+            /** Format: uuid */
+            productId?: string;
+            /** Format: double */
+            amount?: number;
+        };
         ChoiceInput: {
             /** Format: uuid */
             id?: string;
@@ -687,6 +959,33 @@ export interface components {
             requiresReference?: boolean;
             options?: components["schemas"]["OptionView"][];
         };
+        ProductInput: {
+            name: string;
+            /** @enum {string} */
+            unit: "UN" | "ML" | "G";
+            /** Format: double */
+            minQuantity?: number;
+            lot?: string;
+            /** Format: date */
+            expiresAt?: string;
+        };
+        ProductView: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** @enum {string} */
+            unit?: "UN" | "ML" | "G";
+            /** Format: double */
+            quantity?: number;
+            /** Format: double */
+            minQuantity?: number;
+            /** Format: double */
+            avgCostCents?: number;
+            lot?: string;
+            /** Format: date */
+            expiresAt?: string;
+            low?: boolean;
+        };
         WidgetInput: {
             /** Format: uuid */
             id?: string;
@@ -722,6 +1021,20 @@ export interface components {
             target?: string;
             body?: string;
         };
+        ProgramInput: {
+            enabled?: boolean;
+            /** Format: int64 */
+            goalCents?: number;
+            /** Format: int32 */
+            discountPercent?: number;
+        };
+        ProgramView: {
+            enabled?: boolean;
+            /** Format: int64 */
+            goalCents?: number;
+            /** Format: int32 */
+            discountPercent?: number;
+        };
         DesignInput: {
             /** Format: uuid */
             serviceId: string;
@@ -756,6 +1069,20 @@ export interface components {
             publicUrl?: string;
             /** Format: int64 */
             expiresIn?: number;
+        };
+        PurchaseInput: {
+            /** Format: double */
+            quantity?: number;
+            /** Format: double */
+            unitCostCents?: number;
+            lot?: string;
+            /** Format: date */
+            expiresAt?: string;
+        };
+        AdjustInput: {
+            /** Format: double */
+            delta?: number;
+            note?: string;
         };
         Onboarding: {
             /** @enum {string} */
@@ -870,6 +1197,8 @@ export interface components {
             designId?: string;
             referenceKey?: string;
             notes?: string;
+            /** Format: uuid */
+            voucherId?: string;
         };
         SelectionInput: {
             /** Format: uuid */
@@ -948,6 +1277,41 @@ export interface components {
             /** Format: int64 */
             priceDeltaCents?: number;
         };
+        ReviewInput: {
+            /** Format: int32 */
+            rating?: number;
+            comment?: string;
+        };
+        ReviewResult: {
+            review?: components["schemas"]["ReviewView"];
+            voucher?: components["schemas"]["VoucherView"];
+        };
+        ReviewView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            appointmentId?: string;
+            clientName?: string;
+            clientPhotoUrl?: string;
+            /** Format: int32 */
+            rating?: number;
+            comment?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        VoucherView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            kind?: string;
+            /** Format: int32 */
+            percent?: number;
+            label?: string;
+            used?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         ReceiptInput: {
             receiptKey: string;
         };
@@ -1001,6 +1365,10 @@ export interface components {
             minPriceCents?: number;
             /** Format: int32 */
             servicesCount?: number;
+            /** Format: double */
+            rating?: number;
+            /** Format: int32 */
+            reviews?: number;
         };
         PublicPage: {
             professional?: components["schemas"]["PublicProfessional"];
@@ -1008,6 +1376,8 @@ export interface components {
             designs?: components["schemas"]["DesignView"][];
             widgets?: components["schemas"]["WidgetView"][];
             workHours?: components["schemas"]["WorkDay"][];
+            rating?: components["schemas"]["Summary"];
+            reviews?: components["schemas"]["ReviewView"][];
         };
         PublicProfessional: {
             /** Format: uuid */
@@ -1030,6 +1400,12 @@ export interface components {
             /** Format: int32 */
             depositDeadlineHours?: number;
         };
+        Summary: {
+            /** Format: double */
+            average?: number;
+            /** Format: int32 */
+            count?: number;
+        };
         Slot: {
             /** Format: date-time */
             start?: string;
@@ -1037,6 +1413,98 @@ export interface components {
             end?: string;
             /** @enum {string} */
             status?: "FREE" | "BUSY" | "PAST";
+        };
+        MovementView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            productId?: string;
+            productName?: string;
+            /** Format: double */
+            delta?: number;
+            /** @enum {string} */
+            reason?: "PURCHASE" | "ATTENDANCE" | "ADJUSTMENT";
+            /** Format: double */
+            unitCostCents?: number;
+            /** Format: uuid */
+            appointmentId?: string;
+            note?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        MyReview: {
+            /** Format: uuid */
+            appointmentId?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            /** Format: int32 */
+            rating?: number;
+            comment?: string;
+        };
+        CardView: {
+            /** Format: uuid */
+            professionalId?: string;
+            studio?: string;
+            photoUrl?: string;
+            enabled?: boolean;
+            /** Format: int64 */
+            goalCents?: number;
+            /** Format: int32 */
+            discountPercent?: number;
+            /** Format: int64 */
+            spentCents?: number;
+            /** Format: int64 */
+            inCycleCents?: number;
+            /** Format: int32 */
+            percent?: number;
+            /** Format: int64 */
+            remainingCents?: number;
+            /** Format: int32 */
+            cycles?: number;
+        };
+        Profit: {
+            /** Format: date-time */
+            from?: string;
+            /** Format: date-time */
+            to?: string;
+            /** Format: int32 */
+            count?: number;
+            /** Format: int64 */
+            revenueCents?: number;
+            /** Format: int64 */
+            costCents?: number;
+            /** Format: int64 */
+            profitCents?: number;
+            /** Format: int32 */
+            marginPercent?: number;
+            /** Format: int64 */
+            ticketCents?: number;
+            /** Format: int64 */
+            purchasesCents?: number;
+            rows?: components["schemas"]["ServiceRow"][];
+        };
+        ServiceRow: {
+            /** Format: uuid */
+            serviceId?: string;
+            serviceName?: string;
+            /** Format: int32 */
+            count?: number;
+            /** Format: int64 */
+            revenueCents?: number;
+            /** Format: int64 */
+            costCents?: number;
+        };
+        OverdueClient: {
+            /** Format: uuid */
+            clientAccountId?: string;
+            name?: string;
+            photoUrl?: string;
+            phone?: string;
+            serviceName?: string;
+            /** Format: date-time */
+            lastAt?: string;
+            /** Format: int32 */
+            daysLate?: number;
         };
         TrendingDesign: {
             /** Format: uuid */
@@ -1108,6 +1576,32 @@ export interface operations {
             };
         };
     };
+    setConsumption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsumptionInput"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConsumptionView"][];
+                };
+            };
+        };
+    };
     update: {
         parameters: {
             query?: never;
@@ -1135,6 +1629,52 @@ export interface operations {
         };
     };
     delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProductView"];
+                };
+            };
+        };
+    };
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1194,6 +1734,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WidgetView"][];
+                };
+            };
+        };
+    };
+    program: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProgramView"];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProgramView"];
                 };
             };
         };
@@ -1348,6 +1932,102 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ServiceView"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProductView"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProductView"];
+                };
+            };
+        };
+    };
+    purchase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProductView"];
+                };
+            };
+        };
+    };
+    adjust: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProductView"];
                 };
             };
         };
@@ -1558,7 +2238,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1578,6 +2258,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReviewResult"];
                 };
             };
         };
@@ -1696,7 +2402,7 @@ export interface operations {
             };
         };
     };
-    adjust: {
+    adjust_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1863,6 +2569,30 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReviewView"][];
+                };
+            };
+        };
+    };
     availability: {
         parameters: {
             query: {
@@ -1908,7 +2638,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    vouchers: {
         parameters: {
             query?: never;
             header?: never;
@@ -1923,7 +2653,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": string[];
+                    "*/*": components["schemas"]["VoucherView"][];
+                };
+            };
+        };
+    };
+    movements: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MovementView"][];
                 };
             };
         };
@@ -1943,7 +2695,130 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "*/*": components["schemas"]["MyReview"][];
+                };
+            };
+        };
+    };
+    cards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CardView"][];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string[];
+                };
+            };
+        };
+    };
+    consumption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConsumptionView"][];
+                };
+            };
+        };
+    };
+    mine_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "*/*": components["schemas"]["AppointmentView"][];
+                };
+            };
+        };
+    };
+    profit: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Profit"];
+                };
+            };
+        };
+    };
+    overdue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OverdueClient"][];
                 };
             };
         };

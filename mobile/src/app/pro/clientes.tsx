@@ -3,8 +3,9 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 
+import { useProStats } from '@/api/use-pro-stats';
 import { Avatar, Badge, Card, Chip, ProgressBar, Row, Screen, T } from '@/components/ui';
-import { fmtDate, lastDoneOf, loyaltyProgress, overdueClients } from '@/domain/rules';
+import { fmtDate, lastDoneOf, loyaltyProgress } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
 
@@ -15,7 +16,7 @@ export default function ProClientes() {
   const [q, setQ] = useState('');
   const [onlyLate, setOnlyLate] = useState(false);
   const mineAppts = s.appointments.filter((a) => a.professionalId === me.id);
-  const overdue = overdueClients(s.appointments, s.services, s.clients, me.id);
+  const { overdue } = useProStats();
   const lateMap = Object.fromEntries(overdue.map((o) => [o.client.id, o.daysLate]));
   const clients = s.clients
     .filter((c) => mineAppts.some((a) => a.clientId === c.id))

@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
+import { profitReport } from '@/api/business';
+import { API_ENABLED } from '@/api/client';
 import { Card, Chip, Empty, ProgressBar, Row, Screen, SectionTitle, Stat, T } from '@/components/ui';
 import { brl, isLowStock, profitability } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
@@ -19,7 +21,39 @@ export default function Lucro() {
   const L = useLookup();
   const [pi, setPi] = useState(0);
   const [from, to] = PERIODS[pi].range();
-  const r = profitability(s.appointments, s.services, L.myProducts, s.movements, s.proId, from, to);
+  const local = profitability(s.appointments, s.services, L.myProducts, s.movements, s.proId, from, to);
+  // API ligada: números do servidor (faturamento dos atendimentos concluídos − custo real das baixas de estoque)
+  const remote = API_ENABLED && !!L.myPro.remote;
+  const [remoteR, setRemoteR] = useState<typeof local | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!remote) return;
+    setRemoteR(null);
+    profitReport(from, to)
+      .then((p) =>
+        setRemoteR({
+          count: p.count ?? 0,
+          revenue: (p.revenueCents ?? 0) / 100,
+          cost: (p.costCents ?? 0) / 100,
+          profit: (p.profitCents ?? 0) / 100,
+          margin: p.marginPercent ?? 0,
+          ticket: (p.ticketCents ?? 0) / 100,
+          purchases: (p.purchasesCents ?? 0) / 100,
+          rows: (p.rows ?? []).map((row) => ({
+            service: s.services.find((x) => x.id === row.serviceId) ?? {
+              id: row.serviceId!, professionalId: s.proId, name: row.serviceName ?? 'Serviço', niche: 'unha', durationMin: 60,
+              price: 0, depositPercent: 0, returnIntervalDays: 0, options: [], consumption: [],
+            },
+            count: row.count ?? 0,
+            revenue: (row.revenueCents ?? 0) / 100,
+            cost: (row.costCents ?? 0) / 100,
+          })),
+        }),
+      )
+      .catch((e) => setError((e as Error).message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remote, pi]);
+  const r = remote ? (remoteR ?? { ...local, count: 0, revenue: 0, cost: 0, profit: 0, margin: 0, ticket: 0, purchases: 0, rows: [] }) : local;
   const missingCost = L.myProducts.filter((p) => p.unitCost == null);
   const best = r.rows[0];
 
@@ -30,6 +64,8 @@ export default function Lucro() {
         {PERIODS.map((p, i) => <Chip key={p.label} label={p.label} selected={pi === i} onPress={() => setPi(i)} />)}
       </Row>
 
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      {remote && !remoteR && !error ? <T v="small" muted>Calculando…</T> : null}
       <Card tone="black">
         <T v="overline" color={colors.lilac}>Lucro no período</T>
         <T v="display" color={colors.cardSolid}>{brl(r.profit)}</T>

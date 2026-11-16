@@ -47,6 +47,13 @@ class AvailabilityService implements SchedulingApi {
                 .map(w -> new WorkDay(w.weekday, w.start, w.end)).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<com.beautifulapp.scheduling.AppointmentInfo> appointment(UUID id) {
+        return appointments.findById(id).map(a -> new com.beautifulapp.scheduling.AppointmentInfo(a.id, a.clientAccountId, a.professionalId,
+                a.serviceId, a.serviceName, a.status.name(), a.startsAt, a.priceCents - a.discountCents));
+    }
+
     static int weekday(LocalDate date) {
         return date.getDayOfWeek().getValue() % 7; // segunda=1 … domingo=0
     }

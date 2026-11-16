@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { NICHE_LABEL, brl, fmtDate, fmtTime, freeSlots, loyaltyProgress } from '@/domain/rules';
+import { NICHE_LABEL, brl, fmtDate, fmtTime, freeSlots } from '@/domain/rules';
 import type { Professional, Widget, WidgetType } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, fonts, radius, space } from '@/theme';
@@ -168,8 +168,9 @@ function Contagem({ w }: { w: Widget }) {
 
 function Fidelidade({ w, pro }: { w: Widget; pro: Professional }) {
   const s = useStore();
-  if (!pro.loyalty.enabled) return null;
-  const lp = loyaltyProgress(s.appointments, s.clientId, pro.id, pro.loyalty);
+  const L = useLookup();
+  const lp = L.loyalty(pro.id);
+  if (!lp.enabled) return null;
   return (
     <Card tone="lilac">
       <Row style={{ justifyContent: 'space-between' }}>
@@ -177,7 +178,7 @@ function Fidelidade({ w, pro }: { w: Widget; pro: Professional }) {
         <T v="h3">{s.role === 'cliente' ? `${lp.percent}%` : ''}</T>
       </Row>
       {s.role === 'cliente' ? <ProgressBar percent={lp.percent} color={colors.black} track={colors.card} height={10} /> : null}
-      <T v="small">Gaste {brl(pro.loyalty.goalAmount)} e ganhe {pro.loyalty.discountPercent}% OFF automaticamente.</T>
+      <T v="small">Gaste {brl(lp.goal)} e ganhe {lp.discountPercent}% OFF automaticamente.</T>
     </Card>
   );
 }
@@ -185,7 +186,9 @@ function Fidelidade({ w, pro }: { w: Widget; pro: Professional }) {
 function Avaliacoes({ w, pro }: { w: Widget; pro: Professional }) {
   const s = useStore();
   const L = useLookup();
-  const reviews = s.feedbacks.filter((f) => f.professionalId === pro.id).slice(-3).reverse();
+  // com a API: depoimentos públicos (têm clientName); no protótipo: os locais
+  const publicOnes = s.feedbacks.filter((f) => f.professionalId === pro.id && f.clientName !== undefined);
+  const reviews = (publicOnes.length ? publicOnes.slice(0, 3) : s.feedbacks.filter((f) => f.professionalId === pro.id).slice(-3).reverse());
   return (
     <View style={{ gap: space.sm }}>
       <SectionTitle title={w.title ?? 'Depoimentos'} />
@@ -194,7 +197,7 @@ function Avaliacoes({ w, pro }: { w: Widget; pro: Professional }) {
         <Card key={r.id} tone="soft">
           <T v="small">{'⭐'.repeat(r.rating)}</T>
           <T>“{r.comment}”</T>
-          <T v="small" muted>— {L.client(r.clientId).name}</T>
+          <T v="small" muted>— {r.clientName ?? s.clients.find((c) => c.id === r.clientId)?.name ?? 'Cliente'}</T>
         </Card>
       ))}
     </View>

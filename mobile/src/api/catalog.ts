@@ -133,6 +133,8 @@ export function professionalFromCard(c: Schemas['ProfessionalCard'], existing?: 
     cover: c.coverUrl,
     distanceKm: c.distanceKm ?? NaN,
     minPrice: c.minPriceCents != null ? reais(c.minPriceCents) : undefined,
+    rating: c.rating ?? existing?.rating ?? 5,
+    reviews: c.reviews ?? existing?.reviews ?? 0,
     remote: true,
   };
 }

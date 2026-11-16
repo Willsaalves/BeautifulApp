@@ -17,6 +17,7 @@ import com.beautifulapp.media.MediaApi;
 import com.beautifulapp.page.PageApi;
 import com.beautifulapp.profile.Niche;
 import com.beautifulapp.profile.ProfileApi;
+import com.beautifulapp.review.ReviewApi;
 import com.beautifulapp.scheduling.SchedulingApi;
 
 @Service
@@ -27,14 +28,16 @@ class DiscoveryService {
     private final CatalogApi catalog;
     private final PageApi page;
     private final SchedulingApi scheduling;
+    private final ReviewApi reviews;
 
-    DiscoveryService(JdbcClient jdbc, MediaApi media, ProfileApi profiles, CatalogApi catalog, PageApi page, SchedulingApi scheduling) {
+    DiscoveryService(JdbcClient jdbc, MediaApi media, ProfileApi profiles, CatalogApi catalog, PageApi page, SchedulingApi scheduling, ReviewApi reviews) {
         this.jdbc = jdbc;
         this.media = media;
         this.profiles = profiles;
         this.catalog = catalog;
         this.page = page;
         this.scheduling = scheduling;
+        this.reviews = reviews;
     }
 
     record Query(Niche niche, String q, Double lat, Double lng, Double radiusKm, int limit) {}
@@ -51,7 +54,9 @@ class DiscoveryService {
                 SELECT p.id, p.name, p.studio, p.handle, p.niche, p.bio, p.photo_key, p.cover_key, p.neighborhood, p.city,
                        %s AS distance_km,
                        (SELECT min(s.price_cents) FROM service s WHERE s.professional_id = p.id AND s.active) AS min_price,
-                       (SELECT count(*) FROM service s WHERE s.professional_id = p.id AND s.active) AS services_count
+                       (SELECT count(*) FROM service s WHERE s.professional_id = p.id AND s.active) AS services_count,
+                       (SELECT avg(r.rating) FROM review r WHERE r.professional_id = p.id) AS rating,
+                       (SELECT count(*) FROM review r WHERE r.professional_id = p.id) AS reviews
                   FROM professional p
                  WHERE 1 = 1
                 """.formatted(distance));
@@ -81,7 +86,8 @@ class DiscoveryService {
                 Niche.valueOf(rs.getString("niche")), rs.getString("bio"),
                 media.publicUrl(rs.getString("photo_key")), media.publicUrl(rs.getString("cover_key")),
                 rs.getString("neighborhood"), rs.getString("city"),
-                round(rs.getObject("distance_km", Double.class)), rs.getObject("min_price", Long.class), rs.getInt("services_count"))).list();
+                round(rs.getObject("distance_km", Double.class)), rs.getObject("min_price", Long.class), rs.getInt("services_count"),
+                rs.getObject("rating") == null ? null : Math.round(rs.getDouble("rating") * 10) / 10.0, rs.getInt("reviews"))).list();
     }
 
     @Transactional(readOnly = true)
@@ -89,7 +95,7 @@ class DiscoveryService {
         var pro = profiles.publicProfessional(professionalId)
                 .orElseThrow(() -> ApiException.notFound("PROFESSIONAL_NOT_FOUND", "Profissional não encontrada."));
         return new PublicPage(pro, catalog.activeServices(professionalId), catalog.designs(professionalId), page.widgets(professionalId),
-                scheduling.workHours(professionalId));
+                scheduling.workHours(professionalId), reviews.summary(professionalId), reviews.recent(professionalId, 10));
     }
 
     @Transactional(readOnly = true)

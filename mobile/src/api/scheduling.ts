@@ -118,6 +118,7 @@ export async function createAppointment(input: {
   designId?: string;
   referenceImage?: string;
   notes?: string;
+  voucherId?: string;
 }) {
   const referenceKey =
     input.referenceImage && isLocalUri(input.referenceImage) ? (await uploadImage('REFERENCE', input.referenceImage)).key : undefined;
@@ -130,6 +131,7 @@ export async function createAppointment(input: {
         designId: input.designId,
         referenceKey,
         notes: input.notes || undefined,
+        voucherId: input.voucherId,
       },
     }),
   );

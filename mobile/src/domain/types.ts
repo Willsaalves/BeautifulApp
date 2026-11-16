@@ -161,6 +161,23 @@ export interface Feedback {
   rating: number;
   comment: string;
   createdAt: string;
+  clientName?: string;          // vem da API (página pública)
+  clientPhoto?: string;
+}
+
+/** Progresso do cartão fidelidade calculado no servidor. */
+export interface LoyaltyCard {
+  professionalId: string;
+  studio?: string;
+  photo?: string;
+  enabled: boolean;
+  goal: number;
+  discountPercent: number;
+  spent: number;
+  inCycle: number;
+  percent: number;
+  remaining: number;
+  cycles: number;
 }
 
 export interface Voucher {

@@ -1,6 +1,6 @@
 // Estado global em memória. Quando o backend existir, cada ação vira uma chamada de API
 // (mantendo as mesmas assinaturas) e este reducer passa a refletir as respostas.
-import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { addFavorite, professionalFromCard, removeFavorite } from '@/api/catalog';
 import { appointmentFromApi, partiesFromApi, workHoursSummary } from '@/api/scheduling';
@@ -24,6 +24,7 @@ import type {
   Design,
   Dream,
   Feedback,
+  LoyaltyCard,
   Product,
   Professional,
   Service,
@@ -53,6 +54,7 @@ interface State {
   messages: ChatMessage[];
   designs: Design[];
   stories: Story[];
+  loyaltyCards: LoyaltyCard[];   // progresso calculado no servidor (cliente com API)
 }
 
 const initial: State = {
@@ -71,6 +73,7 @@ const initial: State = {
   messages: [],
   designs: mock.designs,
   stories: mock.stories,
+  loyaltyCards: [],
 };
 
 type Action =
@@ -111,11 +114,15 @@ const uuid = () =>
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
   });
 
-function useActions(state: State, dispatch: React.Dispatch<Action>) {
+/**
+ * As ações leem o estado MAIS RECENTE (stateRef) no momento em que são chamadas.
+ * Assim várias ações seguidas (ex.: sincronização com a API) não sobrescrevem umas às outras.
+ */
+function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<Action>) {
   return useMemo(() => {
-    const svc = (id: string) => state.services.find((s) => s.id === id)!;
-    const pro = (id: string) => state.professionals.find((p) => p.id === id)!;
-    const appt = (id: string) => state.appointments.find((a) => a.id === id)!;
+    const svc = (id: string) => stateRef.current.services.find((s) => s.id === id)!;
+    const pro = (id: string) => stateRef.current.professionals.find((p) => p.id === id)!;
+    const appt = (id: string) => stateRef.current.appointments.find((a) => a.id === id)!;
 
     return {
       setRole: (role: Role | null) => dispatch({ type: 'setRole', role }),
@@ -133,21 +140,21 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         const service = svc(input.serviceId);
         const p = pro(service.professionalId);
         const now = new Date();
-        const design = state.designs.find((d) => d.id === input.designId);
+        const design = stateRef.current.designs.find((d) => d.id === input.designId);
         const price = computePrice(service, input.selections, design?.priceDelta ?? 0);
         let discountApplied = 0;
-        const voucher = state.vouchers.find((v) => v.id === input.voucherId && !v.used);
+        const voucher = stateRef.current.vouchers.find((v) => v.id === input.voucherId && !v.used);
         if (voucher) {
           discountApplied = Math.round(price * voucher.percent) / 100;
           dispatch({
             type: 'set',
-            patch: { vouchers: state.vouchers.map((v) => (v.id === voucher.id ? { ...v, used: true } : v)) },
+            patch: { vouchers: stateRef.current.vouchers.map((v) => (v.id === voucher.id ? { ...v, used: true } : v)) },
           });
         }
         const deposit = computeDeposit(price - discountApplied, service.depositPercent);
         const a: Appointment = {
           id: uid('a'),
-          clientId: state.clientId,
+          clientId: stateRef.current.clientId,
           professionalId: p.id,
           serviceId: service.id,
           startsAt: input.startsAt.toISOString(),
@@ -200,10 +207,10 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           comment,
           createdAt: new Date().toISOString(),
         };
-        const earned = canEarnFeedbackVoucher(state.vouchers, a.clientId);
+        const earned = canEarnFeedbackVoucher(stateRef.current.vouchers, a.clientId);
         const vouchers = earned
           ? [
-              ...state.vouchers,
+              ...stateRef.current.vouchers,
               {
                 id: uid('v'),
                 clientId: a.clientId,
@@ -214,22 +221,22 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
                 createdAt: new Date().toISOString(),
               },
             ]
-          : state.vouchers;
-        dispatch({ type: 'set', patch: { feedbacks: [...state.feedbacks, fb], vouchers } });
+          : stateRef.current.vouchers;
+        dispatch({ type: 'set', patch: { feedbacks: [...stateRef.current.feedbacks, fb], vouchers } });
         return earned;
       },
 
       toggleFavorite(proId: string) {
-        const me = state.clients.find((c) => c.id === state.clientId);
+        const me = stateRef.current.clients.find((c) => c.id === stateRef.current.clientId);
         const wasFav = !!me?.favorites.includes(proId);
-        if (API_ENABLED && state.role === 'cliente') {
+        if (API_ENABLED && stateRef.current.role === 'cliente') {
           (wasFav ? removeFavorite(proId) : addFavorite(proId)).catch(() => {
             // desfaz se a API recusar
             dispatch({
               type: 'set',
               patch: {
-                clients: state.clients.map((c) =>
-                  c.id !== state.clientId ? c : { ...c, favorites: wasFav ? [...c.favorites, proId] : c.favorites.filter((f) => f !== proId) },
+                clients: stateRef.current.clients.map((c) =>
+                  c.id !== stateRef.current.clientId ? c : { ...c, favorites: wasFav ? [...c.favorites, proId] : c.favorites.filter((f) => f !== proId) },
                 ),
               },
             });
@@ -238,8 +245,8 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         dispatch({
           type: 'set',
           patch: {
-            clients: state.clients.map((c) =>
-              c.id !== state.clientId
+            clients: stateRef.current.clients.map((c) =>
+              c.id !== stateRef.current.clientId
                 ? c
                 : {
                     ...c,
@@ -255,7 +262,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
       setDreams(dreams: Dream[]) {
         dispatch({
           type: 'set',
-          patch: { clients: state.clients.map((c) => (c.id === state.clientId ? { ...c, dreams } : c)) },
+          patch: { clients: stateRef.current.clients.map((c) => (c.id === stateRef.current.clientId ? { ...c, dreams } : c)) },
         });
       },
 
@@ -264,7 +271,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           type: 'set',
           patch: {
             messages: [
-              ...state.messages,
+              ...stateRef.current.messages,
               { id: uid('m'), appointmentId, from, text, createdAt: new Date().toISOString() },
             ],
           },
@@ -292,17 +299,17 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         const a = appt(id);
         const service = svc(a.serviceId);
         const p = pro(a.professionalId);
-        const own = state.products.filter((x) => state.productOwner[x.id] === p.id);
+        const own = stateRef.current.products.filter((x) => stateRef.current.productOwner[x.id] === p.id);
         const { products: consumed, movements } = consumeStock(own, service, id);
-        const products = state.products.map((x) => consumed.find((c) => c.id === x.id) ?? x);
+        const products = stateRef.current.products.map((x) => consumed.find((c) => c.id === x.id) ?? x);
 
-        const before = loyaltyProgress(state.appointments, a.clientId, p.id, p.loyalty);
-        const nextAppts = state.appointments.map((x) => (x.id === id ? { ...x, status: 'concluido' as const } : x));
+        const before = loyaltyProgress(stateRef.current.appointments, a.clientId, p.id, p.loyalty);
+        const nextAppts = stateRef.current.appointments.map((x) => (x.id === id ? { ...x, status: 'concluido' as const } : x));
         const after = loyaltyProgress(nextAppts, a.clientId, p.id, p.loyalty);
         const reached = p.loyalty.enabled && after.cycles > before.cycles;
         const vouchers = reached
           ? [
-              ...state.vouchers,
+              ...stateRef.current.vouchers,
               {
                 id: uid('v'),
                 clientId: a.clientId,
@@ -314,11 +321,11 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
                 createdAt: new Date().toISOString(),
               },
             ]
-          : state.vouchers;
+          : stateRef.current.vouchers;
 
         dispatch({
           type: 'set',
-          patch: { appointments: nextAppts, products, movements: [...state.movements, ...movements], vouchers },
+          patch: { appointments: nextAppts, products, movements: [...stateRef.current.movements, ...movements], vouchers },
         });
         return { reached, movements };
       },
@@ -334,8 +341,8 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         lot?: string;
         expiresAt?: string;
       }) {
-        let products = state.products;
-        let productOwner = state.productOwner;
+        let products = stateRef.current.products;
+        let productOwner = stateRef.current.productOwner;
         let productId = input.productId;
         if (!productId) {
           productId = uid('pr');
@@ -351,7 +358,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
               expiresAt: input.expiresAt,
             },
           ];
-          productOwner = { ...productOwner, [productId]: state.proId };
+          productOwner = { ...productOwner, [productId]: stateRef.current.proId };
         }
         products = products.map((p) => {
           if (p.id !== productId) return p;
@@ -372,21 +379,21 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           unitCost: input.unitCost,
           createdAt: new Date().toISOString(),
         };
-        dispatch({ type: 'set', patch: { products, productOwner, movements: [...state.movements, mv] } });
+        dispatch({ type: 'set', patch: { products, productOwner, movements: [...stateRef.current.movements, mv] } });
       },
 
       updateProduct(id: string, patch: Partial<Product>) {
-        dispatch({ type: 'set', patch: { products: state.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) } });
+        dispatch({ type: 'set', patch: { products: stateRef.current.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) } });
       },
 
       upsertService(service: Service) {
-        const exists = state.services.some((s) => s.id === service.id);
+        const exists = stateRef.current.services.some((s) => s.id === service.id);
         dispatch({
           type: 'set',
           patch: {
             services: exists
-              ? state.services.map((s) => (s.id === service.id ? service : s))
-              : [...state.services, service],
+              ? stateRef.current.services.map((s) => (s.id === service.id ? service : s))
+              : [...stateRef.current.services, service],
           },
         });
       },
@@ -394,13 +401,13 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
       updateProfessional(patch: Partial<Professional>) {
         dispatch({
           type: 'set',
-          patch: { professionals: state.professionals.map((p) => (p.id === state.proId ? { ...p, ...patch } : p)) },
+          patch: { professionals: stateRef.current.professionals.map((p) => (p.id === stateRef.current.proId ? { ...p, ...patch } : p)) },
         });
       },
 
       // ---------- Página (widgets) ----------
       addWidget(type: WidgetType) {
-        const me = pro(state.proId);
+        const me = pro(stateRef.current.proId);
         const defaults: Record<string, Partial<Widget>> = {
           capa: { title: me.name.toUpperCase(), subtitle: me.headline, color: me.avatar },
           galeria: { title: 'Galeria', images: [] },
@@ -416,15 +423,15 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         const ws = [...me.widgets];
         const capaIdx = ws.findIndex((x) => x.type === 'capa');
         ws.splice(capaIdx + 1, 0, w);
-        dispatch({ type: 'set', patch: { professionals: state.professionals.map((p) => (p.id === me.id ? { ...p, widgets: ws } : p)) } });
+        dispatch({ type: 'set', patch: { professionals: stateRef.current.professionals.map((p) => (p.id === me.id ? { ...p, widgets: ws } : p)) } });
         return w.id;
       },
       updateWidget(id: string, patch: Partial<Widget>) {
         dispatch({
           type: 'set',
           patch: {
-            professionals: state.professionals.map((p) =>
-              p.id === state.proId ? { ...p, widgets: p.widgets.map((w) => (w.id === id ? { ...w, ...patch } : w)) } : p,
+            professionals: stateRef.current.professionals.map((p) =>
+              p.id === stateRef.current.proId ? { ...p, widgets: p.widgets.map((w) => (w.id === id ? { ...w, ...patch } : w)) } : p,
             ),
           },
         });
@@ -433,45 +440,45 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         dispatch({
           type: 'set',
           patch: {
-            professionals: state.professionals.map((p) =>
-              p.id === state.proId ? { ...p, widgets: p.widgets.filter((w) => w.id !== id || w.fixed) } : p,
+            professionals: stateRef.current.professionals.map((p) =>
+              p.id === stateRef.current.proId ? { ...p, widgets: p.widgets.filter((w) => w.id !== id || w.fixed) } : p,
             ),
           },
         });
       },
       moveWidget(id: string, dir: -1 | 1) {
-        const me = pro(state.proId);
+        const me = pro(stateRef.current.proId);
         const ws = [...me.widgets];
         const i = ws.findIndex((w) => w.id === id);
         const j = i + dir;
         if (i < 0 || j < 0 || j >= ws.length) return;
         [ws[i], ws[j]] = [ws[j], ws[i]];
-        dispatch({ type: 'set', patch: { professionals: state.professionals.map((p) => (p.id === me.id ? { ...p, widgets: ws } : p)) } });
+        dispatch({ type: 'set', patch: { professionals: stateRef.current.professionals.map((p) => (p.id === me.id ? { ...p, widgets: ws } : p)) } });
       },
 
       // ---------- Trending Designs ----------
       upsertDesign(d: Design) {
-        const exists = state.designs.some((x) => x.id === d.id);
+        const exists = stateRef.current.designs.some((x) => x.id === d.id);
         dispatch({
           type: 'set',
-          patch: { designs: exists ? state.designs.map((x) => (x.id === d.id ? d : x)) : [...state.designs, d] },
+          patch: { designs: exists ? stateRef.current.designs.map((x) => (x.id === d.id ? d : x)) : [...stateRef.current.designs, d] },
         });
       },
       removeDesign(id: string) {
-        dispatch({ type: 'set', patch: { designs: state.designs.filter((x) => x.id !== id) } });
+        dispatch({ type: 'set', patch: { designs: stateRef.current.designs.filter((x) => x.id !== id) } });
       },
 
       // ---------- Stories ----------
       postStory(input: Omit<Story, 'id' | 'createdAt' | 'authorType' | 'authorId'>) {
-        const isPro = state.role === 'profissional';
+        const isPro = stateRef.current.role === 'profissional';
         const st: Story = {
           ...input,
           id: uid('st'),
           authorType: isPro ? 'profissional' : 'cliente',
-          authorId: isPro ? state.proId : state.clientId,
+          authorId: isPro ? stateRef.current.proId : stateRef.current.clientId,
           createdAt: new Date().toISOString(),
         };
-        dispatch({ type: 'set', patch: { stories: [st, ...state.stories] } });
+        dispatch({ type: 'set', patch: { stories: [st, ...stateRef.current.stories] } });
         return st.id;
       },
 
@@ -479,12 +486,12 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
       /** Login por telefone (mock do OTP). Devolve o papel encontrado ou null se não houver conta. */
       login(phone: string): Role | null {
         const digits = (x?: string) => (x ?? '').replace(/\D/g, '');
-        const c = state.clients.find((x) => digits(x.phone) === digits(phone));
+        const c = stateRef.current.clients.find((x) => digits(x.phone) === digits(phone));
         if (c) {
           dispatch({ type: 'set', patch: { role: 'cliente', clientId: c.id } });
           return 'cliente';
         }
-        const p = state.professionals.find((x) => digits(x.phone) === digits(phone));
+        const p = stateRef.current.professionals.find((x) => digits(x.phone) === digits(phone));
         if (p) {
           dispatch({ type: 'set', patch: { role: 'profissional', proId: p.id } });
           return 'profissional';
@@ -519,7 +526,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
             favorites: [],
             dreams: [],
           };
-          dispatch({ type: 'set', patch: { clients: [...state.clients, c], clientId: c.id, role: 'cliente' } });
+          dispatch({ type: 'set', patch: { clients: [...stateRef.current.clients, c], clientId: c.id, role: 'cliente' } });
         } else {
           const base = {
             id: uid('p'),
@@ -548,7 +555,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
               w.type === 'capa' ? { ...w, image: input.cover } : w,
             ),
           };
-          dispatch({ type: 'set', patch: { professionals: [...state.professionals, p], proId: p.id, role: 'profissional' } });
+          dispatch({ type: 'set', patch: { professionals: [...stateRef.current.professionals, p], proId: p.id, role: 'profissional' } });
         }
       },
 
@@ -558,10 +565,10 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
        */
       applyMe(me: Me, prefer?: Role): Role | null {
         const roles = me.roles ?? [];
-        let clients = state.clients;
-        let professionals = state.professionals;
-        let clientId = state.clientId;
-        let proId = state.proId;
+        let clients = stateRef.current.clients;
+        let professionals = stateRef.current.professionals;
+        let clientId = stateRef.current.clientId;
+        let proId = stateRef.current.proId;
         if (me.client) {
           const id = me.accountId!;
           const existing = clients.find((c) => c.id === id);
@@ -639,7 +646,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         replaceDesignsOf?: string;
         widgetsOf?: { professionalId: string; widgets: Widget[] };
       }) {
-        let professionals = state.professionals;
+        let professionals = stateRef.current.professionals;
         for (const p of input.professionals ?? []) {
           professionals = professionals.some((x) => x.id === p.id) ? professionals.map((x) => (x.id === p.id ? p : x)) : [...professionals, p];
         }
@@ -647,12 +654,12 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           const { professionalId, widgets } = input.widgetsOf;
           professionals = professionals.map((p) => (p.id === professionalId ? { ...p, widgets } : p));
         }
-        let services = state.services;
+        let services = stateRef.current.services;
         if (input.replaceServicesOf) services = services.filter((x) => x.professionalId !== input.replaceServicesOf);
         for (const sv of input.services ?? []) {
           services = services.some((x) => x.id === sv.id) ? services.map((x) => (x.id === sv.id ? sv : x)) : [...services, sv];
         }
-        let designs = state.designs;
+        let designs = stateRef.current.designs;
         if (input.replaceDesignsOf) designs = designs.filter((x) => x.professionalId !== input.replaceDesignsOf);
         for (const d of input.designs ?? []) {
           designs = designs.some((x) => x.id === d.id) ? designs.map((x) => (x.id === d.id ? d : x)) : [...designs, d];
@@ -664,13 +671,13 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
       mergeAppointments(views: AppointmentApiView[]) {
         const incoming = views.map(appointmentFromApi);
         const { clients: cl, pros } = partiesFromApi(views);
-        let clients = state.clients;
+        let clients = stateRef.current.clients;
         for (const c of cl) {
           const ex = clients.find((x) => x.id === c.id);
           // não sobrescreve o próprio perfil (favoritas, próximos procedimentos…)
           clients = ex ? clients.map((x) => (x.id === c.id ? { ...x, name: c.name || x.name, photo: c.photo ?? x.photo, phone: c.phone || x.phone } : x)) : [...clients, c];
         }
-        let professionals = state.professionals;
+        let professionals = stateRef.current.professionals;
         for (const p of pros) {
           const ex = professionals.find((x) => x.id === p.id);
           const merged = ex
@@ -679,7 +686,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           professionals = ex ? professionals.map((x) => (x.id === p.id ? merged : x)) : [...professionals, merged];
         }
         // serviço mínimo para agendamentos cujo serviço ainda não foi carregado (lista da cliente, home…)
-        let services = state.services;
+        let services = stateRef.current.services;
         for (const a of incoming) {
           if (services.some((x) => x.id === a.serviceId)) continue;
           services = [...services, {
@@ -695,7 +702,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
             consumption: [],
           }];
         }
-        let appointments = state.appointments;
+        let appointments = stateRef.current.appointments;
         for (const a of incoming) {
           appointments = appointments.some((x) => x.id === a.id) ? appointments.map((x) => (x.id === a.id ? a : x)) : [...appointments, a];
         }
@@ -707,48 +714,104 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         dispatch({
           type: 'set',
           patch: {
-            professionals: state.professionals.map((p) =>
+            professionals: stateRef.current.professionals.map((p) =>
               p.id === professionalId ? { ...p, workDays: days, workHours: workHoursSummary(days) } : p,
             ),
           },
         });
       },
 
+      /** Estoque da profissional vindo da API (substitui o local). */
+      setRemoteStock(input: { products: Product[]; movements: StockMovement[]; consumption: { serviceId?: string; productId?: string; amount?: number }[] }) {
+        const proId = stateRef.current.proId;
+        const mineOld = new Set(Object.entries(stateRef.current.productOwner).filter(([, owner]) => owner === proId).map(([id]) => id));
+        const products = [...stateRef.current.products.filter((p) => !mineOld.has(p.id)), ...input.products];
+        const productOwner = { ...stateRef.current.productOwner };
+        mineOld.forEach((id) => delete productOwner[id]);
+        input.products.forEach((p) => { productOwner[p.id] = proId; });
+        const mineNew = new Set(input.products.map((p) => p.id));
+        const movements = [...stateRef.current.movements.filter((m) => !mineOld.has(m.productId) && !mineNew.has(m.productId)), ...[...input.movements].reverse()];
+        const services = stateRef.current.services.map((sv) =>
+          sv.professionalId !== proId
+            ? sv
+            : { ...sv, consumption: input.consumption.filter((c) => c.serviceId === sv.id).map((c) => ({ productId: c.productId!, amount: c.amount ?? 0 })) },
+        );
+        dispatch({ type: 'set', patch: { products, productOwner, movements, services } });
+      },
+
+      /** Cartões fidelidade, vouchers e avaliações da cliente vindos da API. */
+      setRemoteClientData(input: { cards?: LoyaltyCard[]; vouchers?: Voucher[]; reviews?: { appointmentId?: string; professionalId?: string; rating?: number; comment?: string }[] }) {
+        const patch: Partial<State> = {};
+        if (input.cards) patch.loyaltyCards = input.cards;
+        if (input.vouchers) patch.vouchers = [...stateRef.current.vouchers.filter((v) => v.clientId !== stateRef.current.clientId), ...input.vouchers];
+        if (input.reviews) {
+          const mine: Feedback[] = input.reviews.map((r) => ({
+            id: `rv_${r.appointmentId}`,
+            appointmentId: r.appointmentId!,
+            clientId: stateRef.current.clientId,
+            professionalId: r.professionalId!,
+            rating: r.rating ?? 5,
+            comment: r.comment ?? '',
+            createdAt: new Date().toISOString(),
+          }));
+          patch.feedbacks = [...stateRef.current.feedbacks.filter((f) => !mine.some((m) => m.appointmentId === f.appointmentId)), ...mine];
+        }
+        dispatch({ type: 'set', patch });
+      },
+
+      /** Nota e depoimentos públicos de uma profissional (página pública). */
+      setProfessionalReviews(professionalId: string, average: number, count: number, reviews: Feedback[]) {
+        dispatch({
+          type: 'set',
+          patch: {
+            professionals: stateRef.current.professionals.map((p) => (p.id === professionalId ? { ...p, rating: average || 5, reviews: count } : p)),
+            // troca os depoimentos públicos dessa profissional (os públicos têm clientName)
+            feedbacks: [...stateRef.current.feedbacks.filter((f) => !(f.professionalId === professionalId && f.clientName !== undefined)), ...reviews],
+          },
+        });
+      },
+
       removeServiceLocal(id: string) {
-        dispatch({ type: 'set', patch: { services: state.services.filter((x) => x.id !== id) } });
+        dispatch({ type: 'set', patch: { services: stateRef.current.services.filter((x) => x.id !== id) } });
       },
 
       /** Edita o perfil de quem está logada (capa, foto, nome, bio). */
       updateMe(patch: { name?: string; photo?: string; cover?: string; bio?: string; email?: string }) {
-        if (state.role === 'profissional') {
+        if (stateRef.current.role === 'profissional') {
           const { bio, ...rest } = patch;
           dispatch({
             type: 'set',
             patch: {
-              professionals: state.professionals.map((p) =>
-                p.id === state.proId ? { ...p, ...rest, ...(bio != null ? { headline: bio } : {}) } : p,
+              professionals: stateRef.current.professionals.map((p) =>
+                p.id === stateRef.current.proId ? { ...p, ...rest, ...(bio != null ? { headline: bio } : {}) } : p,
               ),
             },
           });
         } else {
           dispatch({
             type: 'set',
-            patch: { clients: state.clients.map((c) => (c.id === state.clientId ? { ...c, ...patch } : c)) },
+            patch: { clients: stateRef.current.clients.map((c) => (c.id === stateRef.current.clientId ? { ...c, ...patch } : c)) },
           });
         }
       },
 
       newId: uid,
     };
-  }, [state, dispatch]);
+  }, [stateRef, dispatch]);
 }
 
 type Ctx = State & ReturnType<typeof useActions>;
 const StoreContext = createContext<Ctx | null>(null);
 
 export function AppStoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initial);
-  const actions = useActions(state, dispatch);
+  const [state, setState] = useState(initial);
+  const stateRef = useRef(initial);
+  // dispatch síncrono: o ref já reflete a mudança antes do próximo comando
+  const dispatch = useCallback((action: Action) => {
+    stateRef.current = reducer(stateRef.current, action);
+    setState(stateRef.current);
+  }, []);
+  const actions = useActions(stateRef, dispatch);
 
   // Política de cancelamento: verifica a cada 30s se algum sinal venceu.
   useEffect(() => {
@@ -786,6 +849,15 @@ export function useLookup() {
       myPro: s.professionals.find((x) => x.id === s.proId)!,
       myProducts: s.products.filter((p) => s.productOwner[p.id] === s.proId),
       myServices: s.services.filter((x) => x.professionalId === s.proId),
+      /** Progresso do cartão fidelidade: do servidor quando houver, senão calculado no app (protótipo). */
+      loyalty: (professionalId: string) => {
+        const pro = s.professionals.find((x) => x.id === professionalId);
+        const card = s.loyaltyCards.find((c) => c.professionalId === professionalId);
+        if (card) return { ...card, inCycle: card.inCycle, remaining: card.remaining };
+        const program = pro?.loyalty ?? { enabled: false, goalAmount: 500, discountPercent: 10 };
+        const lp = loyaltyProgress(s.appointments, s.clientId, professionalId, program);
+        return { professionalId, enabled: program.enabled, goal: program.goalAmount, discountPercent: program.discountPercent, ...lp };
+      },
     }),
     [s],
   );

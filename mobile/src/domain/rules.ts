@@ -137,10 +137,11 @@ export function lastDoneOf(appointments: Appointment[], services: Service[], cli
   const done = appointments
     .filter((a) => a.clientId === clientId && a.status === 'concluido')
     .sort((a, b) => b.startsAt.localeCompare(a.startsAt));
-  return done.map((a) => {
-    const svc = services.find((s) => s.id === a.serviceId)!;
+  return done.flatMap((a) => {
+    const svc = services.find((s) => s.id === a.serviceId);
+    if (!svc) return [];
     const next = new Date(new Date(a.startsAt).getTime() + svc.returnIntervalDays * 86400_000);
-    return { appointment: a, service: svc, nextAt: next };
+    return [{ appointment: a, service: svc, nextAt: next }];
   });
 }
 
@@ -258,7 +259,8 @@ export function profitability(
   });
   const byService = new Map<string, { service: Service; count: number; revenue: number; cost: number }>();
   for (const a of done) {
-    const svc = services.find((s) => s.id === a.serviceId)!;
+    const svc = services.find((s) => s.id === a.serviceId);
+    if (!svc) continue;
     const row = byService.get(svc.id) ?? { service: svc, count: 0, revenue: 0, cost: 0 };
     row.count += 1;
     row.revenue += a.price - (a.discountApplied ?? 0);

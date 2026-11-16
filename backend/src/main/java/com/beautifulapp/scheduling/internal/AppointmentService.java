@@ -21,11 +21,12 @@ import com.beautifulapp.catalog.CatalogViews.OptionView;
 import com.beautifulapp.catalog.CatalogViews.ServiceView;
 import com.beautifulapp.common.ApiException;
 import com.beautifulapp.common.Ids;
+import com.beautifulapp.loyalty.LoyaltyApi;
 import com.beautifulapp.media.MediaApi;
 import com.beautifulapp.media.MediaKind;
 import com.beautifulapp.profile.ProfileApi;
 import com.beautifulapp.profile.PublicProfessional;
-import com.beautifulapp.scheduling.AppointmentCompleted;
+import com.beautifulapp.common.AppointmentCompleted;
 import com.beautifulapp.scheduling.internal.SchedulingDtos.*;
 
 @Service
@@ -35,16 +36,18 @@ class AppointmentService {
     private final CatalogApi catalog;
     private final ProfileApi profiles;
     private final MediaApi media;
+    private final LoyaltyApi loyalty;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
     AppointmentService(AppointmentRepository appointments, AvailabilityService availability, CatalogApi catalog, ProfileApi profiles,
-                       MediaApi media, ApplicationEventPublisher events, Clock clock) {
+                       MediaApi media, LoyaltyApi loyalty, ApplicationEventPublisher events, Clock clock) {
         this.appointments = appointments;
         this.availability = availability;
         this.catalog = catalog;
         this.profiles = profiles;
         this.media = media;
+        this.loyalty = loyalty;
         this.events = events;
         this.clock = clock;
     }
@@ -102,7 +105,12 @@ class AppointmentService {
         }
 
         a.priceCents = price;
-        a.depositCents = Math.round(price * svc.depositPercent() / 100.0);
+        if (in.voucherId() != null) {
+            // mesma transação: se o horário falhar, o voucher não é consumido
+            int percent = loyalty.redeem(clientAccountId, svc.professionalId(), in.voucherId(), a.id);
+            a.discountCents = Math.round(price * percent / 100.0);
+        }
+        a.depositCents = Math.round((price - a.discountCents) * svc.depositPercent() / 100.0);
         if (a.depositCents > 0) {
             a.status = AppointmentStatus.AWAITING_DEPOSIT;
             a.depositDueAt = depositDeadline(clock.instant(), start, pro.depositDeadlineHours());
@@ -219,6 +227,7 @@ class AppointmentService {
         if (!client && !isProOf(accountId, a)) throw notFound();
         if (!a.status.active()) throw invalidState(a);
         a.cancelledBy = client ? "CLIENT" : "PROFESSIONAL";
+        if (a.discountCents > 0) loyalty.release(a.id);
         return transition(a, AppointmentStatus.CANCELLED);
     }
 
@@ -226,7 +235,12 @@ class AppointmentService {
     @Scheduled(fixedDelayString = "${app.scheduling.expiry-interval:60000}", initialDelay = 10_000)
     @Transactional
     public int expireOverdueDeposits() {
-        return appointments.expireOverdue(clock.instant());
+        var overdue = appointments.findByStatusAndDepositDueAtBefore(AppointmentStatus.AWAITING_DEPOSIT, clock.instant());
+        for (Appointment a : overdue) {
+            if (a.discountCents > 0) loyalty.release(a.id);
+            transition(a, AppointmentStatus.EXPIRED);
+        }
+        return overdue.size();
     }
 
     // ---------- apoio ----------

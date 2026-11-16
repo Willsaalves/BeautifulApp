@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { patchProfessional } from '@/api/auth';
+import { saveLoyaltyProgram } from '@/api/business';
 import { setMyLocation } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
 import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
@@ -45,10 +46,11 @@ export default function ConfigFidelidade() {
 
   const [error, setError] = useState('');
   const save = async () => {
-    // fidelidade ainda é local (fase 4); Pix e prazo do sinal vão para a API
+    // fidelidade, Pix e prazo do sinal vão para a API
     if (API_ENABLED && me.remote) {
       try {
         s.applyMe(await patchProfessional({ pixKey: pix.trim(), depositDeadlineHours: num(hours) }), 'profissional');
+        await saveLoyaltyProgram(enabled, num(goal), Math.max(1, num(disc)));
       } catch (e) {
         return setError((e as Error).message);
       }

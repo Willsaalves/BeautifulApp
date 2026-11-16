@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable } from 'react-native';
 
 import { designFromApi, professionalFromPublic, publicPage, serviceFromApi, widgetFromApi } from '@/api/catalog';
+import { reviewFromApi } from '@/api/business';
 import { API_ENABLED } from '@/api/client';
 
 import { StoriesRow, activeStories } from '@/components/media';
@@ -38,6 +39,8 @@ export default function PerfilProfissional() {
           designs: (page.designs ?? []).map(designFromApi),
           replaceDesignsOf: id,
         });
+        latest.current.setProfessionalReviews(id, page.rating?.average ?? 0, page.rating?.count ?? 0,
+          (page.reviews ?? []).map((r) => reviewFromApi(r, id)));
       })
       .catch((e) => setLoadError((e as Error).message));
   }, [id]);

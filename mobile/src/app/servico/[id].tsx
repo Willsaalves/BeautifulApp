@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { setConsumption as saveConsumption } from '@/api/business';
 import { createService, deleteService, serviceFromApi, updateService } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
 import { NICHE_ICON, NICHE_LABEL } from '@/domain/rules';
@@ -67,7 +68,11 @@ export default function EditarServico() {
     setError('');
     try {
       const saved = existing ? await updateService(svc) : await createService(svc);
-      s.mergeRemote({ services: [serviceFromApi(saved, svc)] });
+      // consumo por atendimento: só produtos que já estão no servidor
+      const remoteProducts = new Set(L.myProducts.map((p) => p.id));
+      const items = svc.consumption.filter((c) => remoteProducts.has(c.productId) && /^[0-9a-f]{8}-/i.test(c.productId));
+      await saveConsumption(saved.id!, items);
+      s.mergeRemote({ services: [serviceFromApi(saved, { ...svc, consumption: items })] });
       router.back();
     } catch (e) {
       setError((e as Error).message);

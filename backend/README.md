@@ -43,6 +43,10 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | `page` | Página da profissional em blocos (capa, galeria, porcentagem, contagem, texto, trending…); SERVICOS e AGENDA obrigatórios |
 | `discovery` | Busca por nicho, texto e distância (PostGIS), página pública composta, vitrine de designs |
 | `scheduling` | Expediente, bloqueios, horários livres, agendamento (preço/sinal no servidor), comprovante, confirmar/recusar, ajuste de valor, concluir/cancelar, expiração automática do sinal (a cada minuto); exclusion constraint impede horário duplicado |
+| `inventory` | Produtos, compras com custo médio ponderado, consumo por serviço, baixa automática ao concluir (livro-razão, idempotente) |
+| `loyalty` | Programa de fidelidade (meta R$ → % OFF), saldo por cliente, vouchers (fidelidade e bônus mensal por avaliação), uso no agendamento |
+| `review` | Avaliação de atendimento concluído (1 por atendimento), nota média na busca e na página |
+| `analytics` | Painel de lucratividade (faturamento − custo real das baixas) e clientes atrasadas para retorno |
 | `media` | URL pré-assinada para upload direto ao storage; prefixos públicos (avatar, capa, portfólio, story, design) e privados (comprovante, referência); valida o dono da chave |
 | `common` | Erros RFC 7807 com `code`, UUID v7, normalização de celular |
 
@@ -74,6 +78,12 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | POST | `/appointments/{id}/confirm-deposit` · `/reject-receipt` | Profissional confere o sinal |
 | POST | `/appointments/{id}/adjustment` · `/adjustment/accept` · `/adjustment/decline` | Novo valor |
 | POST | `/appointments/{id}/complete` · `/cancel` | Concluir / cancelar |
+| GET/POST/PUT/DELETE | `/me/products` · POST `/purchases` · `/adjustments` | Estoque |
+| GET | `/me/stock-movements` · `/me/consumption` · PUT `/me/services/{id}/consumption` | Movimentações e consumo por serviço |
+| GET/PUT | `/me/loyalty-program` | Fidelidade da profissional |
+| GET | `/me/loyalty` · `/me/vouchers` | Cartões e vouchers da cliente |
+| POST | `/appointments/{id}/review` · GET `/me/reviews` · `/professionals/{id}/reviews` | Avaliações |
+| GET | `/me/analytics/profit?from&to` · `/me/analytics/overdue-clients` | Relatórios |
 
 ## Variáveis de ambiente (deploy de testes / produção)
 

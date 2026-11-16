@@ -3,6 +3,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable } from 'react-native';
 
+import { myReviews, myVouchers, reviewAppointment } from '@/api/business';
+import { API_ENABLED } from '@/api/client';
 import { Button, Card, Field, Header, IconCircle, Row, Screen, T } from '@/components/ui';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, space } from '@/theme';
@@ -15,6 +17,24 @@ export default function Feedback() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [earned, setEarned] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async () => {
+    if (!(API_ENABLED && a.remote)) return setEarned(s.submitFeedback(a.id, rating, comment || 'Amei!'));
+    setBusy(true);
+    setError('');
+    try {
+      const res = await reviewAppointment(a.id, rating, comment.trim());
+      const [vouchers, reviews] = await Promise.all([myVouchers(s.clientId), myReviews()]);
+      s.setRemoteClientData({ vouchers, reviews });
+      setEarned(!!res.voucher);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (earned !== null) {
     return (
@@ -50,7 +70,8 @@ export default function Feedback() {
       </Card>
       <Field label="Seu depoimento" placeholder="Conte como foi sua experiência" value={comment} onChangeText={setComment} multiline style={{ minHeight: 110, textAlignVertical: 'top' }} />
       <T v="small" muted>Avaliações ajudam outras clientes e rendem um voucher mensal no app.</T>
-      <Button title="Enviar avaliação" onPress={() => setEarned(s.submitFeedback(a.id, rating, comment || 'Amei!'))} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      <Button title={busy ? 'Enviando…' : 'Enviar avaliação'} disabled={busy} onPress={submit} />
     </Screen>
   );
 }

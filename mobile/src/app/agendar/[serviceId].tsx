@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { myVouchers } from '@/api/business';
 import { publicPage } from '@/api/catalog';
 import { API_ENABLED, ApiError } from '@/api/client';
 import { availability, createAppointment, workDaysFromApi } from '@/api/scheduling';
@@ -81,8 +82,7 @@ export default function Agendar() {
   const [busySubmit, setBusySubmit] = useState(false);
   const [error, setError] = useState('');
 
-  // vouchers entram na API na fase 4
-  const vouchers = remote ? [] : s.vouchers.filter(
+  const vouchers = s.vouchers.filter(
     (v) => v.clientId === s.clientId && !v.used && (!v.professionalId || v.professionalId === pro.id),
   );
   const voucher = vouchers.find((v) => v.id === voucherId);
@@ -101,8 +101,9 @@ export default function Agendar() {
     setBusySubmit(true);
     setError('');
     try {
-      const v = await createAppointment({ serviceId, startsAt: slot, selections, designId, referenceImage: reference, notes });
+      const v = await createAppointment({ serviceId, startsAt: slot, selections, designId, referenceImage: reference, notes, voucherId });
       s.mergeAppointments([v]);
+      if (voucherId) myVouchers(s.clientId).then((list) => latest.current.setRemoteClientData({ vouchers: list })).catch(() => undefined);
       router.replace(`/agendamento/${v.id}`);
     } catch (e) {
       setError((e as Error).message);

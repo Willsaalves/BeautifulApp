@@ -34,10 +34,5 @@ interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
     List<Appointment> findTop100ByClientAccountIdOrderByStartsAtDesc(UUID clientAccountId);
 
     /** Política de cancelamento: sinal não pago até o prazo libera o horário. */
-    @Modifying
-    @Query("""
-            update Appointment a set a.status = com.beautifulapp.scheduling.internal.AppointmentStatus.EXPIRED, a.updatedAt = :now,
-                   a.version = a.version + 1
-             where a.status = com.beautifulapp.scheduling.internal.AppointmentStatus.AWAITING_DEPOSIT and a.depositDueAt < :now""")
-    int expireOverdue(Instant now);
+    List<Appointment> findByStatusAndDepositDueAtBefore(AppointmentStatus status, Instant now);
 }

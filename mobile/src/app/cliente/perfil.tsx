@@ -7,7 +7,7 @@ import { Thumb } from '@/components/media';
 import { ProfileHeader, handleOf } from '@/components/profile-header';
 
 import { Badge, Button, Card, Empty, ProgressBar, Row, Screen, SectionTitle, T } from '@/components/ui';
-import { brl, fmtDate, loyaltyProgress } from '@/domain/rules';
+import { brl, fmtDate } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, space } from '@/theme';
 
@@ -20,6 +20,10 @@ export default function ClientePerfil() {
     new Set([...me.favorites, ...s.appointments.filter((a) => a.clientId === me.id).map((a) => a.professionalId)]),
   );
   const vouchers = s.vouchers.filter((v) => v.clientId === me.id);
+  const loyaltyPros = Array.from(new Set([...proIds, ...s.loyaltyCards.map((c) => c.professionalId)]))
+    .filter((id) => s.professionals.some((p) => p.id === id))
+    .map(L.pro)
+    .filter((p) => L.loyalty(p.id).enabled);
   const done = s.appointments.filter((a) => a.clientId === me.id && a.status === 'concluido').length;
   const myStories = s.stories.filter((x) => x.authorType === 'cliente' && x.authorId === me.id);
 
@@ -56,11 +60,11 @@ export default function ClientePerfil() {
       </View>
 
       <SectionTitle title="Cartões fidelidade" />
-      {proIds.map(L.pro).filter((p) => p.loyalty.enabled).length === 0 ? (
+      {loyaltyPros.length === 0 ? (
         <Empty icon="heart-outline" text="Seus cartões fidelidade aparecem aqui depois do primeiro atendimento." />
       ) : null}
-      {proIds.map(L.pro).filter((p) => p.loyalty.enabled).map((p) => {
-        const lp = loyaltyProgress(s.appointments, me.id, p.id, p.loyalty);
+      {loyaltyPros.map((p) => {
+        const lp = L.loyalty(p.id);
         return (
           <Card key={p.id} onPress={() => router.push(`/profissional/${p.id}`)}>
             <Row style={{ justifyContent: 'space-between' }}>
@@ -69,7 +73,7 @@ export default function ClientePerfil() {
             </Row>
             <ProgressBar percent={lp.percent} height={10} />
             <T v="small" muted>
-              {brl(lp.inCycle)} de {brl(p.loyalty.goalAmount)} · ganha {p.loyalty.discountPercent}% de desconto ao completar
+              {brl(lp.inCycle)} de {brl(lp.goal)} · ganha {lp.discountPercent}% de desconto ao completar
             </T>
           </Card>
         );

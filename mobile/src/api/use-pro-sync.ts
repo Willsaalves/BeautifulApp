@@ -13,6 +13,7 @@ import {
   widgetsSignature,
 } from './catalog';
 import { API_ENABLED } from './client';
+import { myConsumption, myLoyaltyProgram, myMovements, myProducts } from './business';
 import { myAgenda, myWorkHours } from './scheduling';
 
 /**
@@ -39,6 +40,7 @@ export function useProSync() {
     (async () => {
       try {
         const [svcs, dz, ws, days, agenda] = await Promise.all([myServices(), myDesigns(), myWidgets(), myWorkHours(), myAgenda()]);
+        const [products, movements, consumption, program] = await Promise.all([myProducts(), myMovements(), myConsumption(), myLoyaltyProgram()]);
         if (cancelled) return;
         const st = latest.current;
         const widgets = ws.map(widgetFromApi);
@@ -51,6 +53,10 @@ export function useProSync() {
         });
         st.setWorkDays(st.proId, days);
         latest.current.mergeAppointments(agenda);
+        latest.current.setRemoteStock({ products, movements, consumption });
+        latest.current.updateProfessional({
+          loyalty: { enabled: program.enabled ?? false, goalAmount: (program.goalCents ?? 50000) / 100, discountPercent: program.discountPercent ?? 10 },
+        });
         lastSig.current = widgetsSignature(widgets);
         loaded.current = true;
         setError(null);
@@ -95,4 +101,11 @@ export function useProSync() {
   }, [sig, active]);
 
   return { error, saving };
+}
+
+/** Recarrega estoque e movimentações (ex.: depois de concluir um atendimento). */
+export async function refreshStock(st: ReturnType<typeof useStore>) {
+  const [products, movements, consumption] = await Promise.all([myProducts(), myMovements(), myConsumption()]);
+  st.setRemoteStock({ products, movements, consumption });
+  return products;
 }

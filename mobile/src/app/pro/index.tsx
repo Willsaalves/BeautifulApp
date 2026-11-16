@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
+import { useProStats } from '@/api/use-pro-stats';
 import { StoriesRow } from '@/components/media';
 import { Avatar, Badge, Card, IconCircle, ProgressBar, Row, Screen, SectionTitle, Stat, StatusBadge, T } from '@/components/ui';
-import { brl, fmtTime, isLowStock, overdueClients } from '@/domain/rules';
+import { brl, fmtTime, isLowStock } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, space } from '@/theme';
 
@@ -22,10 +23,7 @@ export default function ProHome() {
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const toConfirm = mine.filter((a) => a.status === 'sinal_enviado');
   const waitingDeposit = mine.filter((a) => a.status === 'aguardando_sinal');
-  const monthRevenue = mine
-    .filter((a) => a.status === 'concluido' && new Date(a.startsAt).getMonth() === now.getMonth() && new Date(a.startsAt).getFullYear() === now.getFullYear())
-    .reduce((sum, a) => sum + a.price - (a.discountApplied ?? 0), 0);
-  const overdue = overdueClients(s.appointments, s.services, s.clients, me.id);
+  const { monthRevenue, overdue } = useProStats();
   const low = L.myProducts.filter(isLowStock);
 
   return (

@@ -29,7 +29,8 @@ final class SchedulingDtos {
             @Size(max = 6) List<@Valid SelectionInput> selections,
             UUID designId,
             String referenceKey,
-            @Size(max = 500) String notes) {}
+            @Size(max = 500) String notes,
+            UUID voucherId) {}
 
     record ReceiptInput(@NotBlank String receiptKey) {}
 

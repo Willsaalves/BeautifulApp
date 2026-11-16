@@ -2,11 +2,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { createProduct, purchase } from '@/api/business';
+import { API_ENABLED } from '@/api/client';
+import { refreshStock } from '@/api/use-pro-sync';
 import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { brl } from '@/domain/rules';
 import type { Unit } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
-import { space } from '@/theme';
+import { colors, space } from '@/theme';
 
 const num = (v: string) => Number(v.replace(',', '.')) || 0;
 
@@ -27,7 +30,26 @@ export default function Compra() {
   const valid = num(qty) > 0 && (!isNew || name.trim().length > 1);
   const totalCost = num(qty) * num(cost);
 
-  const save = () => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const remote = API_ENABLED && !!L.myPro.remote;
+
+  const save = async () => {
+    if (remote) {
+      setBusy(true);
+      setError('');
+      try {
+        const id = productId ?? (await createProduct({ name: name.trim(), unit, minQuantity: num(min), lot: lot || undefined })).id;
+        await purchase(id, num(qty), num(cost) || undefined, lot || undefined);
+        await refreshStock(s);
+        router.back();
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     s.registerPurchase({
       productId,
       name: name.trim(),
@@ -67,7 +89,8 @@ export default function Compra() {
         <Field label="Lote — opcional" placeholder="Ex: HA-2291" value={lot} onChangeText={setLot} />
         {totalCost ? <T v="small" muted>Total da compra: {brl(totalCost)}</T> : null}
       </Card>
-      <Button title="Salvar compra" disabled={!valid} onPress={save} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      <Button title={busy ? 'Salvando…' : 'Salvar compra'} disabled={!valid || busy} onPress={save} />
     </Screen>
   );
 }

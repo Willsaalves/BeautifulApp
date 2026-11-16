@@ -32,7 +32,6 @@ import {
   fmtDate,
   fmtDateTime,
   lastDoneOf,
-  loyaltyProgress,
 } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { currentCoords } from '@/lib/location';
@@ -72,7 +71,11 @@ export default function ClienteHome() {
   );
   const myVouchers = s.vouchers.filter((v) => v.clientId === me.id && !v.used);
   const dreamPct = dreamsProgress(me.dreams);
-  const favPros = me.favorites.map(L.pro);
+  const favPros = me.favorites.filter((id) => s.professionals.some((p) => p.id === id)).map(L.pro);
+  const loyaltyPros = Array.from(new Set([...s.loyaltyCards.map((c) => c.professionalId), ...favPros.map((p) => p.id)]))
+    .filter((id) => s.professionals.some((p) => p.id === id))
+    .map(L.pro)
+    .filter((p) => L.loyalty(p.id).enabled);
 
   // API ligada: vitrine de designs mais perto / mais recentes
   const [remoteTrending, setRemoteTrending] = useState<string[] | null>(null);
@@ -258,8 +261,8 @@ export default function ClienteHome() {
       {/* Fidelidade */}
       <SectionTitle title="Minha fidelidade" action="Ver tudo" onAction={() => router.push('/cliente/perfil')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }}>
-        {favPros.filter((p) => p.loyalty.enabled).map((p) => {
-          const lp = loyaltyProgress(s.appointments, me.id, p.id, p.loyalty);
+        {loyaltyPros.map((p) => {
+          const lp = L.loyalty(p.id);
           return (
             <Card key={p.id} style={{ width: 230 }} onPress={() => router.push(`/profissional/${p.id}`)}>
               <Row>
@@ -268,7 +271,7 @@ export default function ClienteHome() {
               </Row>
               <T v="display" style={{ fontSize: 30 }}>{lp.percent}%</T>
               <ProgressBar percent={lp.percent} />
-              <T v="small" muted>Faltam {brl(lp.remaining)} para {p.loyalty.discountPercent}% OFF</T>
+              <T v="small" muted>Faltam {brl(lp.remaining)} para {lp.discountPercent}% OFF</T>
             </Card>
           );
         })}
