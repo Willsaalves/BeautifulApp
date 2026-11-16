@@ -90,6 +90,22 @@ class OnboardingTest extends ApiTestSupport {
     }
 
     @Test
+    void professionalSwitchingToClientAreaCanEditClientProfile() throws Exception {
+        String token = token();
+        postJson("/me/onboarding", json(
+                "{'role':'PROFESSIONAL','name':'Willian','studio':'Studio W','niche':'CABELO','neighborhood':'Centro','acceptedTerms':true}"), token, 200);
+        String avatar = read(postJson("/media/upload-url", json("{'kind':'AVATAR','contentType':'image/jpeg','sizeBytes':1000}"), token, 200), "$.key");
+
+        String me = mvc.perform(patch("/me/client-profile").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json("{'photoKey':'%s'}", avatar)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(read(me, "$.client.name")).isEqualTo("Willian");
+        assertThat(read(me, "$.client.photoUrl")).endsWith(avatar);
+        assertThat(me).contains("CLIENT").contains("PROFESSIONAL");
+    }
+
+    @Test
     void cannotUseSomeoneElsesPhoto() throws Exception {
         String other = token();
         String foreignKey = read(postJson("/media/upload-url", json("{'kind':'AVATAR','contentType':'image/jpeg','sizeBytes':1000}"), other, 200), "$.key");

@@ -95,8 +95,9 @@ class ProfileService {
 
     @Transactional
     Me patchClient(UUID accountId, ClientPatch in) {
-        ClientProfile c = clients.findById(accountId)
-                .orElseThrow(() -> ApiException.notFound("PROFILE_NOT_FOUND", "Perfil de cliente não encontrado."));
+        // Profissional que trocou para a área da cliente ainda não tem perfil de cliente: cria na hora.
+        String requestedName = in.name();
+        ClientProfile c = clients.findById(accountId).orElseGet(() -> createClientFor(accountId, requestedName));
         in = new ClientPatch(in.name(), in.bio(), media.normalizeKey(in.photoKey()), media.normalizeKey(in.coverKey()), in.email());
         media.assertOwned(in.photoKey(), accountId, MediaKind.AVATAR);
         media.assertOwned(in.coverKey(), accountId, MediaKind.COVER);
@@ -107,6 +108,15 @@ class ProfileService {
         if (in.email() != null) identity.updateEmail(accountId, blankToNull(in.email()));
         c.updatedAt = clock.instant();
         return me(accountId);
+    }
+
+    private ClientProfile createClientFor(UUID accountId, String requestedName) {
+        String name = StringUtils.hasText(requestedName) ? requestedName.trim()
+                : professionals.findByAccountId(accountId).map(p -> p.name)
+                        .orElseThrow(() -> ApiException.notFound("PROFILE_NOT_FOUND", "Perfil de cliente não encontrado."));
+        ClientProfile c = clients.save(new ClientProfile(accountId, name, Handles.from(name, clients::existsByHandle), clock.instant()));
+        identity.grantRole(accountId, Role.CLIENT);
+        return c;
     }
 
     @Transactional
