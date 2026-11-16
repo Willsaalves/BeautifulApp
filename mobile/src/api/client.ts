@@ -74,7 +74,11 @@ export async function unwrap<T>(p: Promise<{ data?: T; error?: unknown; response
   try {
     r = await p;
   } catch {
-    throw new ApiError(0, 'NETWORK', 'Sem conexão com o servidor. Verifique sua internet.');
+    throw new ApiError(
+      0,
+      'NETWORK',
+      __DEV__ ? `Sem conexão com a API em ${API_URL}. Abra ${API_URL}/actuator/health no navegador do celular para testar.` : 'Sem conexão com o servidor. Verifique sua internet.',
+    );
   }
   if (r.response.ok) return r.data as T;
   const e = (r.error ?? {}) as { code?: string; detail?: string; fields?: Record<string, string> };
