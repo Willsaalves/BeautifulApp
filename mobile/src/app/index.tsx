@@ -5,7 +5,6 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ProgressBar, Ring, Row, T } from '@/components/ui';
-import { useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
 
 const NICHES = [
@@ -19,11 +18,7 @@ const NICHES = [
 // Tela de entrada, no estilo da referência (cards brancos, anel de progresso, pílulas pretas).
 // Com o backend, os botões levam ao login por telefone + código.
 export default function Welcome() {
-  const { setRole } = useStore();
-  const enter = (role: 'cliente' | 'profissional') => {
-    setRole(role);
-    router.replace(role === 'cliente' ? '/cliente' : '/pro');
-  };
+  const enter = (role: 'cliente' | 'profissional') => router.push(`/cadastro?role=${role}`);
 
   return (
     <LinearGradient colors={[colors.lilac, '#E4DAF0', colors.bg]} locations={[0, 0.35, 0.75]} style={{ flex: 1 }}>
@@ -48,13 +43,13 @@ export default function Welcome() {
 
           {/* card principal com anel de progresso */}
           <View style={styles.card}>
-            <T v="overline" style={{ textAlign: 'center', fontSize: 10 }}>Seu sonho ideal está mais perto</T>
+            <T v="overline" style={{ textAlign: 'center', fontSize: 10 }}>Seus próximos procedimentos</T>
             <Row gap={space.lg} style={{ marginTop: space.sm }}>
-              <Ring percent={69} size={118} stroke={13} sub="do sonho" />
+              <Ring percent={69} size={118} stroke={13} sub="concluído" />
               <View style={{ flex: 1, gap: 6 }}>
                 <T v="small" muted>Você está</T>
                 <T v="title" style={{ fontSize: 24, lineHeight: 25 }}>LINDA &{'\n'}CONFIANTE</T>
-                <T v="small" muted>Faltam 2 procedimentos para o seu sonho ideal.</T>
+                <T v="small" muted>Faltam 2 procedimentos do seu plano.</T>
               </View>
             </Row>
           </View>
@@ -112,8 +107,11 @@ export default function Welcome() {
             </Pressable>
           </Row>
 
-          <Pressable onPress={() => enter('cliente')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}>
-            <T v="small" color={colors.card} style={{ fontWeight: '800', letterSpacing: 1 }}>COMEÇAR AGORA</T>
+          <Pressable onPress={() => router.push('/cadastro')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}>
+            <T v="small" color={colors.card} style={{ fontWeight: '800', letterSpacing: 1 }}>CRIAR CONTA</T>
+          </Pressable>
+          <Pressable onPress={() => router.push('/login')} style={({ pressed }) => [styles.ctaOutline, pressed && styles.pressed]}>
+            <T v="small" style={{ fontWeight: '800', letterSpacing: 1 }}>JÁ TENHO CONTA · ENTRAR</T>
           </Pressable>
           <T v="small" muted style={{ textAlign: 'center', fontSize: 11 }}>
             Ao continuar você concorda com os Termos e a Política de Privacidade (LGPD).
@@ -134,5 +132,6 @@ const styles = StyleSheet.create({
   tile: { flex: 1, borderRadius: radius.xl, padding: space.lg, gap: space.sm, minHeight: 140, justifyContent: 'space-between' },
   tileTitle: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3, lineHeight: 18 },
   cta: { height: 54, borderRadius: radius.pill, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center', marginTop: space.xs },
+  ctaOutline: { height: 54, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.black, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });

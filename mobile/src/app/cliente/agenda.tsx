@@ -32,7 +32,7 @@ export default function ClienteAgenda() {
         return (
           <Card key={a.id} onPress={() => router.push(`/agendamento/${a.id}`)}>
             <Row gap={space.md}>
-              <Avatar name={p.name} color={p.avatar} />
+              <Avatar name={p.name} color={p.avatar} photo={p.photo} />
               <View style={{ flex: 1, gap: 2 }}>
                 <T v="h3">{svc.name}</T>
                 <T v="small" muted>{p.name}</T>

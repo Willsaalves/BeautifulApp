@@ -32,7 +32,7 @@ export default function ProHome() {
     <Screen>
       <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
         <T v="display">OLÁ,{'\n'}{me.name.split(' ')[0].toUpperCase()}! ✨</T>
-        <Avatar name={me.name} color={me.avatar} size={48} />
+        <Avatar name={me.name} color={me.avatar} photo={me.photo} size={48} />
       </Row>
 
       <StoriesRow onlyPro={me.id} />
@@ -94,7 +94,7 @@ export default function ProHome() {
           <Card>
             {overdue.slice(0, 3).map((o) => (
               <Row key={o.client.id} gap={space.md}>
-                <Avatar name={o.client.name} color={o.client.avatar} size={36} />
+                <Avatar name={o.client.name} color={o.client.avatar} photo={o.client.photo} size={36} />
                 <View style={{ flex: 1 }}>
                   <T v="h3">{o.client.name}</T>
                   <T v="small" muted>{o.service.name}</T>

@@ -70,7 +70,7 @@ export default function Agendar() {
       <Header title={repeat ? 'Reagendar' : 'Agendar'} />
       <Card>
         <Row gap={space.md}>
-          <Avatar name={pro.name} color={pro.avatar} />
+          <Avatar name={pro.name} color={pro.avatar} photo={pro.photo} />
           <View style={{ flex: 1 }}>
             <T v="h3">{service.name}</T>
             <T v="small" muted>{pro.name} · {service.durationMin} min</T>

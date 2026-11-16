@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React from 'react';
 import {
@@ -253,7 +254,7 @@ export function Ring({ percent, size = 112, stroke = 12, label, sub }: { percent
   );
 }
 
-export function Avatar({ name, color = colors.lilac, size = 44 }: { name: string; color?: string; size?: number }) {
+export function Avatar({ name, color = colors.lilac, size = 44, photo }: { name: string; color?: string; size?: number; photo?: string }) {
   const initials = name
     .replace(/^Dra?\.\s*/, '')
     .split(' ')
@@ -262,8 +263,12 @@ export function Avatar({ name, color = colors.lilac, size = 44 }: { name: string
     .join('')
     .toUpperCase();
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.card }}>
-      <Text style={{ fontWeight: '800', fontSize: size * 0.36, color: colors.black }}>{initials}</Text>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.card, overflow: 'hidden' }}>
+      {photo ? (
+        <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+      ) : (
+        <Text style={{ fontWeight: '800', fontSize: size * 0.36, color: colors.black }}>{initials || '?'}</Text>
+      )}
     </View>
   );
 }

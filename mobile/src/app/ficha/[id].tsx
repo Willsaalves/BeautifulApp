@@ -23,7 +23,7 @@ export default function Ficha() {
     <Screen bottomInset={40}>
       <Header title="Ficha da cliente" />
       <Row gap={space.md}>
-        <Avatar name={c.name} color={c.avatar} size={64} />
+        <Avatar name={c.name} color={c.avatar} photo={c.photo} size={64} />
         <View style={{ flex: 1 }}>
           <T v="title">{c.name}</T>
           <T muted>{c.phone}</T>

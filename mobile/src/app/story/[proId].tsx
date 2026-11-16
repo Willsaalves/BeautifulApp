@@ -43,7 +43,7 @@ export default function StoryViewer() {
   const st = list[i];
   if (!st) return null;
   const pro = L.pro(proId);
-  const author = st.authorType === 'profissional' ? { name: L.pro(st.authorId).name, avatar: L.pro(st.authorId).avatar } : L.client(st.authorId);
+  const author = st.authorType === 'profissional' ? L.pro(st.authorId) : L.client(st.authorId);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.black }}>
@@ -58,7 +58,7 @@ export default function StoryViewer() {
             ))}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-            <Avatar name={author.name} color={author.avatar} size={36} />
+            <Avatar name={author.name} color={author.avatar} photo={author.photo} size={36} />
             <View style={{ flex: 1 }}>
               <T v="h3" color={colors.card}>{author.name} <T v="small" color={colors.offWhite}>· {ago(st.createdAt)}</T></T>
               {st.authorType === 'cliente' ? <T v="small" color={colors.lilac}>com {pro.name}{st.serviceId ? ` · ${L.service(st.serviceId).name}` : ''}</T> : null}

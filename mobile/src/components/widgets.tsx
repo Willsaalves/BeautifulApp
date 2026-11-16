@@ -85,11 +85,11 @@ export function WidgetView({ w, pro }: { w: Widget; pro: Professional }) {
 function Capa({ w, pro }: { w: Widget; pro: Professional }) {
   return (
     <View style={{ borderRadius: radius.xl, overflow: 'hidden', backgroundColor: w.color ?? colors.lilac }}>
-      <Thumb src={w.image} bg={w.color ?? colors.lilac} style={{ height: 170 }} emojiSize={64} />
+      <Thumb src={w.image ?? pro.cover} bg={w.color ?? colors.lilac} style={{ height: 170 }} emojiSize={64} />
       <View style={{ padding: space.lg, gap: 4, backgroundColor: colors.card }}>
         <Row gap={space.md}>
           <View style={{ marginTop: -44 }}>
-            <Avatar name={pro.name} color={pro.avatar} size={72} />
+            <Avatar name={pro.name} color={pro.avatar} photo={pro.photo} size={72} />
           </View>
           <View style={{ flex: 1 }}>
             <Badge label={NICHE_LABEL[pro.niche]} />

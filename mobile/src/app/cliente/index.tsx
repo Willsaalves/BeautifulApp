@@ -67,21 +67,21 @@ export default function ClienteHome() {
             <Ionicons name="notifications-outline" size={20} />
           </Pressable>
           <Pressable onPress={() => router.push('/cliente/perfil')}>
-            <Avatar name={me.name} color={me.avatar} />
+            <Avatar name={me.name} color={me.avatar} photo={me.photo} />
           </Pressable>
         </Row>
       </Row>
 
       <StoriesRow />
 
-      {/* Procedimentos dos sonhos */}
+      {/* Seus próximos procedimentos */}
       <Card>
-        <T v="overline" style={{ textAlign: 'center' }}>Seus procedimentos dos sonhos</T>
+        <T v="overline" style={{ textAlign: 'center' }}>Seus próximos procedimentos</T>
         <Row gap={space.lg} style={{ marginTop: space.sm }}>
           <Ring percent={dreamPct} sub={`${me.dreams.filter((d) => d.done).length}/${me.dreams.length}`} />
           <View style={{ flex: 1, gap: 6 }}>
             {me.dreams.length === 0 ? (
-              <T muted>Quais são os seus próximos procedimentos dos sonhos, e até quando pretende realizá-los?</T>
+              <T muted>Quais são os seus próximos procedimentos, e até quando pretende realizá-los?</T>
             ) : (
               me.dreams.slice(0, 3).map((d) => (
                 <Row key={d.id} gap={6}>
@@ -97,7 +97,7 @@ export default function ClienteHome() {
                 </Row>
               ))
             )}
-            <Button small title={me.dreams.length ? 'Ver meus sonhos' : 'Definir sonhos'} onPress={() => router.push('/sonhos')} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
+            <Button small title={me.dreams.length ? 'Ver próximos' : 'Planejar procedimentos'} onPress={() => router.push('/proximos')} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
           </View>
         </Row>
       </Card>
@@ -167,7 +167,7 @@ export default function ClienteHome() {
           return (
             <Card key={p.id} style={{ width: 230 }} onPress={() => router.push(`/profissional/${p.id}`)}>
               <Row>
-                <Avatar name={p.name} color={p.avatar} size={34} />
+                <Avatar name={p.name} color={p.avatar} photo={p.photo} size={34} />
                 <T v="small" style={{ flex: 1, fontWeight: '700' }} numberOfLines={1}>{p.name}</T>
               </Row>
               <T v="display" style={{ fontSize: 30 }}>{lp.percent}%</T>

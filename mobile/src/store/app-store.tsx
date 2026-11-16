@@ -447,6 +447,103 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         return st.id;
       },
 
+      // ---------- Conta ----------
+      /** Login por telefone (mock do OTP). Devolve o papel encontrado ou null se não houver conta. */
+      login(phone: string): Role | null {
+        const digits = (x?: string) => (x ?? '').replace(/\D/g, '');
+        const c = state.clients.find((x) => digits(x.phone) === digits(phone));
+        if (c) {
+          dispatch({ type: 'set', patch: { role: 'cliente', clientId: c.id } });
+          return 'cliente';
+        }
+        const p = state.professionals.find((x) => digits(x.phone) === digits(phone));
+        if (p) {
+          dispatch({ type: 'set', patch: { role: 'profissional', proId: p.id } });
+          return 'profissional';
+        }
+        return null;
+      },
+
+      register(input: {
+        role: Role;
+        name: string;
+        phone: string;
+        email?: string;
+        photo?: string;
+        cover?: string;
+        bio?: string;
+        niche?: Professional['niche'];
+        studio?: string;
+        neighborhood?: string;
+        city?: string;
+        pixKey?: string;
+      }) {
+        if (input.role === 'cliente') {
+          const c: Client = {
+            id: uid('c'),
+            name: input.name,
+            phone: input.phone,
+            email: input.email,
+            photo: input.photo,
+            cover: input.cover,
+            bio: input.bio,
+            avatar: '#CDBCE7',
+            favorites: [],
+            dreams: [],
+          };
+          dispatch({ type: 'set', patch: { clients: [...state.clients, c], clientId: c.id, role: 'cliente' } });
+        } else {
+          const base = {
+            id: uid('p'),
+            name: input.name,
+            niche: input.niche ?? 'unha',
+            headline: input.bio || 'Novo perfil',
+            city: input.city || 'São Paulo',
+            neighborhood: input.neighborhood || '',
+            distanceKm: 0.5,
+            rating: 5,
+            reviews: 0,
+            avatar: '#CDBCE7',
+            photo: input.photo,
+            cover: input.cover,
+            phone: input.phone,
+            email: input.email,
+            portfolio: [],
+            pixKey: input.pixKey || '',
+            depositDeadlineHours: 12,
+            loyalty: { enabled: false, goalAmount: 500, discountPercent: 10 },
+            workHours: { start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5, 6] },
+          };
+          const p: Professional = {
+            ...base,
+            widgets: mock.defaultWidgets({ ...base, name: input.studio || input.name }).map((w) =>
+              w.type === 'capa' ? { ...w, image: input.cover } : w,
+            ),
+          };
+          dispatch({ type: 'set', patch: { professionals: [...state.professionals, p], proId: p.id, role: 'profissional' } });
+        }
+      },
+
+      /** Edita o perfil de quem está logada (capa, foto, nome, bio). */
+      updateMe(patch: { name?: string; photo?: string; cover?: string; bio?: string; email?: string }) {
+        if (state.role === 'profissional') {
+          const { bio, ...rest } = patch;
+          dispatch({
+            type: 'set',
+            patch: {
+              professionals: state.professionals.map((p) =>
+                p.id === state.proId ? { ...p, ...rest, ...(bio != null ? { headline: bio } : {}) } : p,
+              ),
+            },
+          });
+        } else {
+          dispatch({
+            type: 'set',
+            patch: { clients: state.clients.map((c) => (c.id === state.clientId ? { ...c, ...patch } : c)) },
+          });
+        }
+      },
+
       newId: uid,
     };
   }, [state, dispatch]);

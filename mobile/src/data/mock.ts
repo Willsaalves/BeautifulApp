@@ -26,6 +26,7 @@ const baseProfessionals: Omit<Professional, 'widgets'>[] = [
     avatar: '#CDBCE7',
     portfolio: ['💅', '✨', '🌸', '💎', '🤍', '🦋'],
     pixKey: 'camila.nails@pix.com',
+    phone: '(11) 98765-4321',
     depositDeadlineHours: 12,
     loyalty: { enabled: true, goalAmount: 500, discountPercent: 15 },
     workHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] },
@@ -240,6 +241,7 @@ export const clients: Client[] = [
     name: 'Bruna',
     phone: '(11) 99999-0000',
     avatar: '#CDBCE7',
+    bio: 'Apaixonada por unhas longas e skincare 💜',
     favorites: ['p1', 'p2'],
     dreams: [
       { id: 'd1', niche: 'unha', label: 'Unhas stiletto longas', targetDate: at(20, 0), done: true },

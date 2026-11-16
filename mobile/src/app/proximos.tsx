@@ -16,7 +16,7 @@ const HORIZONS = [
   { label: '1 ano', days: 365 },
 ];
 
-export default function Sonhos() {
+export default function ProximosProcedimentos() {
   const s = useStore();
   const L = useLookup();
   const dreams = L.me.dreams;
@@ -36,8 +36,8 @@ export default function Sonhos() {
 
   return (
     <Screen bottomInset={40}>
-      <Header title="Procedimentos dos sonhos" />
-      <T v="display">MEU SONHO{'\n'}IDEAL ✨</T>
+      <Header title="Próximos procedimentos" />
+      <T v="display">SEUS PRÓXIMOS{'\n'}PROCEDIMENTOS ✨</T>
       <Card tone="lilac">
         <Row style={{ justifyContent: 'space-between' }}>
           <T v="overline">Progresso</T>
@@ -72,7 +72,7 @@ export default function Sonhos() {
                   {wallet.map((p) => (
                     <Pressable key={p.id} onPress={() => router.push(`/profissional/${p.id}`)}>
                       <Row gap={6} style={{ backgroundColor: colors.lilacSoft, borderRadius: 999, paddingRight: 12 }}>
-                        <Avatar name={p.name} color={p.avatar} size={30} />
+                        <Avatar name={p.name} color={p.avatar} photo={p.photo} size={30} />
                         <T v="small" style={{ fontWeight: '700' }}>{p.name}</T>
                       </Row>
                     </Pressable>
@@ -86,7 +86,7 @@ export default function Sonhos() {
         );
       })}
 
-      <SectionTitle title="Adicionar sonho" />
+      <SectionTitle title="Adicionar procedimento" />
       <Card>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           {(Object.keys(NICHE_LABEL) as Niche[]).map((n) => (

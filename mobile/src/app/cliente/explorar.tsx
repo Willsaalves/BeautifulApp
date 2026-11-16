@@ -56,7 +56,7 @@ export default function Explorar() {
         return (
           <Card key={p.id} onPress={() => router.push(`/profissional/${p.id}`)}>
             <Row gap={space.md}>
-              <Avatar name={p.name} color={p.avatar} size={56} />
+              <Avatar name={p.name} color={p.avatar} photo={p.photo} size={56} />
               <View style={{ flex: 1, gap: 2 }}>
                 <T v="h3">{p.name}</T>
                 <T v="small" muted numberOfLines={1}>{p.headline}</T>

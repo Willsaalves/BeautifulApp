@@ -39,7 +39,7 @@ export default function ProClientes() {
         return (
           <Card key={c.id} onPress={() => router.push(`/ficha/${c.id}`)}>
             <Row gap={space.md}>
-              <Avatar name={c.name} color={c.avatar} />
+              <Avatar name={c.name} color={c.avatar} photo={c.photo} />
               <View style={{ flex: 1, gap: 2 }}>
                 <T v="h3">{c.name}</T>
                 <T v="small" muted>{last ? `Último: ${last.service.name} · ${fmtDate(last.appointment.startsAt)}` : 'Primeiro atendimento agendado'}</T>

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
+import { ProfileHeader, handleOf } from '@/components/profile-header';
 import { Button, Card, IconCircle, Row, Screen, SectionTitle, T, type IconName } from '@/components/ui';
 import { WIDGET_CATALOG } from '@/components/widgets';
 import { brl } from '@/domain/rules';
@@ -42,10 +43,26 @@ export default function ProPerfil() {
 
   return (
     <Screen>
-      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
-        <T v="display">EDITE SEU{'\n'}PERFIL</T>
-        <Button small title="Ver página" icon="eye" onPress={() => router.push(`/profissional/${me.id}`)} />
-      </Row>
+      <View style={{ marginTop: space.sm }}>
+        <ProfileHeader
+          name={me.name}
+          color={me.avatar}
+          photo={me.photo}
+          cover={me.cover}
+          right={
+            <Row>
+              <Button small variant="outline" title="Editar perfil" onPress={() => router.push('/perfil/editar')} />
+              <Button small title="Ver página" icon="eye" onPress={() => router.push(`/profissional/${me.id}`)} />
+            </Row>
+          }
+        />
+      </View>
+      <View style={{ paddingHorizontal: 4, gap: 2 }}>
+        <T v="title">{me.name}</T>
+        <T v="small" muted>{handleOf(me.name)} · {me.neighborhood}</T>
+        <T style={{ marginTop: 4 }}>{me.headline}</T>
+      </View>
+      <T v="display" style={{ marginTop: space.md }}>EDITE SUA{'\n'}PÁGINA</T>
       <T muted>Monte sua página como quiser. Agenda e serviços são fixos — mantenha seus dias e horários sempre atualizados.</T>
 
       <SectionTitle title={`Blocos da página (${ws.length})`} />

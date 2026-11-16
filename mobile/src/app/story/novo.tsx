@@ -58,7 +58,7 @@ export default function NovoStory() {
               return (
                 <Pressable key={id} onPress={() => setProId(id)}>
                   <Row gap={6} style={{ backgroundColor: sel ? colors.black : colors.card, borderRadius: 999, paddingRight: 12 }}>
-                    <Avatar name={p.name} color={p.avatar} size={32} />
+                    <Avatar name={p.name} color={p.avatar} photo={p.photo} size={32} />
                     <T v="small" color={sel ? colors.card : colors.text} style={{ fontWeight: '700' }}>{p.name}</T>
                   </Row>
                 </Pressable>

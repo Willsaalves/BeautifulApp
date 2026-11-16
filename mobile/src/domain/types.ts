@@ -61,6 +61,10 @@ export interface Professional {
   rating: number;
   reviews: number;
   avatar: string;
+  photo?: string;
+  cover?: string;
+  phone?: string;
+  email?: string;
   portfolio: string[];
   pixKey: string;
   depositDeadlineHours: number;  // prazo para pagar o sinal
@@ -114,7 +118,11 @@ export interface Client {
   id: string;
   name: string;
   phone: string;
-  avatar: string;
+  avatar: string;               // cor de fundo quando não há foto
+  photo?: string;               // foto de perfil
+  cover?: string;               // capa (estilo Twitter)
+  bio?: string;
+  email?: string;
   favorites: string[];          // professionalIds
   dreams: Dream[];
 }

@@ -79,7 +79,7 @@ export default function Agendamento() {
         <T v="title">{svc.name}</T>
         <T>{fmtDateTime(a.startsAt)} · {svc.durationMin} min</T>
         <Row gap={space.md} style={{ marginTop: space.sm }}>
-          <Avatar name={isPro ? client.name : pro.name} color={isPro ? client.avatar : pro.avatar} size={38} />
+          <Avatar name={isPro ? client.name : pro.name} color={isPro ? client.avatar : pro.avatar} photo={isPro ? client.photo : pro.photo} size={38} />
           <View style={{ flex: 1 }}>
             <T v="h3">{isPro ? client.name : pro.name}</T>
             <T v="small" muted>{isPro ? client.phone : `${pro.neighborhood}, ${pro.city}`}</T>

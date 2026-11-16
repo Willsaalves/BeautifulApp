@@ -1,7 +1,10 @@
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { Avatar, Badge, Button, Card, Empty, ProgressBar, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { Thumb } from '@/components/media';
+import { ProfileHeader, handleOf } from '@/components/profile-header';
+
+import { Badge, Button, Card, Empty, ProgressBar, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { brl, fmtDate, loyaltyProgress } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, space } from '@/theme';
@@ -15,18 +18,45 @@ export default function ClientePerfil() {
     new Set([...me.favorites, ...s.appointments.filter((a) => a.clientId === me.id).map((a) => a.professionalId)]),
   );
   const vouchers = s.vouchers.filter((v) => v.clientId === me.id);
+  const done = s.appointments.filter((a) => a.clientId === me.id && a.status === 'concluido').length;
+  const myStories = s.stories.filter((x) => x.authorType === 'cliente' && x.authorId === me.id);
 
   return (
     <Screen>
-      <Row gap={space.md} style={{ marginTop: space.sm }}>
-        <Avatar name={me.name} color={me.avatar} size={64} />
-        <View>
-          <T v="title">{me.name}</T>
-          <T muted>{me.phone}</T>
-        </View>
-      </Row>
+      <View style={{ marginTop: space.sm }}>
+        <ProfileHeader
+          name={me.name}
+          color={me.avatar}
+          photo={me.photo}
+          cover={me.cover}
+          right={<Button small variant="outline" title="Editar perfil" onPress={() => router.push('/perfil/editar')} />}
+        />
+      </View>
+      <View style={{ paddingHorizontal: 4, gap: 4 }}>
+        <T v="title">{me.name}</T>
+        <T v="small" muted>{handleOf(me.name)}</T>
+        {me.bio ? <T style={{ marginTop: 4 }}>{me.bio}</T> : null}
+        <Row gap={space.lg} style={{ marginTop: space.sm }}>
+          <T v="small"><T v="small" style={{ fontWeight: '800' }}>{done}</T> atendimentos</T>
+          <T v="small"><T v="small" style={{ fontWeight: '800' }}>{myStories.length}</T> stories</T>
+          <T v="small"><T v="small" style={{ fontWeight: '800' }}>{me.favorites.length}</T> favoritas</T>
+        </Row>
+      </View>
+
+      <SectionTitle title="Meus resultados" action="+ Story" onAction={() => router.push('/story/novo')} />
+      {myStories.length === 0 ? <Empty icon="camera-outline" text="Poste a foto do seu procedimento no story e marque sua profissional." /> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xs }}>
+        {myStories.map((st) => (
+          <Pressable key={st.id} onPress={() => router.push(`/story/${st.professionalId}`)} style={{ width: '32.6%', aspectRatio: 0.8 }}>
+            <Thumb src={st.image} style={{ flex: 1, borderRadius: 12 }} emojiSize={30} />
+          </Pressable>
+        ))}
+      </View>
 
       <SectionTitle title="Cartões fidelidade" />
+      {proIds.map(L.pro).filter((p) => p.loyalty.enabled).length === 0 ? (
+        <Empty icon="heart-outline" text="Seus cartões fidelidade aparecem aqui depois do primeiro atendimento." />
+      ) : null}
       {proIds.map(L.pro).filter((p) => p.loyalty.enabled).map((p) => {
         const lp = loyaltyProgress(s.appointments, me.id, p.id, p.loyalty);
         return (
