@@ -2,10 +2,13 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { patchClient, patchProfessional } from '@/api/auth';
+import { API_ENABLED } from '@/api/client';
+import { isLocalUri, uploadImage } from '@/api/media';
 import { ProfileHeader, handleOf } from '@/components/profile-header';
 import { Button, Field, Header, Screen, T } from '@/components/ui';
 import { useLookup, useStore } from '@/store/app-store';
-import { space } from '@/theme';
+import { colors, space } from '@/theme';
 
 // Editar perfil (cliente ou profissional): capa + foto estilo Twitter, nome e bio.
 export default function EditarPerfil() {
@@ -19,7 +22,30 @@ export default function EditarPerfil() {
   const [photo, setPhoto] = useState(me.photo);
   const [cover, setCover] = useState(me.cover);
 
-  const save = () => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const saveApi = async () => {
+    const photoKey = photo && isLocalUri(photo) ? (await uploadImage('AVATAR', photo)).key : undefined;
+    const coverKey = cover && isLocalUri(cover) ? (await uploadImage('COVER', cover)).key : undefined;
+    const body = { name: name.trim(), bio, email: email.trim(), photoKey, coverKey };
+    const me = isPro ? await patchProfessional(body) : await patchClient(body);
+    s.applyMe(me, isPro ? 'profissional' : 'cliente');
+  };
+
+  const save = async () => {
+    if (API_ENABLED) {
+      setBusy(true);
+      setError('');
+      try {
+        await saveApi();
+      } catch (e) {
+        setError((e as Error).message);
+        setBusy(false);
+        return;
+      }
+      setBusy(false);
+    }
     s.updateMe({ name: name.trim(), bio, email: email || undefined, photo, cover });
     // capa do perfil também vira a capa da página pública da profissional
     if (isPro) {
@@ -40,7 +66,8 @@ export default function EditarPerfil() {
       <Field label="Bio" value={bio} onChangeText={setBio} multiline maxLength={160} placeholder="Conte um pouco sobre você" />
       <T v="small" muted style={{ textAlign: 'right', marginTop: -6 }}>{bio.length}/160</T>
       <Field label="E-mail" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-      <Button title="Salvar" disabled={name.trim().length < 2} onPress={save} style={{ marginTop: space.sm }} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      <Button title={busy ? 'Salvando…' : 'Salvar'} disabled={name.trim().length < 2 || busy} onPress={save} style={{ marginTop: space.sm }} />
     </Screen>
   );
 }

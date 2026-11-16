@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: beautifulapp
+  threads:
+    virtual:
+      enabled: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  docker:
+    compose:
+      lifecycle-management: start-only
+
+server:
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}
+  legal:
+    version: ${APP_LEGAL_VERSION:2026-11}
+  identity:
+    jwt:
+      issuer: ${APP_JWT_ISSUER:https://api.beautifulapp.dev}
+      access-ttl: 15m
+      refresh-ttl: 60d
+      private-key: ${APP_JWT_PRIVATE_KEY:}
+      public-key: ${APP_JWT_PUBLIC_KEY:}
+    otp:
+      sender: ${APP_OTP_SENDER:log}
+      # Ambiente de testes: código fixo, sem custo de SMS. Deixe vazio em produção.
+      fixed-code: ${APP_OTP_FIXED_CODE:123456}
+      ttl: 5m
+      max-attempts: 5
+      max-requests-per-hour: 5
+      pepper: ${APP_OTP_PEPPER:dev-pepper-change-me}
+  media:
+    bucket: ${APP_MEDIA_BUCKET:beautifulapp}
+    region: ${APP_MEDIA_REGION:us-east-1}
+    endpoint: ${APP_MEDIA_ENDPOINT:http://localhost:9090}
+    access-key: ${APP_MEDIA_ACCESS_KEY:test}
+    secret-key: ${APP_MEDIA_SECRET_KEY:test}
+    public-base-url: ${APP_MEDIA_PUBLIC_URL:http://localhost:9090/beautifulapp}
+    upload-url-ttl: 10m
+    max-bytes: 10485760

@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { fetchMe, hasSession } from '@/api/auth';
+import { API_ENABLED } from '@/api/client';
 import { ProgressBar, Ring, Row, T } from '@/components/ui';
+import { useStore } from '@/store/app-store';
 import { colors, gradients, radius, space } from '@/theme';
 
 const NICHES = [
@@ -18,6 +22,21 @@ const NICHES = [
 // Tela de entrada, no estilo da referência (cards brancos, anel de progresso, pílulas pretas).
 // Com o backend, os botões levam ao login por telefone + código.
 export default function Welcome() {
+  const store = useStore();
+  // Com a API ligada: se já existe sessão salva, entra direto.
+  useEffect(() => {
+    if (!API_ENABLED) return;
+    (async () => {
+      if (!(await hasSession())) return;
+      try {
+        const role = store.applyMe(await fetchMe());
+        if (role) router.replace(role === 'profissional' ? '/pro' : '/cliente');
+      } catch {
+        // sessão inválida: fica na tela inicial
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const enter = (role: 'cliente' | 'profissional') => router.push(`/cadastro?role=${role}`);
 
   return (

@@ -40,7 +40,8 @@
         {
           "photosPermission": "Usamos suas fotos para anexar referências e comprovantes do Pix."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": false,

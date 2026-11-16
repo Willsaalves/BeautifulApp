@@ -1,0 +1,25 @@
+# Ambiente local: `./gradlew bootRun` sobe isto sozinho (spring-boot-docker-compose).
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_DB: beautifulapp
+      POSTGRES_USER: beautifulapp
+      POSTGRES_PASSWORD: beautifulapp
+    ports: ["5432:5432"]
+    labels:
+      org.springframework.boot.service-connection: postgres
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  s3:
+    # S3 local (Adobe S3Mock). Testes na nuvem: Cloudflare R2 / Supabase Storage; produção: AWS S3.
+    image: adobe/s3mock:latest
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: beautifulapp
+      COMMAND_LINE_INITIAL_BUCKETS: beautifulapp
+    ports: ["9090:9090"]
+    labels:
+      org.springframework.boot.ignore: true
+
+volumes:
+  pgdata:

@@ -1,4 +1,6 @@
 import { router } from 'expo-router';
+
+import { logout } from '@/api/auth';
 import { Pressable, View } from 'react-native';
 
 import { Thumb } from '@/components/media';
@@ -90,7 +92,7 @@ export default function ClientePerfil() {
 
       <Button title="Trocar para área da profissional" variant="outline" icon="swap-horizontal" style={{ marginTop: space.lg }}
         onPress={() => { s.setRole('profissional'); router.replace('/pro'); }} />
-      <Button title="Sair" variant="ghost" onPress={() => { s.setRole(null); router.replace('/'); }} />
+      <Button title="Sair" variant="ghost" onPress={async () => { await logout(); s.setRole(null); router.replace('/'); }} />
       <T v="small" muted style={{ textAlign: 'center', color: colors.textMuted }}>Protótipo · dados de exemplo</T>
     </Screen>
   );

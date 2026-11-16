@@ -3,6 +3,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { fetchMe, onboarding, requestOtp, verifyOtp } from '@/api/auth';
+import { API_ENABLED, ApiError } from '@/api/client';
+import { isLocalUri, uploadImage } from '@/api/media';
 import { OtpInput, PhoneField, phoneValid } from '@/components/auth';
 import { ProfileHeader, handleOf } from '@/components/profile-header';
 import { Button, Card, Chip, Field, IconCircle, ProgressBar, Row, Screen, T } from '@/components/ui';
@@ -41,11 +44,70 @@ export default function Cadastro() {
   const dadosOk = name.trim().length > 1 && phoneValid(phone) && (!isPro || (studio.trim().length > 1 && neighborhood.trim().length > 1));
   const last = idx === steps.length - 1;
 
-  const finish = () => {
-    s.register({ role, name: name.trim(), phone, email: email || undefined, photo, cover, bio, niche, studio, neighborhood, city, pixKey });
-    router.replace(isPro ? '/pro/perfil' : '/cliente');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const goHome = (r: Role | null) => router.replace(r === 'profissional' ? '/pro/perfil' : '/cliente');
+
+  const finishWithApi = async () => {
+    if (!verified) await verifyOtp(phone, code);
+    const photoKey = photo && isLocalUri(photo) ? (await uploadImage('AVATAR', photo)).key : undefined;
+    const coverKey = cover && isLocalUri(cover) ? (await uploadImage('COVER', cover)).key : undefined;
+    try {
+      const me = await onboarding({
+        role: isPro ? 'PROFESSIONAL' : 'CLIENT',
+        name: name.trim(),
+        email: email.trim() || undefined,
+        bio: bio.trim() || undefined,
+        photoKey,
+        coverKey,
+        studio: isPro ? studio.trim() : undefined,
+        niche: isPro ? (niche.toUpperCase() as 'UNHA') : undefined,
+        neighborhood: isPro ? neighborhood.trim() : undefined,
+        city: isPro ? city.trim() : undefined,
+        pixKey: isPro ? pixKey.trim() || undefined : undefined,
+        acceptedTerms: terms,
+        imageConsent,
+      });
+      goHome(s.applyMe(me, role));
+    } catch (e) {
+      // já tinha esse perfil (ex: cadastro repetido): só entra
+      if (e instanceof ApiError && e.code === 'PROFILE_EXISTS') return goHome(s.applyMe(await fetchMe(), role));
+      throw e;
+    }
   };
-  const next = () => (last ? finish() : setIdx(idx + 1));
+
+  const finish = async () => {
+    if (!API_ENABLED) {
+      s.register({ role, name: name.trim(), phone, email: email || undefined, photo, cover, bio, niche, studio, neighborhood, city, pixKey });
+      return goHome(role);
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await finishWithApi();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const next = async () => {
+    if (last) return finish();
+    if (API_ENABLED && steps[idx + 1] === 'codigo') {
+      setBusy(true);
+      setError('');
+      try {
+        await requestOtp(phone);
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
+    setIdx(idx + 1);
+  };
   const back = () => (idx === 0 ? (router.canGoBack() ? router.back() : router.replace('/')) : setIdx(idx - 1));
 
   const canNext =
@@ -143,17 +205,18 @@ export default function Cadastro() {
           <T v="display" style={{ marginTop: space.md }}>CONFIRME{'\n'}SEU NÚMERO</T>
           <T muted>Enviamos um código de 6 dígitos para <T style={{ fontWeight: '700' }}>{phone}</T>.</T>
           <OtpInput value={code} onChange={setCode} />
-          <T v="small" muted>Protótipo: qualquer código funciona.</T>
+          <T v="small" muted>{API_ENABLED ? 'O código chega por SMS/WhatsApp em alguns segundos.' : 'Protótipo: qualquer código funciona.'}</T>
         </>
       ) : null}
 
       <Button
-        title={last ? 'Criar conta' : 'Continuar'}
+        title={busy ? 'Aguarde…' : last ? 'Criar conta' : 'Continuar'}
         icon={last ? 'sparkles' : undefined}
-        disabled={!canNext}
+        disabled={!canNext || busy}
         onPress={next}
         style={{ marginTop: space.md }}
       />
+      {error ? <T v="small" color={colors.danger} style={{ textAlign: 'center' }}>{error}</T> : null}
       {step === 'foto' && !terms ? <T v="small" muted style={{ textAlign: 'center' }}>Aceite os termos para continuar.</T> : null}
       {step === 'perfil' || step === 'dados' ? (
         <Pressable onPress={() => router.replace('/login')} style={{ alignItems: 'center', marginTop: space.sm }}>

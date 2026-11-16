@@ -2,6 +2,7 @@
 // (mantendo as mesmas assinaturas) e este reducer passa a refletir as respostas.
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 
+import type { Me } from '@/api/client';
 import * as mock from '@/data/mock';
 import {
   canEarnFeedbackVoucher,
@@ -522,6 +523,77 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           };
           dispatch({ type: 'set', patch: { professionals: [...state.professionals, p], proId: p.id, role: 'profissional' } });
         }
+      },
+
+      /**
+       * Aplica a resposta do GET /me (API real) ao estado: cria/atualiza a cliente e/ou a profissional
+       * e escolhe o papel. As demais telas continuam com dados de exemplo até os próximos módulos.
+       */
+      applyMe(me: Me, prefer?: Role): Role | null {
+        const roles = me.roles ?? [];
+        let clients = state.clients;
+        let professionals = state.professionals;
+        let clientId = state.clientId;
+        let proId = state.proId;
+        if (me.client) {
+          const id = me.accountId!;
+          const existing = clients.find((c) => c.id === id);
+          const c: Client = {
+            ...(existing ?? { avatar: '#E8DCF2', favorites: [], dreams: [] }),
+            id,
+            name: me.client.name ?? '',
+            phone: me.phone ?? '',
+            email: me.email,
+            bio: me.client.bio,
+            photo: me.client.photoUrl,
+            cover: me.client.coverUrl,
+          };
+          clients = existing ? clients.map((x) => (x.id === id ? c : x)) : [...clients, c];
+          clientId = id;
+        }
+        if (me.professional) {
+          const ap = me.professional;
+          const id = ap.id!;
+          const existing = professionals.find((p) => p.id === id);
+          const base = existing ?? {
+            id,
+            rating: 5,
+            reviews: 0,
+            distanceKm: 0.5,
+            avatar: '#E8DCF2',
+            portfolio: [],
+            loyalty: { enabled: false, goalAmount: 500, discountPercent: 10 },
+            workHours: { start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5, 6] },
+            widgets: [],
+          };
+          const p: Professional = {
+            ...base,
+            name: ap.studio ?? ap.name ?? '',
+            niche: (ap.niche?.toLowerCase() ?? 'unha') as Professional['niche'],
+            headline: ap.bio ?? '',
+            city: ap.city ?? '',
+            neighborhood: ap.neighborhood ?? '',
+            photo: ap.photoUrl,
+            cover: ap.coverUrl,
+            phone: me.phone,
+            email: me.email,
+            pixKey: ap.pixKey ?? '',
+            depositDeadlineHours: ap.depositDeadlineHours ?? 12,
+          };
+          if (!p.widgets.length) {
+            p.widgets = mock.defaultWidgets(p).map((w) => (w.type === 'capa' ? { ...w, image: ap.coverUrl } : w));
+          }
+          professionals = existing ? professionals.map((x) => (x.id === id ? p : x)) : [...professionals, p];
+          proId = id;
+        }
+        const role: Role | null =
+          prefer === 'profissional' && me.professional ? 'profissional'
+          : prefer === 'cliente' && me.client ? 'cliente'
+          : roles.includes('PROFESSIONAL') ? 'profissional'
+          : roles.includes('CLIENT') ? 'cliente'
+          : null;
+        dispatch({ type: 'set', patch: { clients, professionals, clientId, proId, role } });
+        return role;
       },
 
       /** Edita o perfil de quem está logada (capa, foto, nome, bio). */

@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+
+import { logout } from '@/api/auth';
 import { Pressable, View } from 'react-native';
 
 import { ProfileHeader, handleOf } from '@/components/profile-header';
@@ -117,7 +119,7 @@ export default function ProPerfil() {
 
       <Button title="Trocar para área da cliente" variant="outline" icon="swap-horizontal" style={{ marginTop: space.lg }}
         onPress={() => { s.setRole('cliente'); router.replace('/cliente'); }} />
-      <Button title="Sair" variant="ghost" onPress={() => { s.setRole(null); router.replace('/'); }} />
+      <Button title="Sair" variant="ghost" onPress={async () => { await logout(); s.setRole(null); router.replace('/'); }} />
     </Screen>
   );
 }

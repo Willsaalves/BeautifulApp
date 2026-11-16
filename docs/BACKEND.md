@@ -2,14 +2,14 @@
 
 ## 1. Stack
 
-**Decisão: Java 21 + Spring Boot 3.** É a stack que o time domina, e ela atende tudo o que o app precisa. A única vantagem de usar TypeScript no backend seria compartilhar tipos com o app. Resolvemos isso gerando o cliente TypeScript a partir do OpenAPI (seção 1.2).
+**Decisão: Java 21 + Spring Boot 4.1** (última versão estável; o plano foi escrito para 3.x e vale igual). É a stack que o time domina, e ela atende tudo o que o app precisa. A única vantagem de usar TypeScript no backend seria compartilhar tipos com o app. Resolvemos isso gerando o cliente TypeScript a partir do OpenAPI (seção 1.2).
 
 ### 1.1 Componentes
 
 | Camada | Escolha | Observação |
 |---|---|---|
 | Linguagem | **Java 21** (LTS) | Virtual threads ligadas (`spring.threads.virtual.enabled=true`) |
-| Framework | **Spring Boot 3.x** | Web MVC, Validation, Security, Data JPA, Actuator |
+| Framework | **Spring Boot 4.1** | Web MVC, Validation, Security, Data JPA, Actuator |
 | Arquitetura | **Monólito modular com Spring Modulith** | Módulos isolados por pacote. O Modulith verifica as fronteiras nos testes e publica eventos entre módulos. |
 | Build | Gradle (Kotlin DSL) | Ou Maven, se o time preferir |
 | Banco | **PostgreSQL 16 + PostGIS** (RDS) | Relacional, transacional, busca por distância, JSONB para widgets |
@@ -23,7 +23,7 @@
 | OTP | WhatsApp Cloud API ou Twilio Verify; SMS via AWS SNS como fallback | Decidir custo (seção 9) |
 | Push | API do **Expo Push** (HTTP) | O app já é Expo |
 | Pagamento (v2) | PSP com Pix dinâmico (Asaas, Efí ou Mercado Pago) + webhook | v1: comprovante manual |
-| Documentação da API | **springdoc-openapi** | Gera o cliente TS do app (orval/openapi-typescript) |
+| Documentação da API | **springdoc-openapi** | Gera os tipos TS do app (`openapi-typescript` + `openapi-fetch`) |
 | Testes | JUnit 5, **Testcontainers** (Postgres/Redis), testes do Modulith, RestAssured | |
 | Observabilidade | Micrometer + OpenTelemetry → CloudWatch, **Sentry** | Logs JSON com `traceId` |
 | Container | Imagem via Jib ou Buildpacks | |
@@ -32,7 +32,7 @@
 ### 1.2 Contrato com o app
 
 1. O backend expõe `/v3/api-docs` (springdoc).
-2. O CI gera `mobile/src/api/` com **orval**: tipos e hooks do React Query.
+2. `npm run api:gen` gera `mobile/src/api/schema.d.ts` com **openapi-typescript**, e o cliente **openapi-fetch** usa esses tipos. O CI falha se o contrato ficar desatualizado.
 3. O `app-store.tsx` atual (mock) troca cada ação por uma chamada a esses hooks, mantendo as mesmas assinaturas.
 
 Assim os tipos continuam compartilhados, como tínhamos planejado com NestJS.
@@ -273,8 +273,8 @@ Ambientes: `dev` (local com Docker Compose: Postgres + PostGIS, Redis, LocalStac
 
 | Fase | Entrega | Pronto quando… |
 |---|---|---|
-| 0 | Repositório `backend/`, Gradle, Docker Compose, Flyway, CI, OpenAPI → cliente TS | `./gradlew test` verde com Testcontainers |
-| 1 | identity (OTP, JWT, cadastro, consentimentos) + profile + media | O app faz login e cadastro de verdade |
+| 0 ✅ | Repositório `backend/`, Gradle, Docker Compose, Flyway, CI, OpenAPI → cliente TS | `./gradlew test` verde com Testcontainers |
+| 1 ✅ | identity (OTP, JWT, cadastro, consentimentos) + profile + media | O app faz login e cadastro de verdade |
 | 2 | catalog + page + discovery | A página da profissional e a busca vêm da API |
 | 3 | scheduling + payment v1 (comprovante) + jobs de expiração | Agendar, pagar sinal e expirar funcionam fim a fim |
 | 4 | inventory + loyalty + review + analytics | Concluir dá baixa no estoque, avança a fidelidade e o painel bate |
