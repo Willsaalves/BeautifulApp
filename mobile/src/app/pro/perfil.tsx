@@ -116,6 +116,9 @@ export default function ProPerfil() {
       <Item icon="time-outline" title="Expediente"
         sub={me.workDays ? `${me.workDays.length} dia(s) de atendimento` : `${me.workHours.start}–${me.workHours.end}`}
         onPress={() => router.push('/config/expediente')} />
+      <Item icon="lock-closed-outline" title="Bloquear horário"
+        sub={s.blocks.filter((b) => new Date(b.endsAt) > new Date()).length ? `${s.blocks.filter((b) => new Date(b.endsAt) > new Date()).length} bloqueio(s) futuros` : 'Almoço, folga, férias'}
+        onPress={() => router.push('/config/bloqueios')} />
       <Item icon="heart-outline" title="Fidelidade, Pix e cancelamento"
         sub={`${me.loyalty.enabled ? `${brl(me.loyalty.goalAmount)} → ${me.loyalty.discountPercent}% OFF` : 'Fidelidade desativada'} · sinal em ${me.depositDeadlineHours}h`}
         onPress={() => router.push('/config/fidelidade')} />

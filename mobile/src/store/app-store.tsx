@@ -29,6 +29,7 @@ import type {
   Professional,
   Service,
   StockMovement,
+  TimeBlock,
   Story,
   Voucher,
   Widget,
@@ -56,6 +57,7 @@ interface State {
   stories: Story[];
   loyaltyCards: LoyaltyCard[];   // progresso calculado no servidor (cliente com API)
   unread: number;                // notificações não lidas (sino)
+  blocks: TimeBlock[];           // bloqueios da profissional logada
 }
 
 const initial: State = {
@@ -76,6 +78,7 @@ const initial: State = {
   stories: mock.stories,
   loyaltyCards: [],
   unread: 0,
+  blocks: [],
 };
 
 type Action =
@@ -788,6 +791,36 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
         dispatch({
           type: 'set',
           patch: { messages: [...stateRef.current.messages.filter((m) => m.appointmentId !== appointmentId), ...list] },
+        });
+      },
+
+      setBlocks(blocks: TimeBlock[]) {
+        dispatch({ type: 'set', patch: { blocks: [...blocks].sort((a, b) => a.startsAt.localeCompare(b.startsAt)) } });
+      },
+
+      /** Ajuste manual de estoque no modo protótipo (com API, vem do servidor). */
+      adjustStockLocal(productId: string, delta: number, note: string) {
+        const st = stateRef.current;
+        dispatch({
+          type: 'set',
+          patch: {
+            products: st.products.map((p) => (p.id === productId ? { ...p, quantity: Math.max(0, p.quantity + delta) } : p)),
+            movements: [...st.movements, { id: uid('mv'), productId, delta, reason: 'ajuste', note, createdAt: new Date().toISOString() }],
+          },
+        });
+      },
+
+      removeProductLocal(productId: string) {
+        const st = stateRef.current;
+        const productOwner = { ...st.productOwner };
+        delete productOwner[productId];
+        dispatch({
+          type: 'set',
+          patch: {
+            products: st.products.filter((p) => p.id !== productId),
+            productOwner,
+            services: st.services.map((sv) => ({ ...sv, consumption: sv.consumption.filter((c) => c.productId !== productId) })),
+          },
         });
       },
 

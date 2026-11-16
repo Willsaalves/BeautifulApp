@@ -2,7 +2,9 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Card, Chip, Empty, Row, Screen, StatusBadge, T } from '@/components/ui';
+import { Ionicons } from '@expo/vector-icons';
+
+import { Button, Card, Chip, Empty, Row, Screen, StatusBadge, T } from '@/components/ui';
 import { brl, fmtDate, fmtTime } from '@/domain/rules';
 import type { AppointmentStatus } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
@@ -37,20 +39,27 @@ export default function ProAgenda() {
     .filter((a) => a.professionalId === s.proId && new Date(a.startsAt).toDateString() === day.toDateString())
     .filter((a) => !f.statuses || f.statuses.includes(a.status))
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const dayStart = day.getTime();
+  const dayEnd = dayStart + 86400_000;
+  const dayBlocks = s.blocks.filter((b) => new Date(b.startsAt).getTime() < dayEnd && new Date(b.endsAt).getTime() > dayStart);
   const dayTotal = list.filter((a) => !['cancelado', 'expirado'].includes(a.status)).reduce((x, a) => x + a.price, 0);
 
   return (
     <Screen>
-      <T v="display" style={{ marginTop: space.sm }}>AGENDA</T>
+      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
+        <T v="display">AGENDA</T>
+        <Button small variant="outline" title="Bloquear" icon="lock-closed" onPress={() => router.push('/config/bloqueios')} />
+      </Row>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }} contentOffset={{ x: 3 * 66, y: 0 }}>
         {days.map((d, i) => {
           const sel = i - 3 === offset;
+          const blocked = s.blocks.some((b) => new Date(b.startsAt).getTime() < d.getTime() + 86400_000 && new Date(b.endsAt).getTime() > d.getTime());
           const count = s.appointments.filter((a) => a.professionalId === s.proId && new Date(a.startsAt).toDateString() === d.toDateString() && !['cancelado', 'expirado'].includes(a.status)).length;
           return (
             <Pressable key={i} onPress={() => setOffset(i - 3)} style={{ width: 58, paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: sel ? colors.black : colors.card }}>
               <T v="small" color={sel ? colors.lilac : colors.textMuted} style={{ fontSize: 10, fontWeight: '700' }}>{WEEK[d.getDay()]}</T>
               <T v="title" color={sel ? colors.cardSolid : colors.text}>{d.getDate()}</T>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: count ? colors.lilacDeep : 'transparent' }} />
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: count ? colors.lilacDeep : blocked ? colors.textMuted : 'transparent' }} />
             </Pressable>
           );
         })}
@@ -62,7 +71,24 @@ export default function ProAgenda() {
         <T v="h3">{fmtDate(day)}</T>
         <T v="small" muted>{list.length} atendimento(s) · {brl(dayTotal)}</T>
       </Row>
-      {list.length === 0 ? <Empty icon="calendar-outline" text="Dia livre. Envie lembretes para clientes atrasadas e preencha a agenda." /> : null}
+      {dayBlocks.map((b) => {
+        const st = new Date(Math.max(new Date(b.startsAt).getTime(), dayStart));
+        const en = new Date(Math.min(new Date(b.endsAt).getTime(), dayEnd));
+        const whole = st.getTime() === dayStart && en.getTime() === dayEnd;
+        return (
+          <Card key={b.id} onPress={() => router.push('/config/bloqueios')} style={{ backgroundColor: colors.bg, borderStyle: 'dashed', borderWidth: 1, borderColor: colors.textMuted }}>
+            <Row gap={space.md}>
+              <View style={{ width: 52 }}>
+                <T v="h3" muted>{whole ? 'Dia' : fmtTime(st)}</T>
+                <T v="small" muted>{whole ? 'inteiro' : fmtTime(en)}</T>
+              </View>
+              <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+              <T v="h3" muted style={{ flex: 1 }}>{b.reason || 'Bloqueado'}</T>
+            </Row>
+          </Card>
+        );
+      })}
+      {list.length === 0 && dayBlocks.length === 0 ? <Empty icon="calendar-outline" text="Dia livre. Envie lembretes para clientes atrasadas e preencha a agenda." /> : null}
       {list.map((a) => {
         const svc = L.service(a.serviceId);
         const end = new Date(new Date(a.startsAt).getTime() + svc.durationMin * 60_000);

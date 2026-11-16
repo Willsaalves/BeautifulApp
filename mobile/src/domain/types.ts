@@ -22,7 +22,16 @@ export interface StockMovement {
   reason: 'compra' | 'atendimento' | 'ajuste';
   appointmentId?: string;
   unitCost?: number;     // custo unitário na compra
+  note?: string;         // motivo do ajuste manual
   createdAt: string;
+}
+
+/** Período bloqueado na agenda da profissional (folga, almoço, compromisso). */
+export interface TimeBlock {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  reason?: string;
 }
 
 export interface ServiceOption {

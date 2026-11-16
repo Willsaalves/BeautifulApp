@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { NICHE_LABEL, brl, fmtDate, fmtTime, freeSlots } from '@/domain/rules';
+import { NICHE_LABEL, brl, fmtDate, fmtTime, freeSlots, withBlocks } from '@/domain/rules';
 import type { Professional, Widget, WidgetType } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, fonts, radius, space } from '@/theme';
@@ -231,8 +231,11 @@ function Agenda({ w, pro }: { w: Widget; pro: Professional }) {
   const services = s.services.filter((x) => x.professionalId === pro.id);
   const shortest = [...services].sort((a, b) => a.durationMin - b.durationMin)[0];
   if (!shortest) return null;
-  const durations = Object.fromEntries(s.services.map((x) => [x.id, x.durationMin]));
-  const busy = s.appointments.filter((a) => a.professionalId === pro.id);
+  const { busy, durations } = withBlocks(
+    s.appointments.filter((a) => a.professionalId === pro.id),
+    Object.fromEntries(s.services.map((x) => [x.id, x.durationMin])),
+    pro.id === s.proId ? s.blocks : [],
+  );
   const out: Date[] = [];
   const d0 = new Date();
   d0.setHours(0, 0, 0, 0);

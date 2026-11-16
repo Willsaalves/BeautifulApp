@@ -11,7 +11,7 @@ import { availability, createAppointment, workDaysFromApi } from '@/api/scheduli
 import { Thumb } from '@/components/media';
 import { DayStrip, SlotGrid } from '@/components/slot-grid';
 import { Avatar, Button, Card, Chip, Divider, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
-import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, daySlots, type SlotStatus } from '@/domain/rules';
+import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, daySlots, withBlocks, type SlotStatus } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
@@ -63,8 +63,11 @@ export default function Agendar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workDays.join(',')]);
 
-  const durations = Object.fromEntries(s.services.map((x) => [x.id, x.durationMin]));
-  const busy = s.appointments.filter((a) => a.professionalId === pro.id);
+  const { busy, durations } = withBlocks(
+    s.appointments.filter((a) => a.professionalId === pro.id),
+    Object.fromEntries(s.services.map((x) => [x.id, x.durationMin])),
+    pro.id === s.proId ? s.blocks : [],
+  );
   const [remoteSlots, setRemoteSlots] = useState<{ time: Date; status: SlotStatus }[] | null>(null);
   const [reloadSlots, setReloadSlots] = useState(0);
   const day = days[dayIdx];

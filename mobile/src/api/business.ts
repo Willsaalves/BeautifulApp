@@ -27,6 +27,7 @@ export const movementFromApi = (m: Schemas['MovementView']): StockMovement => ({
   reason: REASON[m.reason ?? 'ADJUSTMENT'],
   appointmentId: m.appointmentId,
   unitCost: m.unitCostCents != null ? reais(m.unitCostCents) : undefined,
+  note: m.note,
   createdAt: m.createdAt ?? new Date().toISOString(),
 });
 
@@ -85,6 +86,21 @@ export const purchase = async (productId: string, quantity: number, unitCost?: n
       }),
     ),
   );
+
+export const updateProduct = async (id: string, p: { name: string; unit: Unit; minQuantity: number; lot?: string; expiresAt?: string }) =>
+  productFromApi(
+    await unwrap(
+      api.PUT('/me/products/{id}', {
+        params: { path: { id } },
+        body: { name: p.name, unit: p.unit.toUpperCase() as 'UN', minQuantity: p.minQuantity, lot: p.lot || undefined, expiresAt: p.expiresAt || undefined },
+      }),
+    ),
+  );
+
+export const adjustProduct = async (id: string, delta: number, note: string) =>
+  productFromApi(await unwrap(api.POST('/me/products/{id}/adjustments', { params: { path: { id } }, body: { delta, note } })));
+
+export const deleteProduct = (id: string) => unwrap(api.DELETE('/me/products/{id}', { params: { path: { id } } }));
 
 export const setConsumption = (serviceId: string, items: { productId: string; amount: number }[]) =>
   unwrap(api.PUT('/me/services/{serviceId}/consumption', { params: { path: { serviceId } }, body: items }));

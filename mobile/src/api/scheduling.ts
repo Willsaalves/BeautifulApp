@@ -1,5 +1,5 @@
 // Fase 3: expediente, horários livres, agendamentos e sinal via Pix (comprovante).
-import type { Appointment, AppointmentStatus, Client, Professional, WorkDay } from '@/domain/types';
+import type { Appointment, AppointmentStatus, Client, Professional, TimeBlock, WorkDay } from '@/domain/types';
 
 import { api, unwrap, type Schemas } from './client';
 import { isLocalUri, uploadImage } from './media';
@@ -100,6 +100,12 @@ export const saveWorkHours = async (days: WorkDay[]) =>
   workDaysFromApi(await unwrap(api.PUT('/me/work-hours', { body: days.map((d) => ({ weekday: d.weekday, start: d.start, end: d.end })) })));
 
 export const myAgenda = () => unwrap(api.GET('/me/agenda'));
+
+const blockFromApi = (b: Schemas['BlockView']): TimeBlock => ({ id: b.id!, startsAt: b.startsAt!, endsAt: b.endsAt!, reason: b.reason });
+export const myBlocks = async () => (await unwrap(api.GET('/me/blocks'))).map(blockFromApi);
+export const addBlock = async (startsAt: Date, endsAt: Date, reason?: string) =>
+  blockFromApi(await unwrap(api.POST('/me/blocks', { body: { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString(), reason } })));
+export const removeBlock = (id: string) => unwrap(api.DELETE('/me/blocks/{id}', { params: { path: { id } } }));
 export const confirmDeposit = (id: string) => unwrap(api.POST('/appointments/{id}/confirm-deposit', { params: { path: { id } } }));
 export const rejectReceipt = (id: string) => unwrap(api.POST('/appointments/{id}/reject-receipt', { params: { path: { id } } }));
 export const proposeAdjustment = (id: string, newPrice: number, note: string) =>

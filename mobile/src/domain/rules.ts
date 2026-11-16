@@ -7,6 +7,7 @@ import type {
   Product,
   Service,
   StockMovement,
+  TimeBlock,
   Voucher,
 } from './types';
 
@@ -172,6 +173,13 @@ export function overdueClients(
       result.push({ client: c, service: last.service, daysLate, lastAt: new Date(last.appointment.startsAt) });
   }
   return result.sort((a, b) => b.daysLate - a.daysLate);
+}
+
+/** Bloqueios viram "agendamentos" ocupados para o cálculo de horários livres (modo protótipo). */
+export function withBlocks(busy: Appointment[], durations: Record<string, number>, blocks: TimeBlock[]) {
+  const fake = blocks.map((b) => ({ id: b.id, serviceId: `block:${b.id}`, startsAt: b.startsAt, status: 'confirmado' }) as Appointment);
+  const extra = Object.fromEntries(blocks.map((b) => [`block:${b.id}`, (new Date(b.endsAt).getTime() - new Date(b.startsAt).getTime()) / 60_000]));
+  return { busy: [...busy, ...fake], durations: { ...durations, ...extra } };
 }
 
 /** Gera horários livres de um dia, dado expediente, duração e agenda já ocupada. */

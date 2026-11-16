@@ -34,7 +34,7 @@ export default function Estoque() {
         const low = isLowStock(p);
         const pct = Math.min(100, (p.quantity / Math.max(p.minQuantity * 3, 1)) * 100);
         return (
-          <Card key={p.id} onPress={() => router.push(`/estoque/compra?productId=${p.id}`)}>
+          <Card key={p.id} onPress={() => router.push(`/estoque/${p.id}`)}>
             <Row style={{ justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
                 <T v="h3">{p.name}</T>
@@ -56,10 +56,11 @@ export default function Estoque() {
 
       {movements.length ? <SectionTitle title="Últimas movimentações" /> : null}
       {movements.map((m) => {
-        const p = L.product(m.productId)!;
+        const p = L.product(m.productId);
+        if (!p) return null;
         return (
           <Row key={m.id} style={{ justifyContent: 'space-between' }}>
-            <T v="small">{m.reason === 'compra' ? '🛒' : '💅'} {p.name}</T>
+            <T v="small">{m.reason === 'compra' ? '🛒' : m.reason === 'ajuste' ? '✏️' : '💅'} {p.name}{m.note ? ` · ${m.note}` : ''}</T>
             <T v="small" color={m.delta > 0 ? colors.success : colors.danger} style={{ fontWeight: '700' }}>
               {m.delta > 0 ? '+' : ''}{m.delta} {p.unit}
             </T>
