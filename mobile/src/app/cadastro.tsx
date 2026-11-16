@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Platform, Pressable, View } from 'react-native';
 
 import { fetchMe, onboarding, requestOtp, verifyOtp } from '@/api/auth';
 import { API_ENABLED, ApiError } from '@/api/client';
@@ -50,8 +50,26 @@ export default function Cadastro() {
 
   const finishWithApi = async () => {
     if (!verified) await verifyOtp(phone, code);
-    const photoKey = photo && isLocalUri(photo) ? (await uploadImage('AVATAR', photo)).key : undefined;
-    const coverKey = cover && isLocalUri(cover) ? (await uploadImage('COVER', cover)).key : undefined;
+    // Foto/capa não podem impedir o cadastro: se o envio falhar, a conta é criada e ela tenta de novo depois.
+    let uploadFailed = false;
+    const tryUpload = async (kind: 'AVATAR' | 'COVER', uri?: string) => {
+      if (!uri || !isLocalUri(uri)) return undefined;
+      try {
+        return (await uploadImage(kind, uri)).key;
+      } catch (e) {
+        if (__DEV__) console.warn('[cadastro] upload falhou', kind, e);
+        uploadFailed = true;
+        return undefined;
+      }
+    };
+    const photoKey = await tryUpload('AVATAR', photo);
+    const coverKey = await tryUpload('COVER', cover);
+    const warnUpload = () => {
+      if (!uploadFailed) return;
+      const msg = 'Sua conta foi criada, mas a foto/capa não foi enviada. Tente de novo em Perfil → Editar perfil.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Quase lá', msg);
+    };
     try {
       const me = await onboarding({
         role: isPro ? 'PROFESSIONAL' : 'CLIENT',
@@ -69,6 +87,7 @@ export default function Cadastro() {
         imageConsent,
       });
       goHome(s.applyMe(me, role));
+      warnUpload();
     } catch (e) {
       // já tinha esse perfil (ex: cadastro repetido): só entra
       if (e instanceof ApiError && e.code === 'PROFILE_EXISTS') return goHome(s.applyMe(await fetchMe(), role));

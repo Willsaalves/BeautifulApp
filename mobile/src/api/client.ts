@@ -61,10 +61,16 @@ const auth: Middleware = {
         headers.Authorization = `Bearer ${s!.accessToken}`;
         const method = request.method.toUpperCase();
         const body = method === 'GET' || method === 'HEAD' ? undefined : await request.clone().text();
-        return fetch(request.url, { method, headers, body: body || undefined });
+        const retry = await fetch(request.url, { method, headers, body: body || undefined });
+        // O openapi-fetch exige uma instância do Response global; no iOS o fetch nativo usa outra classe.
+        const text = await retry.text();
+        const outHeaders: Record<string, string> = {};
+        retry.headers.forEach((v, k) => { outHeaders[k] = v; });
+        return new Response(text, { status: retry.status, statusText: retry.statusText, headers: outHeaders });
       }
     }
-    return response;
+    // sem alteração: não devolver nada (devolver a mesma resposta quebra no iOS)
+    return undefined;
   },
 };
 
