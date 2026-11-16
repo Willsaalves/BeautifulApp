@@ -32,7 +32,7 @@ cd BeautifulApp
 git checkout claude/confident-babbage-ynfils
 git pull
 cd mobile
-npm install --legacy-peer-deps
+npm install
 cd ..
 ```
 
@@ -148,6 +148,6 @@ Leia o QR code com o Expo Go, de qualquer rede.
 | `docker ... dockerDesktopLinuxEngine ... 500` | O Docker Desktop não está pronto: abra-o e espere "Engine running". Se persistir: `wsl --shutdown`, `wsl --update` e reabra. |
 | `JAVA_HOME is not set` | Instale o JDK 21 e configure o `JAVA_HOME` (passo 0). |
 | `'&&' não é um separador válido` | O PowerShell 5 não aceita `&&`: rode um comando por linha. |
-| `package-lock.json: needs merge` | Rode `git restore mobile/package.json mobile/package-lock.json`, depois `git pull` e `npm install --legacy-peer-deps`. |
+| `package-lock.json: needs merge` | Rode `git restore mobile/package.json mobile/package-lock.json`, depois `git pull` e `npm install`. |
 | Expo pede para instalar `@expo/ngrok` | Responda **Y** (ou `npm install -g @expo/ngrok`). |
 | Login responde "Muitos códigos pedidos" | Limite de 5 códigos por hora por número: use outro número ou espere. |
