@@ -487,7 +487,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
             photo: input.photo,
             cover: input.cover,
             bio: input.bio,
-            avatar: '#CDBCE7',
+            avatar: '#E8DCF2',
             favorites: [],
             dreams: [],
           };
@@ -503,7 +503,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
             distanceKm: 0.5,
             rating: 5,
             reviews: 0,
-            avatar: '#CDBCE7',
+            avatar: '#E8DCF2',
             photo: input.photo,
             cover: input.cover,
             phone: input.phone,

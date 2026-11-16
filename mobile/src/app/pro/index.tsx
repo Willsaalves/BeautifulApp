@@ -111,7 +111,7 @@ export default function ProHome() {
           <Row>
             <IconCircle icon="alert" bg={colors.lilac} />
             <View style={{ flex: 1 }}>
-              <T v="h3" color={colors.card}>Hora de comprar mais</T>
+              <T v="h3" color={colors.cardSolid}>Hora de comprar mais</T>
               <T v="small" color={colors.offWhite}>{low.map((p) => `${p.name} (${p.quantity} ${p.unit})`).join(' · ')}</T>
             </View>
           </Row>

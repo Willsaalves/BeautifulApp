@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ProgressBar, Ring, Row, T } from '@/components/ui';
-import { colors, radius, space } from '@/theme';
+import { colors, gradients, radius, space } from '@/theme';
 
 const NICHES = [
   { icon: '💅', label: 'Unhas', value: '128', sub: 'perto' },
@@ -21,7 +21,7 @@ export default function Welcome() {
   const enter = (role: 'cliente' | 'profissional') => router.push(`/cadastro?role=${role}`);
 
   return (
-    <LinearGradient colors={[colors.lilac, '#E4DAF0', colors.bg]} locations={[0, 0.35, 0.75]} style={{ flex: 1 }}>
+    <LinearGradient colors={gradients.screen} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* topo */}
@@ -37,7 +37,7 @@ export default function Welcome() {
           <T v="display" style={styles.title}>
             SUA BELEZA,{'\n'}NO SEU{'\n'}TEMPO ✨
           </T>
-          <T style={{ color: '#3B3640', marginTop: -4 }}>
+          <T style={{ color: colors.plumSoft, marginTop: -4 }}>
             Agende sozinha, pague o sinal via Pix e acompanhe cada procedimento. Sem depender do WhatsApp.
           </T>
 
@@ -64,7 +64,7 @@ export default function Welcome() {
             </View>
             <View style={[styles.card, { flex: 1, backgroundColor: colors.black }]}>
               <T v="overline" style={{ fontSize: 9 }} color={colors.lilac}>Próximo horário</T>
-              <T v="title" color={colors.card} style={{ fontSize: 20 }}>Qui · 10:00</T>
+              <T v="title" color={colors.cardSolid} style={{ fontSize: 20 }}>Qui · 10:00</T>
               <T v="small" color={colors.offWhite} style={{ fontSize: 11 }}>Alongamento em gel</T>
               <View style={styles.miniPill}>
                 <T v="small" style={{ fontSize: 10, fontWeight: '800' }}>✓ SINAL PAGO</T>
@@ -108,7 +108,7 @@ export default function Welcome() {
           </Row>
 
           <Pressable onPress={() => router.push('/cadastro')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}>
-            <T v="small" color={colors.card} style={{ fontWeight: '800', letterSpacing: 1 }}>CRIAR CONTA</T>
+            <T v="small" color={colors.cardSolid} style={{ fontWeight: '800', letterSpacing: 1 }}>CRIAR CONTA</T>
           </Pressable>
           <Pressable onPress={() => router.push('/login')} style={({ pressed }) => [styles.ctaOutline, pressed && styles.pressed]}>
             <T v="small" style={{ fontWeight: '800', letterSpacing: 1 }}>JÁ TENHO CONTA · ENTRAR</T>

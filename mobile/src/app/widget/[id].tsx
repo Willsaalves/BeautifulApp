@@ -103,7 +103,7 @@ export default function EditarWidget() {
                   <Thumb src={src} style={{ width: 92, height: 92, borderRadius: 14 }} />
                   <Pressable onPress={() => up({ images: (w.images ?? []).filter((_, j) => j !== i) })} accessibilityLabel="Remover foto"
                     style={{ position: 'absolute', top: 4, right: 4, backgroundColor: colors.black, borderRadius: 10 }}>
-                    <Ionicons name="close" size={16} color={colors.card} />
+                    <Ionicons name="close" size={16} color={colors.cardSolid} />
                   </Pressable>
                 </View>
               ))}

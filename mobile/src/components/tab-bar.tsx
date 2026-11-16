@@ -48,7 +48,7 @@ function TabButton({
 }: TabTriggerSlotProps & { icon: IconName; label: string }) {
   return (
     <Pressable {...props} accessibilityLabel={label} style={StyleSheet.flatten([styles.btn, isFocused && styles.btnActive])}>
-      <Ionicons name={icon} size={18} color={isFocused ? colors.black : colors.card} />
+      <Ionicons name={icon} size={18} color={isFocused ? colors.black : colors.cardSolid} />
       {isFocused ? <Text style={styles.label}>{label}</Text> : null}
     </Pressable>
   );

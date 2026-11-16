@@ -58,7 +58,7 @@ export default function Cadastro() {
     <Screen bottomInset={40}>
       <Row style={{ paddingVertical: space.sm }}>
         <Pressable onPress={back} accessibilityLabel="Voltar" style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name="arrow-back" size={20} color={colors.card} />
+          <Ionicons name="arrow-back" size={20} color={colors.cardSolid} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <ProgressBar percent={((idx + 1) / steps.length) * 100} height={6} />
@@ -79,7 +79,7 @@ export default function Cadastro() {
               <Card key={o.r} tone={o.tone} onPress={() => setRole(o.r)} style={{ borderWidth: 3, borderColor: sel ? (o.tone === 'black' ? colors.lilac : colors.black) : 'transparent' }}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <View style={{ flex: 1, gap: 4 }}>
-                    <T v="title" color={o.tone === 'black' ? colors.card : colors.text}>{o.title}</T>
+                    <T v="title" color={o.tone === 'black' ? colors.cardSolid : colors.text}>{o.title}</T>
                     <T color={o.tone === 'black' ? colors.offWhite : colors.text}>{o.sub}</T>
                   </View>
                   <IconCircle icon={sel ? 'checkmark' : o.icon} bg={o.tone === 'black' ? colors.lilac : colors.card} />

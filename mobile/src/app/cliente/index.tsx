@@ -184,7 +184,7 @@ export default function ClienteHome() {
           <Row>
             <IconCircle icon="gift" bg={colors.lilac} />
             <View style={{ flex: 1 }}>
-              <T v="h3" color={colors.card}>Você tem {myVouchers.length} voucher{myVouchers.length > 1 ? 's' : ''}</T>
+              <T v="h3" color={colors.cardSolid}>Você tem {myVouchers.length} voucher{myVouchers.length > 1 ? 's' : ''}</T>
               <T v="small" color={colors.offWhite}>{myVouchers.map((v) => `${v.percent}% · ${v.label}`).join('\n')}</T>
             </View>
           </Row>

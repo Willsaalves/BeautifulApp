@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import {
@@ -18,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { STATUS_LABEL } from '@/domain/rules';
-import { colors, radius, space, type } from '@/theme';
+import { colors, gradients, radius, space, type } from '@/theme';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -55,7 +56,8 @@ export function Screen({
 }) {
   const inner = [padded && { paddingHorizontal: space.lg }, { gap: space.md }, style];
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
+    <LinearGradient colors={gradients.screen} style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={[inner, { paddingBottom: bottomInset, paddingTop: space.sm }]}
@@ -67,6 +69,7 @@ export function Screen({
         <View style={[{ flex: 1 }, inner]}>{children}</View>
       )}
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -78,7 +81,7 @@ export function Header({ title, right, back = true }: { title?: string; right?: 
           accessibilityLabel="Voltar"
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           style={styles.iconBtn}>
-          <Ionicons name="arrow-back" size={20} color={colors.card} />
+          <Ionicons name="arrow-back" size={20} color={colors.cardSolid} />
         </Pressable>
       ) : (
         <View style={{ width: 40 }} />
@@ -152,7 +155,7 @@ export function Button({
   style?: StyleProp<ViewStyle>;
 }) {
   const bg = { black: colors.black, lilac: colors.lilac, outline: 'transparent', ghost: 'transparent', danger: colors.danger }[variant];
-  const fg = variant === 'black' || variant === 'danger' ? colors.card : colors.text;
+  const fg = variant === 'black' || variant === 'danger' ? colors.cardSolid : colors.text;
   return (
     <Pressable
       accessibilityRole="button"
@@ -187,7 +190,7 @@ export function Chip({
       onPress={onPress}
       style={[styles.chip, selected && { backgroundColor: colors.black, borderColor: colors.black }]}>
       {icon ? <Text style={{ fontSize: 13 }}>{icon}</Text> : null}
-      <Text style={[type.small, { color: selected ? colors.card : colors.text, fontWeight: '600' }]}>{label}</Text>
+      <Text style={[type.small, { color: selected ? colors.cardSolid : colors.text, fontWeight: '600' }]}>{label}</Text>
     </Pressable>
   );
 }

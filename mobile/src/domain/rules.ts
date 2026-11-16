@@ -286,3 +286,29 @@ export function profitability(
 
 export const STORY_TTL_MS = 24 * 3600_000;
 export const isUri = (s?: string) => !!s && /^(file:|blob:|data:|https?:|content:|ph:)/.test(s);
+
+export type SlotStatus = 'livre' | 'ocupado' | 'passado';
+
+/** Todos os horários do expediente (de 30 em 30 min) com o status de cada um. */
+export function daySlots(
+  day: Date,
+  work: { start: string; end: string; days: number[] },
+  durationMin: number,
+  busy: Appointment[],
+  durations: Record<string, number>,
+  now = new Date(),
+): { time: Date; status: SlotStatus }[] {
+  if (!work.days.includes(day.getDay())) return [];
+  const free = new Set(freeSlots(day, work, durationMin, busy, durations, now).map((d) => d.getTime()));
+  const [sh, sm] = work.start.split(':').map(Number);
+  const [eh, em] = work.end.split(':').map(Number);
+  const start = new Date(day);
+  start.setHours(sh, sm, 0, 0);
+  const end = new Date(day);
+  end.setHours(eh, em, 0, 0);
+  const out: { time: Date; status: SlotStatus }[] = [];
+  for (let t = start.getTime(); t + durationMin * 60_000 <= end.getTime(); t += 30 * 60_000) {
+    out.push({ time: new Date(t), status: t < now.getTime() ? 'passado' : free.has(t) ? 'livre' : 'ocupado' });
+  }
+  return out;
+}

@@ -32,12 +32,12 @@ export default function Lucro() {
 
       <Card tone="black">
         <T v="overline" color={colors.lilac}>Lucro no período</T>
-        <T v="display" color={colors.card}>{brl(r.profit)}</T>
+        <T v="display" color={colors.cardSolid}>{brl(r.profit)}</T>
         <Row style={{ justifyContent: 'space-between' }}>
           <T v="small" color={colors.offWhite}>Margem {r.margin}%</T>
           <T v="small" color={colors.offWhite}>{r.count} atendimento(s)</T>
         </Row>
-        <ProgressBar percent={r.margin} color={colors.lilac} track="#2A2A2A" height={8} />
+        <ProgressBar percent={r.margin} color={colors.lilac} track={colors.plumSoft} height={8} />
       </Card>
 
       <Card>

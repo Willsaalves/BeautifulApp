@@ -1,24 +1,33 @@
-// Paleta da referência visual (colorselect): lilás #CDBCE7, preto #010101, off-white #E7E3E4
+// Paleta escolhida pela Bruna: pastel lavanda → pêssego, cards brancos translúcidos,
+// ameixa escuro no lugar do preto e destaque em degradê rosa → lavanda.
 export const colors = {
-  lilac: '#CDBCE7',
-  lilacSoft: '#EFE8F7',
-  lilacDeep: '#9F86C9',
-  black: '#010101',
-  offWhite: '#E7E3E4',
-  bg: '#F4F1F3',
-  card: '#FFFFFF',
-  text: '#010101',
-  textMuted: '#6E6A6C',
-  border: '#E2DDE0',
-  success: '#3E9B6E',
-  warning: '#D9922E',
-  danger: '#D2525B',
-  cream: '#F6EEDD',
+  lilac: '#E8DCF2',       // destaque suave (lavanda)
+  lilacSoft: '#F4EEF8',
+  lilacDeep: '#B78DBF',   // anéis, barras de progresso
+  blush: '#F6D5E2',       // rosa do "escolhido"
+  black: '#221A20',       // ameixa escuro (botões, textos fortes, barra inferior)
+  plumSoft: '#3A2F37',
+  offWhite: '#EFE7EC',
+  bg: '#F5EEF1',
+  card: 'rgba(255,255,255,0.82)',
+  cardSolid: '#FFFFFF',
+  text: '#221A20',
+  textMuted: '#8C8088',
+  border: '#ECE2E7',
+  success: '#4E9C7A',
+  warning: '#C9894A',
+  danger: '#C95668',
+  cream: '#FBEDE6',       // pêssego
+};
+
+/** Fundo das telas (degradê lavanda → pêssego) e destaque "escolhido". */
+export const gradients = {
+  screen: ['#EFE8F7', '#F7EEF2', '#FAEDE6'] as const,
+  chosen: ['#F6D3E1', '#E6D6F5'] as const,
 };
 
 export const radius = { sm: 10, md: 16, lg: 22, xl: 28, pill: 999 };
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
-
 export const type = {
   display: { fontSize: 34, fontWeight: '800' as const, letterSpacing: -0.8, lineHeight: 36 },
   title: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.4 },

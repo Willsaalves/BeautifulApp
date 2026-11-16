@@ -5,8 +5,9 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { Thumb } from '@/components/media';
+import { DayStrip, SlotGrid } from '@/components/slot-grid';
 import { Avatar, Button, Card, Chip, Divider, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
-import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, freeSlots, fmtTime } from '@/domain/rules';
+import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, daySlots } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
@@ -47,7 +48,7 @@ export default function Agendar() {
 
   const durations = Object.fromEntries(s.services.map((x) => [x.id, x.durationMin]));
   const busy = s.appointments.filter((a) => a.professionalId === pro.id);
-  const slots = freeSlots(days[dayIdx], pro.workHours, service.durationMin, busy, durations);
+  const allSlots = daySlots(days[dayIdx], pro.workHours, service.durationMin, busy, durations);
 
   const vouchers = s.vouchers.filter(
     (v) => v.clientId === s.clientId && !v.used && (!v.professionalId || v.professionalId === pro.id),
@@ -128,27 +129,8 @@ export default function Agendar() {
 
       <Field label="Observações" placeholder="Ex: quero tom nude, alergia a…" value={notes} onChangeText={setNotes} multiline />
 
-      <SectionTitle title="Data" />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }}>
-        {days.map((d, i) => {
-          const sel = i === dayIdx;
-          return (
-            <Pressable key={d.toISOString()} onPress={() => { setDayIdx(i); setSlot(null); }}
-              style={{ width: 58, paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: sel ? colors.black : colors.card }}>
-              <T v="small" color={sel ? colors.lilac : colors.textMuted} style={{ fontSize: 10, fontWeight: '700' }}>{WEEK[d.getDay()]}</T>
-              <T v="title" color={sel ? colors.card : colors.text}>{d.getDate()}</T>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      <SectionTitle title="Horário" />
-      {slots.length === 0 ? <T muted>Sem horários livres neste dia.</T> : null}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-        {slots.map((t) => (
-          <Chip key={t.toISOString()} label={fmtTime(t)} selected={slot?.getTime() === t.getTime()} onPress={() => setSlot(t)} />
-        ))}
-      </View>
+      <DayStrip days={days} index={dayIdx} onChange={(i) => { setDayIdx(i); setSlot(null); }} />
+      <SlotGrid slots={allSlots} selected={slot} onSelect={setSlot} />
 
       {vouchers.length ? (
         <>

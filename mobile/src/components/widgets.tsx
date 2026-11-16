@@ -144,14 +144,14 @@ function Galeria({ w }: { w: Widget }) {
 function Contagem({ w }: { w: Widget }) {
   const c = useCountdown(w.target);
   const box = (n: number, l: string) => (
-    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#1C1C1C', borderRadius: radius.md, paddingVertical: 10 }}>
-      <T v="title" color={colors.card}>{String(n).padStart(2, '0')}</T>
+    <View style={{ flex: 1, alignItems: 'center', backgroundColor: colors.plumSoft, borderRadius: radius.md, paddingVertical: 10 }}>
+      <T v="title" color={colors.cardSolid}>{String(n).padStart(2, '0')}</T>
       <T v="small" color={colors.lilac} style={{ fontSize: 10 }}>{l}</T>
     </View>
   );
   return (
     <Card tone="black">
-      <T v="h3" color={colors.card}>{w.title}</T>
+      <T v="h3" color={colors.cardSolid}>{w.title}</T>
       <T v="small" color={colors.offWhite}>{c.over ? 'Encerrado' : `${w.subtitle ?? 'Termina em'} · ${fmtDate(w.target ?? new Date())}`}</T>
       <Row>
         {box(c.d, 'DIAS')}

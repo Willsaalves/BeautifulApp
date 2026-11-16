@@ -123,14 +123,14 @@ export default function Agendamento() {
         <Card tone="black">
           <Row style={{ justifyContent: 'space-between' }}>
             <T v="overline" color={colors.lilac}>Pague o sinal via Pix</T>
-            <T v="h3" color={colors.card}>⏱ {countdown}</T>
+            <T v="h3" color={colors.cardSolid}>⏱ {countdown}</T>
           </Row>
-          <T v="display" color={colors.card}>{brl(a.depositAmount)}</T>
+          <T v="display" color={colors.cardSolid}>{brl(a.depositAmount)}</T>
           <T v="small" color={colors.offWhite}>Chave Pix de {pro.name}</T>
           <Pressable
             onPress={async () => { await Clipboard.setStringAsync(pro.pixKey); notify('Chave Pix copiada'); }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1C1C1C', borderRadius: radius.md, padding: space.md }}>
-            <T color={colors.card} style={{ flex: 1 }} selectable>{pro.pixKey}</T>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.plumSoft, borderRadius: radius.md, padding: space.md }}>
+            <T color={colors.cardSolid} style={{ flex: 1 }} selectable>{pro.pixKey}</T>
             <Ionicons name="copy-outline" size={18} color={colors.lilac} />
           </Pressable>
           <Pressable
@@ -256,7 +256,7 @@ export default function Agendamento() {
               const mine = (m.from === 'profissional') === isPro;
               return (
                 <View key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%', backgroundColor: mine ? colors.black : colors.lilacSoft, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
-                  <T color={mine ? colors.card : colors.text}>{m.text}</T>
+                  <T color={mine ? colors.cardSolid : colors.text}>{m.text}</T>
                   <T v="small" color={mine ? colors.offWhite : colors.textMuted} style={{ fontSize: 10, textAlign: 'right' }}>{fmtTime(m.createdAt)}</T>
                 </View>
               );
@@ -273,7 +273,7 @@ export default function Agendamento() {
                 accessibilityLabel="Enviar"
                 onPress={() => { if (msg.trim()) { s.sendMessage(a.id, isPro ? 'profissional' : 'cliente', msg.trim()); setMsg(''); } }}
                 style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="send" size={16} color={colors.card} />
+                <Ionicons name="send" size={16} color={colors.cardSolid} />
               </Pressable>
             </Row>
           </Card>

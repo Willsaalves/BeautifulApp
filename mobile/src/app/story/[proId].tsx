@@ -47,7 +47,7 @@ export default function StoryViewer() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.black }}>
-      <Thumb src={st.image} bg="#1A1622" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} emojiSize={140} />
+      <Thumb src={st.image} bg={colors.plumSoft} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} emojiSize={140} />
       <SafeAreaView style={{ flex: 1, justifyContent: 'space-between' }}>
         <View style={{ paddingHorizontal: space.md, gap: space.sm }}>
           <View style={{ flexDirection: 'row', gap: 4, marginTop: space.sm }}>
@@ -60,11 +60,11 @@ export default function StoryViewer() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
             <Avatar name={author.name} color={author.avatar} photo={author.photo} size={36} />
             <View style={{ flex: 1 }}>
-              <T v="h3" color={colors.card}>{author.name} <T v="small" color={colors.offWhite}>· {ago(st.createdAt)}</T></T>
+              <T v="h3" color={colors.cardSolid}>{author.name} <T v="small" color={colors.offWhite}>· {ago(st.createdAt)}</T></T>
               {st.authorType === 'cliente' ? <T v="small" color={colors.lilac}>com {pro.name}{st.serviceId ? ` · ${L.service(st.serviceId).name}` : ''}</T> : null}
             </View>
             <Pressable onPress={close} hitSlop={12} accessibilityLabel="Fechar">
-              <Ionicons name="close" size={28} color={colors.card} />
+              <Ionicons name="close" size={28} color={colors.cardSolid} />
             </Pressable>
           </View>
         </View>
@@ -76,7 +76,7 @@ export default function StoryViewer() {
         </View>
 
         <View style={{ padding: space.lg, gap: space.md }}>
-          {st.caption ? <T v="h3" color={colors.card} style={{ textShadowColor: '#000', textShadowRadius: 6 }}>{st.caption}</T> : null}
+          {st.caption ? <T v="h3" color={colors.cardSolid} style={{ textShadowColor: '#000', textShadowRadius: 6 }}>{st.caption}</T> : null}
           {s.role === 'cliente' ? (
             <Button title={`Agendar com ${pro.name.split(' ')[0]}`} variant="lilac" icon="calendar"
               onPress={() => router.replace(`/profissional/${pro.id}`)} />

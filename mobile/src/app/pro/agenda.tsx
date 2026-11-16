@@ -49,7 +49,7 @@ export default function ProAgenda() {
           return (
             <Pressable key={i} onPress={() => setOffset(i - 3)} style={{ width: 58, paddingVertical: 10, borderRadius: radius.md, alignItems: 'center', backgroundColor: sel ? colors.black : colors.card }}>
               <T v="small" color={sel ? colors.lilac : colors.textMuted} style={{ fontSize: 10, fontWeight: '700' }}>{WEEK[d.getDay()]}</T>
-              <T v="title" color={sel ? colors.card : colors.text}>{d.getDate()}</T>
+              <T v="title" color={sel ? colors.cardSolid : colors.text}>{d.getDate()}</T>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: count ? colors.lilacDeep : 'transparent' }} />
             </Pressable>
           );

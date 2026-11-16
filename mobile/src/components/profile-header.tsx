@@ -42,12 +42,12 @@ export function ProfileHeader({
         {cover ? (
           <Image source={{ uri: cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
         ) : (
-          <LinearGradient colors={[colors.lilac, colors.lilacDeep]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }} />
+          <LinearGradient colors={[colors.blush, colors.lilac]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }} />
         )}
         {editable ? (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ backgroundColor: 'rgba(1,1,1,0.55)', borderRadius: 24, width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="camera" size={22} color={colors.card} />
+              <Ionicons name="camera" size={22} color={colors.cardSolid} />
             </View>
           </View>
         ) : null}
@@ -63,7 +63,7 @@ export function ProfileHeader({
           </View>
           {editable ? (
             <View style={{ position: 'absolute', right: 2, bottom: 6, width: 30, height: 30, borderRadius: 15, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.bg }}>
-              <Ionicons name="camera" size={14} color={colors.card} />
+              <Ionicons name="camera" size={14} color={colors.cardSolid} />
             </View>
           ) : null}
         </Pressable>
