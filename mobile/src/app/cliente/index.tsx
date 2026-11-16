@@ -23,7 +23,6 @@ import {
   SectionTitle,
   StatusBadge,
   T,
-  type IconName,
 } from '@/components/ui';
 import {
   NICHE_ICON,
@@ -36,7 +35,6 @@ import {
   loyaltyProgress,
 } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
-import type { Niche } from '@/domain/types';
 import { currentCoords } from '@/lib/location';
 import { pickImage } from '@/lib/pick-image';
 import { colors, fonts, gradients, radius, space } from '@/theme';
@@ -48,12 +46,6 @@ function notify(title: string, msg: string) {
   else Alert.alert(title, msg);
 }
 
-const CATEGORIES: { niche: Niche; label: string; icon: IconName }[] = [
-  { niche: 'unha', label: 'Unhas', icon: 'hand-left-outline' },
-  { niche: 'cilios', label: 'Cílios', icon: 'eye-outline' },
-  { niche: 'sobrancelha', label: 'Sobrancelha', icon: 'sparkles-outline' },
-  { niche: 'estetica', label: 'Estética', icon: 'color-wand-outline' },
-];
 
 export default function ClienteHome() {
   const s = useStore();
@@ -157,92 +149,25 @@ export default function ClienteHome() {
         )}
         <LinearGradient colors={['rgba(36,23,31,0.15)', 'rgba(36,23,31,0.85)']} style={StyleSheet.absoluteFill} />
 
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Pressable accessibilityLabel="Meu perfil" onPress={() => router.push('/cliente/perfil')} style={styles.glassBtn}>
-            <Ionicons name="menu" size={20} color={colors.cardSolid} />
+        <Row style={{ justifyContent: 'flex-end' }}>
+          <Pressable accessibilityLabel="Trocar foto do banner" onPress={changeHero} disabled={savingHero} style={styles.glassBtn}>
+            {savingHero ? <ActivityIndicator color={colors.cardSolid} /> : <Ionicons name="camera-outline" size={20} color={colors.cardSolid} />}
           </Pressable>
-          <Row>
-            <Pressable accessibilityLabel="Trocar imagem do topo" onPress={changeHero} disabled={savingHero} style={styles.glassBtn}>
-              {savingHero ? <ActivityIndicator color={colors.cardSolid} /> : <Ionicons name="camera-outline" size={20} color={colors.cardSolid} />}
-            </Pressable>
-            <Pressable accessibilityLabel="Notificações" style={styles.glassBtn}>
-              <Ionicons name="notifications-outline" size={20} color={colors.cardSolid} />
-              <View style={styles.dot} />
-            </Pressable>
-          </Row>
+          <Pressable accessibilityLabel="Notificações" style={styles.glassBtn}>
+            <Ionicons name="notifications-outline" size={20} color={colors.cardSolid} />
+            <View style={styles.dot} />
+          </Pressable>
+          <Pressable accessibilityLabel="Meu perfil" onPress={() => router.push('/cliente/perfil')}>
+            <Avatar name={me.name} color={me.avatar} photo={me.photo} />
+          </Pressable>
         </Row>
 
-        <View style={{ marginTop: 90, gap: space.sm }}>
-          <T style={styles.kicker}>OLÁ, {me.name.split(' ')[0].toUpperCase()} ✨</T>
-          <T style={styles.headline}>Se cuidar fica{'\n'}<T style={[styles.headline, { fontFamily: fonts.serifItalic }]}>lindo</T> em você <T style={[styles.headline, { color: colors.pink }]}>♥</T></T>
-          <T style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
-            Profissionais perto de você.{'\n'}Agende sozinha, sem WhatsApp.
-          </T>
-        </View>
-
-        <Pressable onPress={() => router.push('/cliente/explorar')} style={({ pressed }) => [styles.cta, pressed && { opacity: 0.9 }]} accessibilityRole="button">
-          <T style={{ fontSize: 15, fontWeight: '600', color: colors.black }}>Agendar horário</T>
-          <View style={styles.ctaArrow}>
-            <Ionicons name="arrow-forward" size={18} color={colors.cardSolid} />
-          </View>
-        </Pressable>
-
-        {next ? (
-          <Pressable onPress={() => router.push(`/agendamento/${next.id}`)} style={styles.nextChip}>
-            <Ionicons name="calendar-outline" size={16} color={colors.pink} />
-            <T v="small" style={{ flex: 1, color: colors.cardSolid }} numberOfLines={1}>
-              Próximo: {L.service(next.serviceId).name} · {fmtDateTime(next.startsAt)}
-            </T>
-            <Ionicons name="chevron-forward" size={16} color={colors.cardSolid} />
-          </Pressable>
-        ) : null}
+        <T v="display" style={styles.greeting}>
+          OLÁ,{'\n'}{me.name.split(' ')[0].toUpperCase()}! ✨
+        </T>
       </View>
 
       <View style={{ paddingHorizontal: space.lg, gap: space.md, marginTop: space.lg }}>
-      {/* ---------- Categorias ---------- */}
-      <Row style={{ justifyContent: 'space-between' }}>
-        {CATEGORIES.map((c, i) => (
-          <Pressable key={c.niche} onPress={() => router.push(`/cliente/explorar?niche=${c.niche}`)} style={{ alignItems: 'center', gap: 6, width: '23%' }}>
-            <View style={[styles.catTile, i === 0 && { backgroundColor: colors.pink, borderColor: colors.pink }]}>
-              <Ionicons name={c.icon} size={24} color={colors.black} />
-            </View>
-            <T v="small" style={{ fontSize: 12, fontWeight: i === 0 ? '700' : '500' }}>{c.label}</T>
-          </Pressable>
-        ))}
-      </Row>
-
-      {/* ---------- Trending Designs ---------- */}
-      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
-        <T style={{ fontSize: 22, fontFamily: fonts.serifSemi }}>Trending Designs</T>
-        <Pressable onPress={() => router.push('/cliente/explorar')} hitSlop={8}>
-          <T v="small" muted>Ver todos ›</T>
-        </Pressable>
-      </Row>
-      {API_ENABLED && remoteTrending && trending.length === 0 ? (
-        <T v="small" muted>Ainda não há designs publicados perto de você.</T>
-      ) : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }} style={{ marginHorizontal: -space.lg }}>
-        <View style={{ width: space.lg - space.md }} />
-        {trending.map((d) => {
-          const pro = L.pro(d.professionalId);
-          const fav = me.favorites.includes(pro.id);
-          return (
-            <Pressable key={d.id} onPress={() => openDesign(d)} style={{ width: 140 }}>
-              <View>
-                <Thumb src={d.image} bg={colors.blush} style={{ width: 140, height: 170, borderRadius: 22 }} emojiSize={56} />
-                <Pressable onPress={() => s.toggleFavorite(pro.id)} hitSlop={8} accessibilityLabel="Favoritar" style={styles.heart}>
-                  <Ionicons name={fav ? 'heart' : 'heart-outline'} size={16} color={fav ? colors.danger : colors.black} />
-                </Pressable>
-              </View>
-              <T style={{ fontWeight: '700', marginTop: 8 }} numberOfLines={1}>{d.name}</T>
-              <T v="small" muted numberOfLines={1}>{pro.name.split(' ')[0]}{d.priceDelta ? ` · +${brl(d.priceDelta)}` : ''}</T>
-            </Pressable>
-          );
-        })}
-        <View style={{ width: space.lg - space.md }} />
-      </ScrollView>
-
-      <SectionTitle title="Stories" />
       <StoriesRow />
 
       {/* Seus próximos procedimentos */}
@@ -273,8 +198,8 @@ export default function ClienteHome() {
         </Row>
       </Card>
 
-      {/* Próximo horário: aparece em destaque só quando precisa de ação (sinal / novo valor) */}
-      {next && (next.status === 'aguardando_sinal' || next.status === 'ajuste_pendente') ? (
+      {/* Próximo horário */}
+      {next ? (
         <Card onPress={() => router.push(`/agendamento/${next.id}`)}>
           <Row style={{ justifyContent: 'space-between' }}>
             <T v="overline">Meu próximo horário</T>
@@ -376,6 +301,37 @@ export default function ClienteHome() {
         </Card>
       ) : null}
 
+      {/* ---------- Trending Designs ---------- */}
+      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
+        <T style={{ fontSize: 22, fontFamily: fonts.serifSemi }}>Trending Designs</T>
+        <Pressable onPress={() => router.push('/cliente/explorar')} hitSlop={8}>
+          <T v="small" muted>Ver todos ›</T>
+        </Pressable>
+      </Row>
+      {API_ENABLED && remoteTrending && trending.length === 0 ? (
+        <T v="small" muted>Ainda não há designs publicados perto de você.</T>
+      ) : null}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }} style={{ marginHorizontal: -space.lg }}>
+        <View style={{ width: space.lg - space.md }} />
+        {trending.map((d) => {
+          const pro = L.pro(d.professionalId);
+          const fav = me.favorites.includes(pro.id);
+          return (
+            <Pressable key={d.id} onPress={() => openDesign(d)} style={{ width: 140 }}>
+              <View>
+                <Thumb src={d.image} bg={colors.blush} style={{ width: 140, height: 170, borderRadius: 22 }} emojiSize={56} />
+                <Pressable onPress={() => s.toggleFavorite(pro.id)} hitSlop={8} accessibilityLabel="Favoritar" style={styles.heart}>
+                  <Ionicons name={fav ? 'heart' : 'heart-outline'} size={16} color={fav ? colors.danger : colors.black} />
+                </Pressable>
+              </View>
+              <T style={{ fontWeight: '700', marginTop: 8 }} numberOfLines={1}>{d.name}</T>
+              <T v="small" muted numberOfLines={1}>{pro.name.split(' ')[0]}{d.priceDelta ? ` · +${brl(d.priceDelta)}` : ''}</T>
+            </Pressable>
+          );
+        })}
+        <View style={{ width: space.lg - space.md }} />
+      </ScrollView>
+
       </View>
     </ScrollView>
     </LinearGradient>
@@ -395,39 +351,6 @@ const styles = StyleSheet.create({
   blob: { position: 'absolute', borderRadius: 999, opacity: 0.55 },
   glassBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   dot: { position: 'absolute', top: 11, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.pink },
-  kicker: { color: 'rgba(255,255,255,0.8)', fontSize: 12, letterSpacing: 3, fontWeight: '600' },
-  headline: { fontFamily: fonts.serif, fontWeight: '400', color: colors.cardSolid, fontSize: 42, lineHeight: 50 },
-  cta: {
-    marginTop: space.xl,
-    height: 58,
-    borderRadius: radius.pill,
-    backgroundColor: colors.pink,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingLeft: space.xl,
-    paddingRight: 6,
-  },
-  ctaArrow: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' },
-  nextChip: {
-    marginTop: space.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: radius.pill,
-    paddingHorizontal: space.lg,
-    paddingVertical: 10,
-  },
-  catTile: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 22,
-    backgroundColor: colors.cardSolid,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  greeting: { color: colors.cardSolid, fontSize: 40, lineHeight: 42, marginTop: 120, textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 8 },
   heart: { position: 'absolute', right: 8, bottom: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
 });
