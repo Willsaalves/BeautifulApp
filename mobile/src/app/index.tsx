@@ -1,42 +1,138 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Card, IconCircle, Row, Screen, T } from '@/components/ui';
+import { ProgressBar, Ring, Row, T } from '@/components/ui';
 import { useStore } from '@/store/app-store';
-import { colors, space } from '@/theme';
+import { colors, radius, space } from '@/theme';
 
-// Entrada do app. Na versão com backend, isto vira login (telefone + OTP) e o perfil define o papel.
+const NICHES = [
+  { icon: '💅', label: 'Unhas', value: '128', sub: 'perto' },
+  { icon: '👁️', label: 'Cílios', value: '96', sub: 'perto' },
+  { icon: '✨', label: 'Sobrancelha', value: '74', sub: 'perto' },
+  { icon: '💉', label: 'Estética', value: '41', sub: 'perto' },
+  { icon: '💇‍♀️', label: 'Cabelo', value: '63', sub: 'perto' },
+];
+
+// Tela de entrada, no estilo da referência (cards brancos, anel de progresso, pílulas pretas).
+// Com o backend, os botões levam ao login por telefone + código.
 export default function Welcome() {
   const { setRole } = useStore();
+  const enter = (role: 'cliente' | 'profissional') => {
+    setRole(role);
+    router.replace(role === 'cliente' ? '/cliente' : '/pro');
+  };
+
   return (
-    <Screen bottomInset={40} style={{ paddingTop: space.xxl }}>
-      <T v="overline" muted>Beleza sem WhatsApp</T>
-      <T v="display" style={{ fontSize: 44, lineHeight: 46 }}>SUA BELEZA,{'\n'}NO SEU{'\n'}TEMPO ✨</T>
-      <T muted style={{ marginTop: space.sm }}>
-        Encontre profissionais perto de você, agende sozinha, pague o sinal via Pix e acompanhe seus procedimentos.
-      </T>
-
-      <View style={{ gap: space.md, marginTop: space.xl }}>
-        <Card tone="lilac" onPress={() => { setRole('cliente'); router.replace('/cliente'); }}>
+    <LinearGradient colors={[colors.lilac, '#E4DAF0', colors.bg]} locations={[0, 0.35, 0.75]} style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {/* topo */}
           <Row style={{ justifyContent: 'space-between' }}>
-            <View style={{ flex: 1, gap: 4 }}>
-              <T v="title">Sou cliente</T>
-              <T>Quero agendar e acompanhar meus procedimentos</T>
+            <View style={styles.brand}>
+              <T v="overline" style={{ fontSize: 10 }}>✦ Beautiful</T>
             </View>
-            <IconCircle icon="heart" bg={colors.card} />
-          </Row>
-        </Card>
-        <Card tone="black" onPress={() => { setRole('profissional'); router.replace('/pro'); }}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <View style={{ flex: 1, gap: 4 }}>
-              <T v="title" color={colors.card}>Sou profissional</T>
-              <T color={colors.offWhite}>Agenda, sinal via Pix, estoque e fidelidade</T>
+            <View style={styles.roundBtn}>
+              <Ionicons name="sparkles" size={18} color={colors.black} />
             </View>
-            <IconCircle icon="briefcase" bg={colors.lilac} />
           </Row>
-        </Card>
-      </View>
 
-    </Screen>
+          <T v="display" style={styles.title}>
+            SUA BELEZA,{'\n'}NO SEU{'\n'}TEMPO ✨
+          </T>
+          <T style={{ color: '#3B3640', marginTop: -4 }}>
+            Agende sozinha, pague o sinal via Pix e acompanhe cada procedimento. Sem depender do WhatsApp.
+          </T>
+
+          {/* card principal com anel de progresso */}
+          <View style={styles.card}>
+            <T v="overline" style={{ textAlign: 'center', fontSize: 10 }}>Seu sonho ideal está mais perto</T>
+            <Row gap={space.lg} style={{ marginTop: space.sm }}>
+              <Ring percent={69} size={118} stroke={13} sub="do sonho" />
+              <View style={{ flex: 1, gap: 6 }}>
+                <T v="small" muted>Você está</T>
+                <T v="title" style={{ fontSize: 24, lineHeight: 25 }}>LINDA &{'\n'}CONFIANTE</T>
+                <T v="small" muted>Faltam 2 procedimentos para o seu sonho ideal.</T>
+              </View>
+            </Row>
+          </View>
+
+          {/* dois cards lado a lado: fidelidade + próximo horário */}
+          <Row gap={space.md} style={{ alignItems: 'stretch' }}>
+            <View style={[styles.card, { flex: 1 }]}>
+              <T v="overline" style={{ fontSize: 9 }}>Fidelidade</T>
+              <T v="display" style={{ fontSize: 32, lineHeight: 34 }}>78%</T>
+              <ProgressBar percent={78} height={6} />
+              <T v="small" muted style={{ fontSize: 11 }}>Faltam R$ 110 para 15% OFF</T>
+            </View>
+            <View style={[styles.card, { flex: 1, backgroundColor: colors.black }]}>
+              <T v="overline" style={{ fontSize: 9 }} color={colors.lilac}>Próximo horário</T>
+              <T v="title" color={colors.card} style={{ fontSize: 20 }}>Qui · 10:00</T>
+              <T v="small" color={colors.offWhite} style={{ fontSize: 11 }}>Alongamento em gel</T>
+              <View style={styles.miniPill}>
+                <T v="small" style={{ fontSize: 10, fontWeight: '800' }}>✓ SINAL PAGO</T>
+              </View>
+            </View>
+          </Row>
+
+          {/* "insight cards" por nicho */}
+          <View style={styles.card}>
+            <T v="overline" style={{ textAlign: 'center', fontSize: 10 }}>Profissionais perto de você</T>
+            <Row style={{ justifyContent: 'space-between', marginTop: space.xs }}>
+              {NICHES.map((n) => (
+                <View key={n.label} style={{ alignItems: 'center', gap: 2, flex: 1 }}>
+                  <T style={{ fontSize: 22 }}>{n.icon}</T>
+                  <T v="small" style={{ fontSize: 10, fontWeight: '700' }} numberOfLines={1}>{n.label}</T>
+                  <T v="small" style={{ fontSize: 11 }}>{n.value}</T>
+                  <T v="small" muted style={{ fontSize: 9 }}>{n.sub}</T>
+                </View>
+              ))}
+            </Row>
+          </View>
+
+          {/* escolha de perfil, no estilo dos tiles "morning / evening care" */}
+          <Row gap={space.md} style={{ alignItems: 'stretch' }}>
+            <Pressable onPress={() => enter('cliente')} style={({ pressed }) => [styles.tile, { backgroundColor: colors.cream }, pressed && styles.pressed]}>
+              <Row gap={6}>
+                <Ionicons name="heart-outline" size={14} color={colors.warning} />
+                <T v="small" muted style={{ fontSize: 11 }}>Para você</T>
+              </Row>
+              <T v="h3" style={styles.tileTitle}>SOU{'\n'}CLIENTE</T>
+              <Ionicons name="arrow-forward-circle" size={28} color={colors.black} />
+            </Pressable>
+            <Pressable onPress={() => enter('profissional')} style={({ pressed }) => [styles.tile, { backgroundColor: colors.lilacSoft }, pressed && styles.pressed]}>
+              <Row gap={6}>
+                <Ionicons name="briefcase-outline" size={14} color={colors.lilacDeep} />
+                <T v="small" muted style={{ fontSize: 11 }}>Para profissionais</T>
+              </Row>
+              <T v="h3" style={styles.tileTitle}>SOU{'\n'}PROFISSIONAL</T>
+              <Ionicons name="arrow-forward-circle" size={28} color={colors.black} />
+            </Pressable>
+          </Row>
+
+          <Pressable onPress={() => enter('cliente')} style={({ pressed }) => [styles.cta, pressed && styles.pressed]}>
+            <T v="small" color={colors.card} style={{ fontWeight: '800', letterSpacing: 1 }}>COMEÇAR AGORA</T>
+          </Pressable>
+          <T v="small" muted style={{ textAlign: 'center', fontSize: 11 }}>
+            Ao continuar você concorda com os Termos e a Política de Privacidade (LGPD).
+          </T>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  content: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.xl, gap: space.md },
+  brand: { backgroundColor: 'rgba(255,255,255,0.7)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill },
+  roundBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 46, lineHeight: 46, letterSpacing: -1.5, marginTop: space.md },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.lg, gap: space.sm },
+  miniPill: { backgroundColor: colors.lilac, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
+  tile: { flex: 1, borderRadius: radius.xl, padding: space.lg, gap: space.sm, minHeight: 140, justifyContent: 'space-between' },
+  tileTitle: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3, lineHeight: 18 },
+  cta: { height: 54, borderRadius: radius.pill, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center', marginTop: space.xs },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+});

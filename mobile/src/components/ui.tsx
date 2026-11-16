@@ -223,8 +223,8 @@ export function ProgressBar({
 export function Ring({ percent, size = 112, stroke = 12, label, sub }: { percent: number; size?: number; stroke?: number; label?: string; sub?: string }) {
   const p = Math.max(0, Math.min(100, percent));
   const half = size / 2;
-  const rightDeg = Math.min(p, 50) * 3.6 - 180;
-  const leftDeg = Math.max(p - 50, 0) * 3.6 - 180;
+  const rightDeg = Math.min(p, 50) * 3.6;
+  const leftDeg = Math.max(p - 50, 0) * 3.6;
   const ringBase = { width: size, height: size, borderRadius: half, borderWidth: stroke, position: 'absolute' as const };
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={`${p}%`}>
