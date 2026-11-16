@@ -113,6 +113,9 @@ export default function ProPerfil() {
       ))}
 
       <SectionTitle title="Configurações" />
+      <Item icon="time-outline" title="Expediente"
+        sub={me.workDays ? `${me.workDays.length} dia(s) de atendimento` : `${me.workHours.start}–${me.workHours.end}`}
+        onPress={() => router.push('/config/expediente')} />
       <Item icon="heart-outline" title="Fidelidade, Pix e cancelamento"
         sub={`${me.loyalty.enabled ? `${brl(me.loyalty.goalAmount)} → ${me.loyalty.discountPercent}% OFF` : 'Fidelidade desativada'} · sinal em ${me.depositDeadlineHours}h`}
         onPress={() => router.push('/config/fidelidade')} />

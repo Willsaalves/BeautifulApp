@@ -13,6 +13,7 @@ import {
   widgetsSignature,
 } from './catalog';
 import { API_ENABLED } from './client';
+import { myAgenda, myWorkHours } from './scheduling';
 
 /**
  * Área da profissional com API ligada:
@@ -37,7 +38,7 @@ export function useProSync() {
     loaded.current = false;
     (async () => {
       try {
-        const [svcs, dz, ws] = await Promise.all([myServices(), myDesigns(), myWidgets()]);
+        const [svcs, dz, ws, days, agenda] = await Promise.all([myServices(), myDesigns(), myWidgets(), myWorkHours(), myAgenda()]);
         if (cancelled) return;
         const st = latest.current;
         const widgets = ws.map(widgetFromApi);
@@ -48,6 +49,8 @@ export function useProSync() {
           replaceDesignsOf: st.proId,
           widgetsOf: { professionalId: st.proId, widgets },
         });
+        st.setWorkDays(st.proId, days);
+        latest.current.mergeAppointments(agenda);
         lastSig.current = widgetsSignature(widgets);
         loaded.current = true;
         setError(null);
@@ -55,7 +58,14 @@ export function useProSync() {
         setError((e as Error).message);
       }
     })();
-    return () => { cancelled = true; };
+    // agenda atualizada a cada 30s (novos agendamentos, comprovantes, expirações)
+    const poll = setInterval(() => {
+      myAgenda().then((list) => !cancelled && latest.current.mergeAppointments(list)).catch(() => undefined);
+    }, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+    };
   }, [active, s.proId]);
 
   const widgets = L.myPro?.widgets ?? [];

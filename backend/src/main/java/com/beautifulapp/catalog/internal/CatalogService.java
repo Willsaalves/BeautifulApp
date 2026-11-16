@@ -51,6 +51,12 @@ class CatalogService implements CatalogApi {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<DesignView> design(UUID designId) {
+        return designs.findById(designId).map(this::view);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<DesignView> designs(UUID professionalId) {
         return designs.findVisibleByProfessional(professionalId).stream().map(this::view).toList();
     }

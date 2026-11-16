@@ -2,8 +2,11 @@
 // (mantendo as mesmas assinaturas) e este reducer passa a refletir as respostas.
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 
-import { addFavorite, removeFavorite } from '@/api/catalog';
-import { API_ENABLED, type Me } from '@/api/client';
+import { addFavorite, professionalFromCard, removeFavorite } from '@/api/catalog';
+import { appointmentFromApi, partiesFromApi, workHoursSummary } from '@/api/scheduling';
+import { API_ENABLED, type Me, type Schemas } from '@/api/client';
+
+type AppointmentApiView = Schemas['AppointmentView'];
 import * as mock from '@/data/mock';
 import {
   canEarnFeedbackVoucher,
@@ -29,6 +32,7 @@ import type {
   Voucher,
   Widget,
   WidgetType,
+  WorkDay,
 } from '@/domain/types';
 
 export type Role = 'cliente' | 'profissional';
@@ -656,6 +660,60 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
         dispatch({ type: 'set', patch: { professionals, services, designs } });
       },
 
+      /** Agendamentos vindos da API (+ cliente e profissional de cada um). */
+      mergeAppointments(views: AppointmentApiView[]) {
+        const incoming = views.map(appointmentFromApi);
+        const { clients: cl, pros } = partiesFromApi(views);
+        let clients = state.clients;
+        for (const c of cl) {
+          const ex = clients.find((x) => x.id === c.id);
+          // não sobrescreve o próprio perfil (favoritas, próximos procedimentos…)
+          clients = ex ? clients.map((x) => (x.id === c.id ? { ...x, name: c.name || x.name, photo: c.photo ?? x.photo, phone: c.phone || x.phone } : x)) : [...clients, c];
+        }
+        let professionals = state.professionals;
+        for (const p of pros) {
+          const ex = professionals.find((x) => x.id === p.id);
+          const merged = ex
+            ? { ...ex, pixKey: p.pixKey || ex.pixKey, photo: p.photo ?? ex.photo }
+            : { ...professionalFromCard({ id: p.id, studio: p.name, photoUrl: p.photo, neighborhood: p.neighborhood, city: p.city }), pixKey: p.pixKey ?? '' };
+          professionals = ex ? professionals.map((x) => (x.id === p.id ? merged : x)) : [...professionals, merged];
+        }
+        // serviço mínimo para agendamentos cujo serviço ainda não foi carregado (lista da cliente, home…)
+        let services = state.services;
+        for (const a of incoming) {
+          if (services.some((x) => x.id === a.serviceId)) continue;
+          services = [...services, {
+            id: a.serviceId,
+            professionalId: a.professionalId,
+            name: a.serviceName ?? 'Serviço',
+            niche: professionals.find((p) => p.id === a.professionalId)?.niche ?? 'unha',
+            durationMin: a.durationMin ?? 60,
+            price: a.price,
+            depositPercent: 0,
+            returnIntervalDays: a.returnIntervalDays ?? 0,
+            options: [],
+            consumption: [],
+          }];
+        }
+        let appointments = state.appointments;
+        for (const a of incoming) {
+          appointments = appointments.some((x) => x.id === a.id) ? appointments.map((x) => (x.id === a.id ? a : x)) : [...appointments, a];
+        }
+        dispatch({ type: 'set', patch: { appointments, clients, professionals, services } });
+        return incoming;
+      },
+
+      setWorkDays(professionalId: string, days: WorkDay[]) {
+        dispatch({
+          type: 'set',
+          patch: {
+            professionals: state.professionals.map((p) =>
+              p.id === professionalId ? { ...p, workDays: days, workHours: workHoursSummary(days) } : p,
+            ),
+          },
+        });
+      },
+
       removeServiceLocal(id: string) {
         dispatch({ type: 'set', patch: { services: state.services.filter((x) => x.id !== id) } });
       },
@@ -695,7 +753,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   // Política de cancelamento: verifica a cada 30s se algum sinal venceu.
   useEffect(() => {
     const tick = () => {
-      state.appointments.filter((a) => isDepositExpired(a)).forEach((a) =>
+      state.appointments.filter((a) => !a.remote && isDepositExpired(a)).forEach((a) =>
         dispatch({ type: 'patchAppointment', id: a.id, patch: { status: 'expirado' } }),
       );
     };

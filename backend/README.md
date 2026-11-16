@@ -42,6 +42,7 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | `catalog` | Serviços (opções e escolhas com acréscimo, ids estáveis na edição), Trending Designs com foto |
 | `page` | Página da profissional em blocos (capa, galeria, porcentagem, contagem, texto, trending…); SERVICOS e AGENDA obrigatórios |
 | `discovery` | Busca por nicho, texto e distância (PostGIS), página pública composta, vitrine de designs |
+| `scheduling` | Expediente, bloqueios, horários livres, agendamento (preço/sinal no servidor), comprovante, confirmar/recusar, ajuste de valor, concluir/cancelar, expiração automática do sinal (a cada minuto); exclusion constraint impede horário duplicado |
 | `media` | URL pré-assinada para upload direto ao storage; prefixos públicos (avatar, capa, portfólio, story, design) e privados (comprovante, referência); valida o dono da chave |
 | `common` | Erros RFC 7807 com `code`, UUID v7, normalização de celular |
 
@@ -64,6 +65,15 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | GET | `/professionals/{id}` | Página pública: perfil + serviços + designs + blocos |
 | GET | `/designs/trending?niche&lat&lng` | Vitrine de designs |
 | GET/PUT/DELETE | `/me/favorites[/{professionalId}]` | Favoritas |
+| GET/PUT | `/me/work-hours` | Expediente da semana |
+| GET/POST/DELETE | `/me/blocks` | Bloqueios (folga, almoço) |
+| GET | `/professionals/{id}/availability?date&serviceId` | Horários FREE / BUSY / PAST |
+| POST | `/appointments` | Agendar (preço, sinal e prazo calculados no servidor) |
+| GET | `/me/appointments` · `/me/agenda` · `/appointments/{id}` | Listas (cliente / profissional) e detalhe |
+| POST | `/appointments/{id}/receipt` | Cliente envia comprovante (upload kind=RECEIPT, privado) |
+| POST | `/appointments/{id}/confirm-deposit` · `/reject-receipt` | Profissional confere o sinal |
+| POST | `/appointments/{id}/adjustment` · `/adjustment/accept` · `/adjustment/decline` | Novo valor |
+| POST | `/appointments/{id}/complete` · `/cancel` | Concluir / cancelar |
 
 ## Variáveis de ambiente (deploy de testes / produção)
 

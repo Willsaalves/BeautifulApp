@@ -4,6 +4,24 @@
  */
 
 export interface paths {
+    "/me/work-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meu expediente (dias sem linha = folga) */
+        get: operations["get"];
+        /** Substitui o expediente da semana */
+        put: operations["put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/services/{id}": {
         parameters: {
             query?: never;
@@ -146,6 +164,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus bloqueios futuros */
+        get: operations["blocks"];
+        put?: never;
+        /** Bloquear um período (folga, almoço…) */
+        post: operations["addBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/refresh": {
         parameters: {
             query?: never;
@@ -208,6 +244,159 @@ export interface paths {
         put?: never;
         /** Encerra a sessão */
         post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Agendar (preço e sinal calculados no servidor) */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/reject-receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recusar comprovante */
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enviar comprovante do Pix (receiptKey de upload kind=RECEIPT) */
+        post: operations["receipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/confirm-deposit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirmar o sinal (comprovante ok) */
+        post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Concluir atendimento */
+        post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancelar (cliente ou profissional) */
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/adjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propor novo valor */
+        post: operations["adjust"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/adjustment/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recusar novo valor proposto */
+        post: operations["decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/adjustment/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aceitar novo valor proposto */
+        post: operations["accept"];
         delete?: never;
         options?: never;
         head?: never;
@@ -282,6 +471,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/professionals/{id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Horários do dia para um serviço (FREE / BUSY / PAST) */
+        get: operations["availability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -316,6 +522,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus agendamentos (cliente) */
+        get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/agenda": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Minha agenda (profissional) no período; padrão: 7 dias atrás até 60 dias à frente */
+        get: operations["agenda"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/designs/trending": {
         parameters: {
             query?: never;
@@ -333,10 +573,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/appointments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe (cliente ou profissional do agendamento) */
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/blocks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remover bloqueio */
+        delete: operations["removeBlock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WorkDayInput: {
+            /** Format: int32 */
+            weekday?: number;
+            /** Format: time-local */
+            start: string;
+            /** Format: time-local */
+            end: string;
+        };
+        WorkDay: {
+            /** Format: int32 */
+            weekday?: number;
+            /** Format: time-local */
+            start?: string;
+            /** Format: time-local */
+            end?: string;
+        };
         ChoiceInput: {
             /** Format: uuid */
             id?: string;
@@ -531,6 +821,22 @@ export interface components {
             /** Format: int32 */
             depositDeadlineHours?: number;
         };
+        BlockInput: {
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            reason?: string;
+        };
+        BlockView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            reason?: string;
+        };
         RefreshRequest: {
             refreshToken: string;
         };
@@ -553,6 +859,102 @@ export interface components {
             phone?: string;
             /** Format: int64 */
             expiresIn?: number;
+        };
+        CreateAppointment: {
+            /** Format: uuid */
+            serviceId: string;
+            /** Format: date-time */
+            startsAt: string;
+            selections?: components["schemas"]["SelectionInput"][];
+            /** Format: uuid */
+            designId?: string;
+            referenceKey?: string;
+            notes?: string;
+        };
+        SelectionInput: {
+            /** Format: uuid */
+            optionId: string;
+            /** Format: uuid */
+            choiceId: string;
+        };
+        AdjustmentView: {
+            /** Format: int64 */
+            newPriceCents?: number;
+            note?: string;
+            status?: string;
+        };
+        AppointmentView: {
+            /** Format: uuid */
+            id?: string;
+            status?: string;
+            client?: components["schemas"]["PartyClient"];
+            professional?: components["schemas"]["PartyProfessional"];
+            /** Format: uuid */
+            serviceId?: string;
+            serviceName?: string;
+            /** Format: int32 */
+            durationMin?: number;
+            /** Format: int32 */
+            returnIntervalDays?: number;
+            /** Format: uuid */
+            designId?: string;
+            designName?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            selections?: components["schemas"]["SelectionView"][];
+            /** Format: int64 */
+            priceCents?: number;
+            /** Format: int64 */
+            discountCents?: number;
+            /** Format: int64 */
+            totalCents?: number;
+            /** Format: int64 */
+            depositCents?: number;
+            /** Format: date-time */
+            depositDueAt?: string;
+            receiptUrl?: string;
+            referenceUrl?: string;
+            notes?: string;
+            adjustment?: components["schemas"]["AdjustmentView"];
+            cancelledBy?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PartyClient: {
+            /** Format: uuid */
+            accountId?: string;
+            name?: string;
+            photoUrl?: string;
+            phone?: string;
+        };
+        PartyProfessional: {
+            /** Format: uuid */
+            id?: string;
+            studio?: string;
+            photoUrl?: string;
+            neighborhood?: string;
+            city?: string;
+            pixKey?: string;
+        };
+        SelectionView: {
+            /** Format: uuid */
+            optionId?: string;
+            /** Format: uuid */
+            choiceId?: string;
+            optionLabel?: string;
+            choiceLabel?: string;
+            /** Format: int64 */
+            priceDeltaCents?: number;
+        };
+        ReceiptInput: {
+            receiptKey: string;
+        };
+        AdjustmentInput: {
+            /** Format: int64 */
+            newPriceCents?: number;
+            note?: string;
         };
         ProfessionalPatch: {
             name?: string;
@@ -605,6 +1007,7 @@ export interface components {
             services?: components["schemas"]["ServiceView"][];
             designs?: components["schemas"]["DesignView"][];
             widgets?: components["schemas"]["WidgetView"][];
+            workHours?: components["schemas"]["WorkDay"][];
         };
         PublicProfessional: {
             /** Format: uuid */
@@ -626,6 +1029,14 @@ export interface components {
             pixKey?: string;
             /** Format: int32 */
             depositDeadlineHours?: number;
+        };
+        Slot: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            /** @enum {string} */
+            status?: "FREE" | "BUSY" | "PAST";
         };
         TrendingDesign: {
             /** Format: uuid */
@@ -653,6 +1064,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkDay"][];
+                };
+            };
+        };
+    };
+    put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkDayInput"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkDay"][];
+                };
+            };
+        };
+    };
     update: {
         parameters: {
             query?: never;
@@ -965,6 +1420,50 @@ export interface operations {
             };
         };
     };
+    blocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BlockView"][];
+                };
+            };
+        };
+    };
+    addBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BlockView"];
+                };
+            };
+        };
+    };
     refresh: {
         parameters: {
             query?: never;
@@ -1056,6 +1555,214 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAppointment"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiptInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    adjust: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustmentInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
             };
         };
     };
@@ -1156,6 +1863,31 @@ export interface operations {
             };
         };
     };
+    availability: {
+        parameters: {
+            query: {
+                date: string;
+                serviceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Slot"][];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -1196,6 +1928,49 @@ export interface operations {
             };
         };
     };
+    mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"][];
+                };
+            };
+        };
+    };
+    agenda: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"][];
+                };
+            };
+        };
+    };
     trending: {
         parameters: {
             query?: {
@@ -1218,6 +1993,48 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["TrendingDesign"][];
                 };
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    removeBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

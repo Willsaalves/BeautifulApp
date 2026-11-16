@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { publicPage } from '@/api/catalog';
+import { API_ENABLED, ApiError } from '@/api/client';
+import { availability, createAppointment, workDaysFromApi } from '@/api/scheduling';
 import { Thumb } from '@/components/media';
 import { DayStrip, SlotGrid } from '@/components/slot-grid';
 import { Avatar, Button, Card, Chip, Divider, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
-import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, daySlots } from '@/domain/rules';
+import { brl, computeDeposit, computePrice, depositDeadline, fmtDateTime, daySlots, type SlotStatus } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
@@ -34,6 +37,18 @@ export default function Agendar() {
   const [slot, setSlot] = useState<Date | null>(null);
   const [voucherId, setVoucherId] = useState<string | undefined>();
 
+  // API ligada: expediente e horários livres vêm do servidor
+  const remote = API_ENABLED && !!pro.remote;
+  const latest = useRef(s);
+  latest.current = s;
+  useEffect(() => {
+    if (!remote) return;
+    publicPage(pro.id)
+      .then((page) => latest.current.setWorkDays(pro.id, workDaysFromApi(page.workHours ?? [])))
+      .catch(() => undefined);
+  }, [remote, pro.id]);
+  const workDays = pro.workDays?.map((d) => d.weekday) ?? pro.workHours.days;
+
   const days = useMemo(() => {
     const out: Date[] = [];
     const d0 = new Date();
@@ -41,16 +56,33 @@ export default function Agendar() {
     for (let i = 0; out.length < 14 && i < 30; i++) {
       const d = new Date(d0);
       d.setDate(d.getDate() + i);
-      if (pro.workHours.days.includes(d.getDay())) out.push(d);
+      if (workDays.includes(d.getDay())) out.push(d);
     }
     return out;
-  }, [pro]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workDays.join(',')]);
 
   const durations = Object.fromEntries(s.services.map((x) => [x.id, x.durationMin]));
   const busy = s.appointments.filter((a) => a.professionalId === pro.id);
-  const allSlots = daySlots(days[dayIdx], pro.workHours, service.durationMin, busy, durations);
+  const [remoteSlots, setRemoteSlots] = useState<{ time: Date; status: SlotStatus }[] | null>(null);
+  const [reloadSlots, setReloadSlots] = useState(0);
+  const day = days[dayIdx];
+  useEffect(() => {
+    if (!remote || !day) return;
+    setRemoteSlots(null);
+    const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    availability(pro.id, iso, service.id)
+      .then((list) =>
+        setRemoteSlots(list.map((x) => ({ time: new Date(x.start!), status: x.status === 'FREE' ? 'livre' : x.status === 'BUSY' ? 'ocupado' : 'passado' }))),
+      )
+      .catch(() => setRemoteSlots([]));
+  }, [remote, day?.getTime(), service.id, reloadSlots]);
+  const allSlots = !day ? [] : remote ? (remoteSlots ?? []) : daySlots(day, pro.workHours, service.durationMin, busy, durations);
+  const [busySubmit, setBusySubmit] = useState(false);
+  const [error, setError] = useState('');
 
-  const vouchers = s.vouchers.filter(
+  // vouchers entram na API na fase 4
+  const vouchers = remote ? [] : s.vouchers.filter(
     (v) => v.clientId === s.clientId && !v.used && (!v.professionalId || v.professionalId === pro.id),
   );
   const voucher = vouchers.find((v) => v.id === voucherId);
@@ -60,10 +92,27 @@ export default function Agendar() {
   const needsRef = service.requiresReference && !reference && !design;
   const canSubmit = !!slot && !needsRef;
 
-  const submit = () => {
+  const submit = async () => {
     if (!slot) return;
-    const id = s.createAppointment({ serviceId, startsAt: slot, selections, referenceImage: reference, designId, notes, voucherId });
-    router.replace(`/agendamento/${id}`);
+    if (!remote) {
+      const id = s.createAppointment({ serviceId, startsAt: slot, selections, referenceImage: reference, designId, notes, voucherId });
+      return router.replace(`/agendamento/${id}`);
+    }
+    setBusySubmit(true);
+    setError('');
+    try {
+      const v = await createAppointment({ serviceId, startsAt: slot, selections, designId, referenceImage: reference, notes });
+      s.mergeAppointments([v]);
+      router.replace(`/agendamento/${v.id}`);
+    } catch (e) {
+      setError((e as Error).message);
+      if (e instanceof ApiError && e.code === 'SLOT_UNAVAILABLE') {
+        setSlot(null);
+        setReloadSlots((n) => n + 1);
+      }
+    } finally {
+      setBusySubmit(false);
+    }
   };
 
   return (
@@ -129,8 +178,9 @@ export default function Agendar() {
 
       <Field label="Observações" placeholder="Ex: quero tom nude, alergia a…" value={notes} onChangeText={setNotes} multiline />
 
-      <DayStrip days={days} index={dayIdx} onChange={(i) => { setDayIdx(i); setSlot(null); }} />
-      <SlotGrid slots={allSlots} selected={slot} onSelect={setSlot} />
+      {days.length ? <DayStrip days={days} index={dayIdx} onChange={(i) => { setDayIdx(i); setSlot(null); }} /> : null}
+      {remote && remoteSlots === null && day ? <T v="small" muted>Carregando horários…</T> : null}
+      {!day ? <T muted>A profissional ainda não configurou o expediente.</T> : <SlotGrid slots={allSlots} selected={slot} onSelect={setSlot} />}
 
       {vouchers.length ? (
         <>
@@ -159,7 +209,8 @@ export default function Agendar() {
       </Card>
 
       {needsRef ? <T v="small" color={colors.danger}>Escolha um Trending Design ou anexe sua referência para continuar.</T> : null}
-      <Button title="Confirmar e pagar sinal" icon="flash" disabled={!canSubmit} onPress={submit} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      <Button title={busySubmit ? 'Agendando…' : 'Confirmar e pagar sinal'} icon="flash" disabled={!canSubmit || busySubmit} onPress={submit} />
     </Screen>
   );
 }

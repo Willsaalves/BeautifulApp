@@ -69,12 +69,19 @@ export interface Professional {
   pixKey: string;
   depositDeadlineHours: number;  // prazo para pagar o sinal
   loyalty: LoyaltyProgram;
-  workHours: { start: string; end: string; days: number[] }; // 0=dom
+  workHours: { start: string; end: string; days: number[] }; // 0=dom (resumo)
+  workDays?: WorkDay[];  // expediente por dia (vem da API)
   widgets: Widget[];
   latitude?: number;
   longitude?: number;
   minPrice?: number;     // "a partir de" (vem da busca da API)
   remote?: boolean;      // veio da API (não é dado de exemplo)
+}
+
+export interface WorkDay {
+  weekday: number;       // 0 = domingo
+  start: string;         // "09:00"
+  end: string;           // "18:00"
 }
 
 export interface LoyaltyProgram {
@@ -115,6 +122,13 @@ export interface Appointment {
   status: AppointmentStatus;
   adjustment?: PriceAdjustment;
   discountApplied?: number;
+  endsAt?: string;
+  serviceName?: string;
+  durationMin?: number;
+  returnIntervalDays?: number;
+  designName?: string;
+  selectionLabels?: { option: string; choice: string }[];
+  remote?: boolean;
   createdAt: string;
 }
 

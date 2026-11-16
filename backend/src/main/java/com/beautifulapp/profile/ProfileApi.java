@@ -8,4 +8,9 @@ public interface ProfileApi {
     UUID requireProfessionalId(UUID accountId);
 
     Optional<PublicProfessional> publicProfessional(UUID professionalId);
+
+    /** Nome, foto e celular da cliente (para a agenda da profissional). */
+    Optional<ClientSummary> clientSummary(UUID accountId);
+
+    record ClientSummary(UUID accountId, String name, String photoUrl, String phone) {}
 }

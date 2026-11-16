@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.jayway.jsonpath.JsonPath;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.scheduling.jobs=false")
 @AutoConfigureMockMvc
 @Import(TestcontainersConfig.class)
 public abstract class ApiTestSupport {

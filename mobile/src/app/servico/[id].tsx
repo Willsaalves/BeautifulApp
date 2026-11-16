@@ -26,6 +26,15 @@ export default function EditarServico() {
   const [ret, setRet] = useState(String(existing?.returnIntervalDays ?? 21));
   const [consumption, setConsumption] = useState<Consumption[]>(existing?.consumption ?? []);
   const [needsRef, setNeedsRef] = useState(existing?.requiresReference ?? false);
+  // opções (Formato, Tamanho…) com escolhas e acréscimo de preço; preço guardado como texto enquanto edita
+  const [options, setOptions] = useState(
+    (existing?.options ?? []).map((o) => ({ ...o, choices: o.choices.map((c) => ({ ...c, priceText: String(c.priceDelta) })) })),
+  );
+  const newKey = () => s.newId('o');
+  const setOpt = (i: number, patch: Partial<(typeof options)[number]>) => setOptions(options.map((o, j) => (j === i ? { ...o, ...patch } : o)));
+  const setChoice = (i: number, k: number, patch: Partial<(typeof options)[number]['choices'][number]>) =>
+    setOpt(i, { choices: options[i].choices.map((c, j) => (j === k ? { ...c, ...patch } : c)) });
+  const optionsValid = options.every((o) => o.label.trim() && o.choices.length > 0 && o.choices.every((c) => c.label.trim()));
 
   const unused = L.myProducts.filter((p) => !consumption.some((c) => c.productId === p.id));
 
@@ -42,7 +51,11 @@ export default function EditarServico() {
       durationMin: num(duration),
       depositPercent: num(deposit),
       returnIntervalDays: num(ret),
-      options: existing?.options ?? [],
+      options: options.map((o) => ({
+        id: o.id,
+        label: o.label.trim(),
+        choices: o.choices.map((c) => ({ id: c.id, label: c.label.trim(), priceDelta: num(c.priceText) })),
+      })),
       consumption: consumption.filter((c) => c.amount > 0),
       requiresReference: needsRef,
     };
@@ -96,6 +109,39 @@ export default function EditarServico() {
         <Chip label="Exigir foto de referência da cliente" icon={needsRef ? '✅' : '⬜'} selected={needsRef} onPress={() => setNeedsRef(!needsRef)} />
       </Card>
 
+      <SectionTitle title="Opções que a cliente escolhe" action="+ Opção" onAction={() =>
+        setOptions([...options, { id: newKey(), label: '', choices: [{ id: newKey(), label: '', priceDelta: 0, priceText: '0' }] }])} />
+      <T v="small" muted>Ex: Formato (Quadrada, Stiletto +R$ 20), Tamanho, Decoração. O preço final é calculado sozinho.</T>
+      {options.map((o, i) => (
+        <Card key={o.id}>
+          <Row>
+            <View style={{ flex: 1 }}>
+              <Field label={`Opção ${i + 1}`} placeholder="Ex: Formato" value={o.label} onChangeText={(v) => setOpt(i, { label: v })} />
+            </View>
+            <Pressable onPress={() => setOptions(options.filter((_, j) => j !== i))} hitSlop={8} accessibilityLabel="Remover opção" style={{ marginTop: 18 }}>
+              <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
+            </Pressable>
+          </Row>
+          {o.choices.map((c, k) => (
+            <Row key={c.id}>
+              <TextInput value={c.label} onChangeText={(v) => setChoice(i, k, { label: v })} placeholder="Escolha (ex: Stiletto)"
+                placeholderTextColor={colors.textMuted}
+                style={{ flex: 1, backgroundColor: colors.bg, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, color: colors.text }} />
+              <T v="small" muted>+R$</T>
+              <TextInput value={c.priceText} onChangeText={(v) => setChoice(i, k, { priceText: v })} keyboardType="decimal-pad"
+                accessibilityLabel="Acréscimo"
+                style={{ width: 70, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 10, color: colors.text }} />
+              <Pressable disabled={o.choices.length === 1} onPress={() => setOpt(i, { choices: o.choices.filter((_, j) => j !== k) })} hitSlop={8}
+                accessibilityLabel="Remover escolha" style={{ opacity: o.choices.length === 1 ? 0.3 : 1 }}>
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </Pressable>
+            </Row>
+          ))}
+          <Button small variant="outline" title="+ Escolha" style={{ alignSelf: 'flex-start' }}
+            onPress={() => setOpt(i, { choices: [...o.choices, { id: newKey(), label: '', priceDelta: 0, priceText: '0' }] })} />
+        </Card>
+      ))}
+
       <SectionTitle title="Consumo por atendimento" />
       <T v="small" muted>O que sai do estoque toda vez que este serviço é concluído.</T>
       <Card>
@@ -128,7 +174,8 @@ export default function EditarServico() {
         ) : null}
       </Card>
       {error ? <T v="small" color={colors.danger}>{error}</T> : null}
-      <Button title={busy ? 'Salvando…' : 'Salvar serviço'} disabled={!name.trim() || !num(price) || busy} onPress={save} />
+      {!optionsValid ? <T v="small" color={colors.danger}>Dê nome a todas as opções e escolhas (ou remova as vazias).</T> : null}
+      <Button title={busy ? 'Salvando…' : 'Salvar serviço'} disabled={!name.trim() || !num(price) || busy || !optionsValid} onPress={save} />
       {existing ? <Button title="Desativar serviço" variant="ghost" onPress={deactivate} /> : null}
     </Screen>
   );

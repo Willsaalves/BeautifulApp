@@ -1,6 +1,8 @@
+import { useClientSync } from '@/api/use-client-sync';
 import { AppTabs } from '@/components/tab-bar';
 
 export default function ClienteLayout() {
+  useClientSync();
   return (
     <AppTabs
       tabs={[

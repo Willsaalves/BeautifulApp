@@ -12,6 +12,7 @@ import com.beautifulapp.media.MediaApi;
 import com.beautifulapp.media.MediaKind;
 import com.beautifulapp.media.MediaProperties;
 
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -51,6 +52,13 @@ class MediaService implements MediaApi {
     public String publicUrl(String key) {
         if (!StringUtils.hasText(key)) return null;
         return props.publicBaseUrl().replaceAll("/$", "") + "/" + key;
+    }
+
+    @Override
+    public String signedReadUrl(String key) {
+        if (!StringUtils.hasText(key)) return null;
+        var get = GetObjectRequest.builder().bucket(props.bucket()).key(key).build();
+        return presigner.presignGetObject(r -> r.signatureDuration(java.time.Duration.ofMinutes(5)).getObjectRequest(get)).url().toString();
     }
 
     @Override

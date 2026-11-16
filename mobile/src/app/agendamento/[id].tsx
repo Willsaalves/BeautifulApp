@@ -2,10 +2,23 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, TextInput, View } from 'react-native';
 
 import { Thumb } from '@/components/media';
+import { API_ENABLED, type Schemas } from '@/api/client';
+import {
+  acceptAdjustment,
+  cancelAppointment,
+  completeAppointment,
+  confirmDeposit,
+  declineAdjustment,
+  getAppointment,
+  proposeAdjustment,
+  rejectReceipt,
+  sendReceipt,
+} from '@/api/scheduling';
+import { maskPhone } from '@/components/auth';
 import { Avatar, Button, Card, Divider, Empty, Field, Header, Row, Screen, SectionTitle, StatusBadge, T } from '@/components/ui';
 import { brl, fmtDateTime, fmtTime, isLowStock } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
@@ -42,10 +55,40 @@ export default function Agendamento() {
   const [adjNote, setAdjNote] = useState('');
   const [showAdj, setShowAdj] = useState(false);
   const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const latest = useRef(s);
+  latest.current = s;
+  const remote = API_ENABLED && (a?.remote ?? /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id));
 
-  if (!a) return <Screen><Header /><Empty text="Agendamento não encontrado." /></Screen>;
+  // API ligada: sempre mostra o estado atual do servidor
+  useEffect(() => {
+    if (!remote) return;
+    getAppointment(id).then((v) => latest.current.mergeAppointments([v])).catch((e) => setError((e as Error).message));
+  }, [remote, id]);
 
-  const svc = L.service(a.serviceId);
+  /** Executa a ação na API (se ligada) e aplica a resposta; senão usa a regra local do protótipo. */
+  const run = async (apiCall: () => Promise<Schemas['AppointmentView']>, local: () => void) => {
+    if (!remote) return local();
+    setBusy(true);
+    setError('');
+    try {
+      s.mergeAppointments([await apiCall()]);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!a) return <Screen><Header />{error ? <T color={colors.danger}>{error}</T> : <Empty text="Carregando agendamento…" />}</Screen>;
+
+  const svc = L.service(a.serviceId) ?? {
+    name: a.serviceName ?? 'Serviço',
+    durationMin: a.durationMin ?? 60,
+    options: [],
+    consumption: [],
+  };
   const pro = L.pro(a.professionalId);
   const client = L.client(a.clientId);
   const total = a.price - (a.discountApplied ?? 0);
@@ -53,7 +96,16 @@ export default function Agendamento() {
   const feedback = s.feedbacks.find((f) => f.appointmentId === a.id);
   const open = ['aguardando_sinal', 'sinal_enviado', 'confirmado', 'ajuste_pendente'].includes(a.status);
 
-  const complete = () => {
+  const complete = async () => {
+    if (remote) {
+      try {
+        s.mergeAppointments([await completeAppointment(a.id)]);
+      } catch (e) {
+        return setError((e as Error).message);
+      }
+      // estoque e fidelidade ainda são locais (fase 4)
+      if (!L.service(a.serviceId)) return notify('Atendimento concluído');
+    }
     const { reached, movements } = s.completeAppointment(a.id);
     const lines = movements.map((m) => {
       const p = L.product(m.productId)!;
@@ -70,6 +122,8 @@ export default function Agendamento() {
   return (
     <Screen bottomInset={60}>
       <Header title="Agendamento" />
+      {error ? <Card tone="cream"><T v="small" color={colors.danger}>{error}</T></Card> : null}
+      {busy ? <T v="small" muted>Atualizando…</T> : null}
 
       <Card>
         <Row style={{ justifyContent: 'space-between' }}>
@@ -82,10 +136,20 @@ export default function Agendamento() {
           <Avatar name={isPro ? client.name : pro.name} color={isPro ? client.avatar : pro.avatar} photo={isPro ? client.photo : pro.photo} size={38} />
           <View style={{ flex: 1 }}>
             <T v="h3">{isPro ? client.name : pro.name}</T>
-            <T v="small" muted>{isPro ? client.phone : `${pro.neighborhood}, ${pro.city}`}</T>
+            <T v="small" muted>{isPro ? maskPhone(client.phone.replace(/^\+55/, '')) : `${pro.neighborhood}, ${pro.city}`}</T>
           </View>
         </Row>
-        {Object.keys(a.selections).length ? (
+        {a.selectionLabels?.length ? (
+          <>
+            <Divider />
+            {a.selectionLabels.map((x) => (
+              <Row key={x.option} style={{ justifyContent: 'space-between' }}>
+                <T muted>{x.option}</T>
+                <T>{x.choice}</T>
+              </Row>
+            ))}
+          </>
+        ) : Object.keys(a.selections).length ? (
           <>
             <Divider />
             {svc.options.map((o) => {
@@ -102,7 +166,7 @@ export default function Agendamento() {
         {a.designId ? (
           <Row style={{ justifyContent: 'space-between' }}>
             <T muted>Design</T>
-            <T style={{ fontWeight: '800' }}>{s.designs.find((d) => d.id === a.designId)?.name}</T>
+            <T style={{ fontWeight: '800' }}>{a.designName ?? s.designs.find((d) => d.id === a.designId)?.name}</T>
           </Row>
         ) : null}
         {a.notes ? <T v="small" muted>Obs.: {a.notes}</T> : null}
@@ -145,7 +209,7 @@ export default function Agendamento() {
               </>
             )}
           </Pressable>
-          <Button title="Enviar comprovante" variant="lilac" disabled={!receipt} onPress={() => receipt && s.attachReceipt(a.id, receipt)} />
+          <Button title="Enviar comprovante" variant="lilac" disabled={!receipt} onPress={() => receipt && run(() => sendReceipt(a.id, receipt), () => s.attachReceipt(a.id, receipt))} />
           <T v="small" color={colors.offWhite}>
             Se o comprovante não for enviado até {fmtDateTime(a.depositDueAt)}, o horário é cancelado automaticamente e você precisa agendar de novo.
           </T>
@@ -169,8 +233,8 @@ export default function Agendamento() {
             <T v="small" muted>Aguardando a cliente aceitar.</T>
           ) : (
             <Row>
-              <Button title="Recusar" variant="outline" style={{ flex: 1 }} onPress={() => s.respondAdjustment(a.id, false)} />
-              <Button title="Aceitar" style={{ flex: 1 }} onPress={() => s.respondAdjustment(a.id, true)} />
+              <Button title="Recusar" variant="outline" style={{ flex: 1 }} onPress={() => run(() => declineAdjustment(a.id), () => s.respondAdjustment(a.id, false))} />
+              <Button title="Aceitar" style={{ flex: 1 }} onPress={() => run(() => acceptAdjustment(a.id), () => s.respondAdjustment(a.id, true))} />
             </Row>
           )}
         </Card>
@@ -189,8 +253,8 @@ export default function Agendamento() {
             </View>
           )}
           <Row>
-            <Button title="Recusar" variant="outline" style={{ flex: 1 }} onPress={() => s.rejectReceipt(a.id)} />
-            <Button title="Confirmar" style={{ flex: 1 }} onPress={() => s.confirmDeposit(a.id)} />
+            <Button title="Recusar" variant="outline" style={{ flex: 1 }} onPress={() => run(() => rejectReceipt(a.id), () => s.rejectReceipt(a.id))} />
+            <Button title="Confirmar" style={{ flex: 1 }} onPress={() => run(() => confirmDeposit(a.id), () => s.confirmDeposit(a.id))} />
           </Row>
         </Card>
       ) : null}
@@ -207,7 +271,11 @@ export default function Agendamento() {
                   title="Enviar"
                   style={{ flex: 1 }}
                   disabled={!Number(adjPrice.replace(',', '.'))}
-                  onPress={() => { s.proposeAdjustment(a.id, Number(adjPrice.replace(',', '.')), adjNote); setShowAdj(false); }}
+                  onPress={() => {
+                    const value = Number(adjPrice.replace(',', '.'));
+                    run(() => proposeAdjustment(a.id, value, adjNote), () => s.proposeAdjustment(a.id, value, adjNote));
+                    setShowAdj(false);
+                  }}
                 />
               </Row>
             </>
@@ -277,7 +345,7 @@ export default function Agendamento() {
               </Pressable>
             </Row>
           </Card>
-          <Button title="Cancelar agendamento" variant="ghost" onPress={() => s.cancelAppointment(a.id)} />
+          <Button title="Cancelar agendamento" variant="ghost" onPress={() => run(() => cancelAppointment(a.id), () => s.cancelAppointment(a.id))} />
         </>
       ) : null}
     </Screen>

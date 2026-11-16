@@ -12,6 +12,8 @@ public interface CatalogApi {
 
     Optional<ServiceView> activeService(UUID serviceId);
 
+    Optional<DesignView> design(UUID designId);
+
     /** Designs cujos serviços estão ativos. */
     List<DesignView> designs(UUID professionalId);
 }

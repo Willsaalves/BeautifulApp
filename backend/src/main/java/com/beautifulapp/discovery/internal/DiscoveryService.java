@@ -17,6 +17,7 @@ import com.beautifulapp.media.MediaApi;
 import com.beautifulapp.page.PageApi;
 import com.beautifulapp.profile.Niche;
 import com.beautifulapp.profile.ProfileApi;
+import com.beautifulapp.scheduling.SchedulingApi;
 
 @Service
 class DiscoveryService {
@@ -25,13 +26,15 @@ class DiscoveryService {
     private final ProfileApi profiles;
     private final CatalogApi catalog;
     private final PageApi page;
+    private final SchedulingApi scheduling;
 
-    DiscoveryService(JdbcClient jdbc, MediaApi media, ProfileApi profiles, CatalogApi catalog, PageApi page) {
+    DiscoveryService(JdbcClient jdbc, MediaApi media, ProfileApi profiles, CatalogApi catalog, PageApi page, SchedulingApi scheduling) {
         this.jdbc = jdbc;
         this.media = media;
         this.profiles = profiles;
         this.catalog = catalog;
         this.page = page;
+        this.scheduling = scheduling;
     }
 
     record Query(Niche niche, String q, Double lat, Double lng, Double radiusKm, int limit) {}
@@ -85,7 +88,8 @@ class DiscoveryService {
     PublicPage page(UUID professionalId) {
         var pro = profiles.publicProfessional(professionalId)
                 .orElseThrow(() -> ApiException.notFound("PROFESSIONAL_NOT_FOUND", "Profissional não encontrada."));
-        return new PublicPage(pro, catalog.activeServices(professionalId), catalog.designs(professionalId), page.widgets(professionalId));
+        return new PublicPage(pro, catalog.activeServices(professionalId), catalog.designs(professionalId), page.widgets(professionalId),
+                scheduling.workHours(professionalId));
     }
 
     @Transactional(readOnly = true)

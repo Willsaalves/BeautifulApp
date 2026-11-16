@@ -276,7 +276,7 @@ Ambientes: `dev` (local com Docker Compose: Postgres + PostGIS, Redis, LocalStac
 | 0 ✅ | Repositório `backend/`, Gradle, Docker Compose, Flyway, CI, OpenAPI → cliente TS | `./gradlew test` verde com Testcontainers |
 | 1 ✅ | identity (OTP, JWT, cadastro, consentimentos) + profile + media | O app faz login e cadastro de verdade |
 | 2 ✅ | catalog + page + discovery | A página da profissional e a busca vêm da API |
-| 3 | scheduling + payment v1 (comprovante) + jobs de expiração | Agendar, pagar sinal e expirar funcionam fim a fim |
+| 3 ✅ | scheduling + payment v1 (comprovante) + jobs de expiração | Agendar, pagar sinal e expirar funcionam fim a fim |
 | 4 | inventory + loyalty + review + analytics | Concluir dá baixa no estoque, avança a fidelidade e o painel bate |
 | 5 | story + chat + notification (push/WhatsApp) | |
 | 6 | Terraform AWS, staging, observabilidade, testes de carga | Deploy automático em staging |
