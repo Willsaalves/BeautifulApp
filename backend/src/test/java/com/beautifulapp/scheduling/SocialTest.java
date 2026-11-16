@@ -1,4 +1,4 @@
-package com.beautifulapp.scheduling.internal;
+package com.beautifulapp.scheduling;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,13 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.beautifulapp.ApiTestSupport;
+import com.beautifulapp.scheduling.application.port.in.AppointmentHousekeeping;
 import com.jayway.jsonpath.JsonPath;
 
 /** Fase 5: notificações (+ lembrete do sinal), push tokens, chat, stories e próximos procedimentos. */
 class SocialTest extends ApiTestSupport {
     static final ZoneId SP = ZoneId.of("America/Sao_Paulo");
 
-    @Autowired AppointmentService appointmentService;
+    @Autowired AppointmentHousekeeping appointmentService;
 
     @AfterEach
     void reset() { clock.reset(); }

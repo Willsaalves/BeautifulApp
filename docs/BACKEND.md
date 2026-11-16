@@ -93,6 +93,34 @@ Os módulos conversam por **eventos de domínio**, por exemplo:
 - `servicos` e `agenda` são fixos e não podem ser removidos (validação no backend).
 - Endpoint de reordenação em lote.
 
+### scheduling: arquitetura hexagonal (portas e adaptadores)
+O módulo com a regra de negócio mais rica é organizado em camadas. As regras são verificadas pelo `SchedulingArchitectureTest`:
+
+```
+scheduling/
+  SchedulingApi, AppointmentInfo, WorkDay     API pública para outros módulos (não mudou)
+  domain/            regras puras: Appointment (ciclo de vida + eventos), Quote (preço), DepositPolicy,
+                     Availability (horários livres), WorkingHours, TimeBlock. Só Java: sem Spring, JPA ou outros módulos.
+  application/
+    port/in/         casos de uso: ClientAppointments, ProfessionalAppointments, SharedAppointments,
+                     ManageSchedule, AppointmentHousekeeping, AppointmentQueries
+    port/out/        o que o domínio precisa: Appointments, Schedules, ServiceCatalog, Participants,
+                     Files, Vouchers, BlockList, EventPublisher
+    service/         implementação dos casos de uso (carrega → pede ao domínio → salva → publica eventos)
+  adapter/
+    in/web           controllers HTTP + DTOs (mesmo JSON de antes) + tradução de erro
+    in/job           tarefas periódicas (sinal vencido, lembrete)
+    in/event         reage a AccountDeleted
+    in/module        implementa SchedulingApi para os outros módulos
+    out/persistence  JPA (as entidades só existem aqui)
+    out/modules      catalog, profile, media, loyalty e moderation atrás das portas
+    out/events       eventos de domínio → eventos do sistema
+```
+
+O que isso dá na prática:
+- **Testes rápidos:** as regras do domínio têm testes unitários puros (`AppointmentTest`, `QuoteAndAvailabilityTest`), sem Spring e sem banco, que rodam em milissegundos.
+- **Trocar uma peça sem mexer na regra:** banco, catálogo ou forma de publicar eventos mudam só no adaptador.
+
 ### scheduling (o núcleo)
 - **Disponibilidade** = expediente − bloqueios − agendamentos ativos, em passos de 30 min, retornando `livre / ocupado / passado`. A regra é a mesma de `daySlots` no app.
 - **Concorrência:** duas clientes não podem pegar o mesmo horário. Uma *exclusion constraint* do Postgres garante isso:
