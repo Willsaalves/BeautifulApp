@@ -9,7 +9,7 @@ import { fetchMe, hasSession } from '@/api/auth';
 import { API_ENABLED } from '@/api/client';
 import { ProgressBar, Ring, Row, T } from '@/components/ui';
 import { useStore } from '@/store/app-store';
-import { colors, gradients, radius, space } from '@/theme';
+import { colors, fonts, gradients, radius, space } from '@/theme';
 
 const NICHES = [
   { icon: '💅', label: 'Unhas', value: '128', sub: 'perto' },
@@ -54,7 +54,7 @@ export default function Welcome() {
           </Row>
 
           <T v="display" style={styles.title}>
-            SUA BELEZA,{'\n'}NO SEU{'\n'}TEMPO ✨
+            Sua beleza,{'\n'}no seu <T style={[styles.title, { fontFamily: fonts.serifItalic, marginTop: 0 }]}>tempo</T> ✨
           </T>
           <T style={{ color: colors.plumSoft, marginTop: -4 }}>
             Agende sozinha, pague o sinal via Pix e acompanhe cada procedimento. Sem depender do WhatsApp.
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.xl, gap: space.md },
   brand: { backgroundColor: 'rgba(255,255,255,0.7)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill },
   roundBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 46, lineHeight: 46, letterSpacing: -1.5, marginTop: space.md },
+  title: { fontFamily: fonts.serif, fontWeight: '400', fontSize: 46, lineHeight: 52, letterSpacing: -0.5, marginTop: space.md },
   card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.lg, gap: space.sm },
   miniPill: { backgroundColor: colors.lilac, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
   tile: { flex: 1, borderRadius: radius.xl, padding: space.lg, gap: space.sm, minHeight: 140, justifyContent: 'space-between' },

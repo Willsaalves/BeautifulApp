@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 // Paleta escolhida pela Bruna: pastel lavanda → pêssego, cards brancos translúcidos,
 // ameixa escuro no lugar do preto e destaque em degradê rosa → lavanda.
 export const colors = {
@@ -30,9 +28,12 @@ export const gradients = {
   chosen: ['#F6D3E1', '#E6D6F5'] as const,
 };
 
-/** Serifada para títulos de destaque (estilo editorial da referência). */
+/** Playfair Display (carregada em app/_layout.tsx) para títulos de destaque, estilo editorial. */
 export const fonts = {
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' }),
+  serif: 'PlayfairDisplay_500Medium',
+  serifSemi: 'PlayfairDisplay_600SemiBold',
+  serifBold: 'PlayfairDisplay_700Bold',
+  serifItalic: 'PlayfairDisplay_500Medium_Italic',
 };
 
 export const radius = { sm: 10, md: 16, lg: 22, xl: 28, pill: 999 };

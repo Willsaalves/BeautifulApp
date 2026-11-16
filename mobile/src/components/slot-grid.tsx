@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { fmtTime, type SlotStatus } from '@/domain/rules';
-import { colors, gradients, radius, space } from '@/theme';
+import { colors, fonts, gradients, radius, space } from '@/theme';
 
 import { Row, T } from './ui';
 
@@ -13,7 +13,7 @@ const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Jul
 export function DayStrip({ days, index, onChange }: { days: Date[]; index: number; onChange: (i: number) => void }) {
   return (
     <View style={{ gap: space.sm }}>
-      <T style={{ fontSize: 34, fontWeight: '500', letterSpacing: -0.8 }}>{MONTHS[days[index].getMonth()]}</T>
+      <T style={{ fontSize: 36, fontFamily: fonts.serif }}>{MONTHS[days[index].getMonth()]}</T>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm, paddingVertical: 4 }}>
         {days.map((d, i) => {
           const sel = i === index;

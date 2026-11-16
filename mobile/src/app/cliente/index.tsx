@@ -2,9 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { patchClient } from '@/api/auth';
+import { API_ENABLED } from '@/api/client';
+import { uploadImage } from '@/api/media';
 import { StoriesRow, Thumb } from '@/components/media';
 import {
   Avatar,
@@ -27,15 +31,20 @@ import {
   dreamsProgress,
   fmtDate,
   fmtDateTime,
-  isUri,
   lastDoneOf,
   loyaltyProgress,
 } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import type { Niche } from '@/domain/types';
+import { pickImage } from '@/lib/pick-image';
 import { colors, fonts, gradients, radius, space } from '@/theme';
 
 const ACTIVE = ['aguardando_sinal', 'sinal_enviado', 'confirmado', 'ajuste_pendente'];
+
+function notify(title: string, msg: string) {
+  if (Platform.OS === 'web') window.alert(`${title}\n\n${msg}`);
+  else Alert.alert(title, msg);
+}
 
 const CATEGORIES: { niche: Niche; label: string; icon: IconName }[] = [
   { niche: 'unha', label: 'Unhas', icon: 'hand-left-outline' },
@@ -72,7 +81,24 @@ export default function ClienteHome() {
   const favPros = me.favorites.map(L.pro);
 
   const trending = s.designs.slice(0, 8);
-  const heroImage = s.designs.find((d) => isUri(d.image))?.image ?? me.cover;
+  // Imagem do topo: a foto que a cliente escolheu (mesma da capa do perfil); sem ela, o fundo decorativo.
+  const heroImage = me.cover;
+  const [savingHero, setSavingHero] = useState(false);
+  const changeHero = async () => {
+    const uri = await pickImage();
+    if (!uri) return;
+    s.updateMe({ cover: uri }); // mostra na hora
+    if (!API_ENABLED) return;
+    setSavingHero(true);
+    try {
+      const { key } = await uploadImage('COVER', uri);
+      s.applyMe(await patchClient({ coverKey: key }), 'cliente');
+    } catch (e) {
+      notify('Não foi possível salvar a imagem', (e as Error).message);
+    } finally {
+      setSavingHero(false);
+    }
+  };
 
   return (
     <LinearGradient colors={gradients.screen} style={{ flex: 1 }}>
@@ -94,15 +120,20 @@ export default function ClienteHome() {
           <Pressable accessibilityLabel="Meu perfil" onPress={() => router.push('/cliente/perfil')} style={styles.glassBtn}>
             <Ionicons name="menu" size={20} color={colors.cardSolid} />
           </Pressable>
-          <Pressable accessibilityLabel="Notificações" style={styles.glassBtn}>
-            <Ionicons name="notifications-outline" size={20} color={colors.cardSolid} />
-            <View style={styles.dot} />
-          </Pressable>
+          <Row>
+            <Pressable accessibilityLabel="Trocar imagem do topo" onPress={changeHero} disabled={savingHero} style={styles.glassBtn}>
+              {savingHero ? <ActivityIndicator color={colors.cardSolid} /> : <Ionicons name="camera-outline" size={20} color={colors.cardSolid} />}
+            </Pressable>
+            <Pressable accessibilityLabel="Notificações" style={styles.glassBtn}>
+              <Ionicons name="notifications-outline" size={20} color={colors.cardSolid} />
+              <View style={styles.dot} />
+            </Pressable>
+          </Row>
         </Row>
 
         <View style={{ marginTop: 90, gap: space.sm }}>
           <T style={styles.kicker}>OLÁ, {me.name.split(' ')[0].toUpperCase()} ✨</T>
-          <T style={styles.headline}>Se cuidar fica{'\n'}lindo em você <T style={[styles.headline, { color: colors.pink }]}>♥</T></T>
+          <T style={styles.headline}>Se cuidar fica{'\n'}<T style={[styles.headline, { fontFamily: fonts.serifItalic }]}>lindo</T> em você <T style={[styles.headline, { color: colors.pink }]}>♥</T></T>
           <T style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
             Profissionais perto de você.{'\n'}Agende sozinha, sem WhatsApp.
           </T>
@@ -141,7 +172,7 @@ export default function ClienteHome() {
 
       {/* ---------- Trending Designs ---------- */}
       <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
-        <T style={{ fontSize: 18, fontWeight: '700' }}>Trending Designs</T>
+        <T style={{ fontSize: 22, fontFamily: fonts.serifSemi }}>Trending Designs</T>
         <Pressable onPress={() => router.push('/cliente/explorar')} hitSlop={8}>
           <T v="small" muted>Ver todos ›</T>
         </Pressable>
@@ -321,7 +352,7 @@ const styles = StyleSheet.create({
   glassBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   dot: { position: 'absolute', top: 11, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.pink },
   kicker: { color: 'rgba(255,255,255,0.8)', fontSize: 12, letterSpacing: 3, fontWeight: '600' },
-  headline: { fontFamily: fonts.serif, color: colors.cardSolid, fontSize: 40, lineHeight: 44, letterSpacing: -0.5 },
+  headline: { fontFamily: fonts.serif, fontWeight: '400', color: colors.cardSolid, fontSize: 42, lineHeight: 50 },
   cta: {
     marginTop: space.xl,
     height: 58,

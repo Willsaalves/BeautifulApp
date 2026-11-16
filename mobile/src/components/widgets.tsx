@@ -7,7 +7,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { NICHE_LABEL, brl, fmtDate, fmtTime, freeSlots, loyaltyProgress } from '@/domain/rules';
 import type { Professional, Widget, WidgetType } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
-import { colors, radius, space } from '@/theme';
+import { colors, fonts, radius, space } from '@/theme';
 
 import { Thumb } from './media';
 import { Avatar, Badge, Button, Card, Chip, ProgressBar, Row, SectionTitle, T, type IconName } from './ui';
@@ -95,7 +95,7 @@ function Capa({ w, pro }: { w: Widget; pro: Professional }) {
             <Badge label={NICHE_LABEL[pro.niche]} />
           </View>
         </Row>
-        <T v="display" style={{ fontSize: 28, lineHeight: 30 }}>{w.title || pro.name.toUpperCase()}</T>
+        <T style={{ fontFamily: fonts.serifSemi, fontSize: 30, lineHeight: 36 }}>{w.title || pro.name}</T>
         {w.subtitle ? <T muted>{w.subtitle}</T> : null}
         <T v="small" muted>⭐ {pro.rating.toFixed(1)} · {pro.reviews} avaliações · {pro.distanceKm.toFixed(1)} km · {pro.neighborhood}</T>
       </View>
