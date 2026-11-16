@@ -56,16 +56,32 @@ const auth: Middleware = {
       refreshing ??= refreshSession().finally(() => { refreshing = null; });
       if (await refreshing) {
         const s = await loadSession();
-        const retry = new Request(request, { headers: new Headers(request.headers) });
-        retry.headers.set('Authorization', `Bearer ${s!.accessToken}`);
-        return fetch(retry);
+        const headers: Record<string, string> = {};
+        request.headers.forEach((v, k) => { headers[k] = v; });
+        headers.Authorization = `Bearer ${s!.accessToken}`;
+        const method = request.method.toUpperCase();
+        const body = method === 'GET' || method === 'HEAD' ? undefined : await request.clone().text();
+        return fetch(request.url, { method, headers, body: body || undefined });
       }
     }
     return response;
   },
 };
 
-export const api = createClient<paths>({ baseUrl: API_URL });
+/**
+ * No React Native, repassar um objeto Request para o fetch nativo nem sempre funciona bem.
+ * Aqui desmontamos em (url, init) com o corpo já como texto.
+ */
+async function rnFetch(input: Request | string | URL, init?: RequestInit): Promise<Response> {
+  if (typeof input === 'string' || input instanceof URL) return fetch(input, init);
+  const headers: Record<string, string> = {};
+  input.headers.forEach((v, k) => { headers[k] = v; });
+  const method = input.method?.toUpperCase() ?? 'GET';
+  const body = method === 'GET' || method === 'HEAD' ? undefined : await input.clone().text();
+  return fetch(input.url, { method, headers, body: body || undefined });
+}
+
+export const api = createClient<paths>({ baseUrl: API_URL, fetch: rnFetch });
 api.use(auth);
 
 /** Converte a resposta do openapi-fetch em dado ou ApiError com a mensagem do backend. */
@@ -73,11 +89,14 @@ export async function unwrap<T>(p: Promise<{ data?: T; error?: unknown; response
   let r: { data?: T; error?: unknown; response: Response };
   try {
     r = await p;
-  } catch {
+  } catch (err) {
+    if (__DEV__) console.warn('[api] falha de rede', API_URL, err);
     throw new ApiError(
       0,
       'NETWORK',
-      __DEV__ ? `Sem conexão com a API em ${API_URL}. Abra ${API_URL}/actuator/health no navegador do celular para testar.` : 'Sem conexão com o servidor. Verifique sua internet.',
+      __DEV__
+        ? `Sem conexão com a API em ${API_URL} (${(err as Error)?.message ?? err}). Teste ${API_URL}/actuator/health no navegador do celular.`
+        : 'Sem conexão com o servidor. Verifique sua internet.',
     );
   }
   if (r.response.ok) return r.data as T;
