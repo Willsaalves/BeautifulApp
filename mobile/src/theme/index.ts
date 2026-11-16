@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 // Paleta escolhida pela Bruna: pastel lavanda → pêssego, cards brancos translúcidos,
 // ameixa escuro no lugar do preto e destaque em degradê rosa → lavanda.
 export const colors = {
@@ -18,12 +20,19 @@ export const colors = {
   warning: '#C9894A',
   danger: '#C95668',
   cream: '#FBEDE6',       // pêssego
+  pink: '#F7C9DA',        // rosa do botão principal da home
+  plumDeep: '#24171F',    // fundo do destaque da home
 };
 
 /** Fundo das telas (degradê lavanda → pêssego) e destaque "escolhido". */
 export const gradients = {
   screen: ['#EFE8F7', '#F7EEF2', '#FAEDE6'] as const,
   chosen: ['#F6D3E1', '#E6D6F5'] as const,
+};
+
+/** Serifada para títulos de destaque (estilo editorial da referência). */
+export const fonts = {
+  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Times New Roman", serif' }),
 };
 
 export const radius = { sm: 10, md: 16, lg: 22, xl: 28, pill: 999 };

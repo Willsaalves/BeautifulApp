@@ -73,6 +73,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   btn: { height: 46, minWidth: 42, borderRadius: 23, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 10 },
-  btnActive: { backgroundColor: colors.lilac, paddingHorizontal: 14 },
+  btnActive: { backgroundColor: colors.pink, paddingHorizontal: 14 },
   label: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: colors.black },
 });

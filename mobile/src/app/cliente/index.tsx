@@ -1,8 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { StoriesRow } from '@/components/media';
+import { StoriesRow, Thumb } from '@/components/media';
 import {
   Avatar,
   Badge,
@@ -12,10 +15,10 @@ import {
   ProgressBar,
   Ring,
   Row,
-  Screen,
   SectionTitle,
   StatusBadge,
   T,
+  type IconName,
 } from '@/components/ui';
 import {
   NICHE_ICON,
@@ -24,19 +27,29 @@ import {
   dreamsProgress,
   fmtDate,
   fmtDateTime,
+  isUri,
   lastDoneOf,
   loyaltyProgress,
 } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
-import { colors, space } from '@/theme';
+import type { Niche } from '@/domain/types';
+import { colors, fonts, gradients, radius, space } from '@/theme';
 
 const ACTIVE = ['aguardando_sinal', 'sinal_enviado', 'confirmado', 'ajuste_pendente'];
+
+const CATEGORIES: { niche: Niche; label: string; icon: IconName }[] = [
+  { niche: 'unha', label: 'Unhas', icon: 'hand-left-outline' },
+  { niche: 'cilios', label: 'Cílios', icon: 'eye-outline' },
+  { niche: 'sobrancelha', label: 'Sobrancelha', icon: 'sparkles-outline' },
+  { niche: 'estetica', label: 'Estética', icon: 'color-wand-outline' },
+];
 
 export default function ClienteHome() {
   const s = useStore();
   const L = useLookup();
   const me = L.me;
   const now = new Date();
+  const insets = useSafeAreaInsets();
 
   const upcoming = s.appointments
     .filter((a) => a.clientId === me.id && ACTIVE.includes(a.status))
@@ -58,20 +71,103 @@ export default function ClienteHome() {
   const dreamPct = dreamsProgress(me.dreams);
   const favPros = me.favorites.map(L.pro);
 
+  const trending = s.designs.slice(0, 8);
+  const heroImage = s.designs.find((d) => isUri(d.image))?.image ?? me.cover;
+
   return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
-        <T v="display">OLÁ,{'\n'}{me.name.toUpperCase()}! ✨</T>
-        <Row>
-          <Pressable style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="notifications-outline" size={20} />
+    <LinearGradient colors={gradients.screen} style={{ flex: 1 }}>
+    <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+      {/* ---------- Destaque (hero) ---------- */}
+      <View style={[styles.hero, { paddingTop: insets.top + space.sm }]}>
+        {heroImage ? (
+          <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        ) : (
+          <>
+            <View style={[styles.blob, { width: 260, height: 260, top: -60, right: -80, backgroundColor: '#6B3A55' }]} />
+            <View style={[styles.blob, { width: 180, height: 180, top: 120, right: 30, backgroundColor: '#8E4A6B', opacity: 0.35 }]} />
+            <View style={[styles.blob, { width: 140, height: 140, top: 40, left: -50, backgroundColor: '#4A2A3B' }]} />
+          </>
+        )}
+        <LinearGradient colors={['rgba(36,23,31,0.15)', 'rgba(36,23,31,0.85)']} style={StyleSheet.absoluteFill} />
+
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Pressable accessibilityLabel="Meu perfil" onPress={() => router.push('/cliente/perfil')} style={styles.glassBtn}>
+            <Ionicons name="menu" size={20} color={colors.cardSolid} />
           </Pressable>
-          <Pressable onPress={() => router.push('/cliente/perfil')}>
-            <Avatar name={me.name} color={me.avatar} photo={me.photo} />
+          <Pressable accessibilityLabel="Notificações" style={styles.glassBtn}>
+            <Ionicons name="notifications-outline" size={20} color={colors.cardSolid} />
+            <View style={styles.dot} />
           </Pressable>
         </Row>
+
+        <View style={{ marginTop: 90, gap: space.sm }}>
+          <T style={styles.kicker}>OLÁ, {me.name.split(' ')[0].toUpperCase()} ✨</T>
+          <T style={styles.headline}>Se cuidar fica{'\n'}lindo em você <T style={[styles.headline, { color: colors.pink }]}>♥</T></T>
+          <T style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>
+            Profissionais perto de você.{'\n'}Agende sozinha, sem WhatsApp.
+          </T>
+        </View>
+
+        <Pressable onPress={() => router.push('/cliente/explorar')} style={({ pressed }) => [styles.cta, pressed && { opacity: 0.9 }]} accessibilityRole="button">
+          <T style={{ fontSize: 15, fontWeight: '600', color: colors.black }}>Agendar horário</T>
+          <View style={styles.ctaArrow}>
+            <Ionicons name="arrow-forward" size={18} color={colors.cardSolid} />
+          </View>
+        </Pressable>
+
+        {next ? (
+          <Pressable onPress={() => router.push(`/agendamento/${next.id}`)} style={styles.nextChip}>
+            <Ionicons name="calendar-outline" size={16} color={colors.pink} />
+            <T v="small" style={{ flex: 1, color: colors.cardSolid }} numberOfLines={1}>
+              Próximo: {L.service(next.serviceId).name} · {fmtDateTime(next.startsAt)}
+            </T>
+            <Ionicons name="chevron-forward" size={16} color={colors.cardSolid} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View style={{ paddingHorizontal: space.lg, gap: space.md, marginTop: space.lg }}>
+      {/* ---------- Categorias ---------- */}
+      <Row style={{ justifyContent: 'space-between' }}>
+        {CATEGORIES.map((c, i) => (
+          <Pressable key={c.niche} onPress={() => router.push(`/cliente/explorar?niche=${c.niche}`)} style={{ alignItems: 'center', gap: 6, width: '23%' }}>
+            <View style={[styles.catTile, i === 0 && { backgroundColor: colors.pink, borderColor: colors.pink }]}>
+              <Ionicons name={c.icon} size={24} color={colors.black} />
+            </View>
+            <T v="small" style={{ fontSize: 12, fontWeight: i === 0 ? '700' : '500' }}>{c.label}</T>
+          </Pressable>
+        ))}
       </Row>
 
+      {/* ---------- Trending Designs ---------- */}
+      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
+        <T style={{ fontSize: 18, fontWeight: '700' }}>Trending Designs</T>
+        <Pressable onPress={() => router.push('/cliente/explorar')} hitSlop={8}>
+          <T v="small" muted>Ver todos ›</T>
+        </Pressable>
+      </Row>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }} style={{ marginHorizontal: -space.lg }}>
+        <View style={{ width: space.lg - space.md }} />
+        {trending.map((d) => {
+          const pro = L.pro(d.professionalId);
+          const fav = me.favorites.includes(pro.id);
+          return (
+            <Pressable key={d.id} onPress={() => router.push(`/agendar/${d.serviceId}?designId=${d.id}`)} style={{ width: 140 }}>
+              <View>
+                <Thumb src={d.image} bg={colors.blush} style={{ width: 140, height: 170, borderRadius: 22 }} emojiSize={56} />
+                <Pressable onPress={() => s.toggleFavorite(pro.id)} hitSlop={8} accessibilityLabel="Favoritar" style={styles.heart}>
+                  <Ionicons name={fav ? 'heart' : 'heart-outline'} size={16} color={fav ? colors.danger : colors.black} />
+                </Pressable>
+              </View>
+              <T style={{ fontWeight: '700', marginTop: 8 }} numberOfLines={1}>{d.name}</T>
+              <T v="small" muted numberOfLines={1}>{pro.name.split(' ')[0]}{d.priceDelta ? ` · +${brl(d.priceDelta)}` : ''}</T>
+            </Pressable>
+          );
+        })}
+        <View style={{ width: space.lg - space.md }} />
+      </ScrollView>
+
+      <SectionTitle title="Stories" />
       <StoriesRow />
 
       {/* Seus próximos procedimentos */}
@@ -102,8 +198,8 @@ export default function ClienteHome() {
         </Row>
       </Card>
 
-      {/* Próximo horário */}
-      {next ? (
+      {/* Próximo horário: aparece em destaque só quando precisa de ação (sinal / novo valor) */}
+      {next && (next.status === 'aguardando_sinal' || next.status === 'ajuste_pendente') ? (
         <Card onPress={() => router.push(`/agendamento/${next.id}`)}>
           <Row style={{ justifyContent: 'space-between' }}>
             <T v="overline">Meu próximo horário</T>
@@ -205,20 +301,58 @@ export default function ClienteHome() {
         </Card>
       ) : null}
 
-      {/* Rotina rápida (atalhos por nicho) */}
-      <SectionTitle title="Encontre perto de você" action="Ver todas" onAction={() => router.push('/cliente/explorar')} />
-      <Card>
-        <Row style={{ justifyContent: 'space-between' }}>
-          {(['unha', 'cilios', 'sobrancelha', 'estetica', 'cabelo'] as const).map((n) => (
-            <Pressable key={n} onPress={() => router.push(`/cliente/explorar?niche=${n}`)} style={{ alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.lilacSoft, alignItems: 'center', justifyContent: 'center' }}>
-                <T style={{ fontSize: 20 }}>{NICHE_ICON[n]}</T>
-              </View>
-              <T v="small" style={{ fontSize: 11 }}>{{ unha: 'Unhas', cilios: 'Cílios', sobrancelha: 'Sobrancelha', estetica: 'Estética', cabelo: 'Cabelo' }[n]}</T>
-            </Pressable>
-          ))}
-        </Row>
-      </Card>
-    </Screen>
+      </View>
+    </ScrollView>
+    </LinearGradient>
   );
 }
+
+
+const styles = StyleSheet.create({
+  hero: {
+    backgroundColor: colors.plumDeep,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+    paddingHorizontal: space.lg,
+    paddingBottom: space.xl,
+    overflow: 'hidden',
+  },
+  blob: { position: 'absolute', borderRadius: 999, opacity: 0.55 },
+  glassBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  dot: { position: 'absolute', top: 11, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.pink },
+  kicker: { color: 'rgba(255,255,255,0.8)', fontSize: 12, letterSpacing: 3, fontWeight: '600' },
+  headline: { fontFamily: fonts.serif, color: colors.cardSolid, fontSize: 40, lineHeight: 44, letterSpacing: -0.5 },
+  cta: {
+    marginTop: space.xl,
+    height: 58,
+    borderRadius: radius.pill,
+    backgroundColor: colors.pink,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: space.xl,
+    paddingRight: 6,
+  },
+  ctaArrow: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' },
+  nextChip: {
+    marginTop: space.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: radius.pill,
+    paddingHorizontal: space.lg,
+    paddingVertical: 10,
+  },
+  catTile: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 22,
+    backgroundColor: colors.cardSolid,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heart: { position: 'absolute', right: 8, bottom: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
+});
