@@ -1,6 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable } from 'react-native';
+
+import { designFromApi, professionalFromPublic, publicPage, serviceFromApi, widgetFromApi } from '@/api/catalog';
+import { API_ENABLED } from '@/api/client';
 
 import { StoriesRow, activeStories } from '@/components/media';
 import { Card, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
@@ -9,11 +13,44 @@ import { useLookup, useStore } from '@/store/app-store';
 import { colors } from '@/theme';
 
 // Página da profissional montada pelos widgets que ela escolheu (Perfil → Edite sua página).
+const UUID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-/i;
+
 export default function PerfilProfissional() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useStore();
   const L = useLookup();
-  const p = L.pro(id);
+  const [loadError, setLoadError] = useState('');
+  const latest = useRef(s);
+  latest.current = s;
+
+  // API ligada: perfil + serviços + designs + blocos vêm do servidor
+  useEffect(() => {
+    if (!API_ENABLED || UUID_LIKE.test(id) === false) return;
+    publicPage(id)
+      .then((page) => {
+        const st = latest.current;
+        const existing = st.professionals.find((x) => x.id === id);
+        const pro = professionalFromPublic(page.professional!, existing);
+        st.mergeRemote({
+          professionals: [{ ...pro, widgets: (page.widgets ?? []).map(widgetFromApi) }],
+          services: (page.services ?? []).map((v) => serviceFromApi(v, st.services.find((x) => x.id === v.id))),
+          replaceServicesOf: id,
+          designs: (page.designs ?? []).map(designFromApi),
+          replaceDesignsOf: id,
+        });
+      })
+      .catch((e) => setLoadError((e as Error).message));
+  }, [id]);
+
+  const p = s.professionals.find((x) => x.id === id);
+  if (!p) {
+    return (
+      <Screen bottomInset={40}>
+        <Header />
+        {loadError ? <T color={colors.danger}>{loadError}</T> : <ActivityIndicator style={{ marginTop: 40 }} />}
+      </Screen>
+    );
+  }
   const fav = L.me.favorites.includes(id);
   const isOwner = s.role === 'profissional' && s.proId === id;
   const hasStories = activeStories(s.stories).some((x) => x.professionalId === id);

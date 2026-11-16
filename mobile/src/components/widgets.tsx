@@ -97,7 +97,10 @@ function Capa({ w, pro }: { w: Widget; pro: Professional }) {
         </Row>
         <T style={{ fontFamily: fonts.serifSemi, fontSize: 30, lineHeight: 36 }}>{w.title || pro.name}</T>
         {w.subtitle ? <T muted>{w.subtitle}</T> : null}
-        <T v="small" muted>⭐ {pro.rating.toFixed(1)} · {pro.reviews} avaliações · {pro.distanceKm.toFixed(1)} km · {pro.neighborhood}</T>
+        <T v="small" muted>
+          {pro.reviews ? `⭐ ${pro.rating.toFixed(1)} · ${pro.reviews} avaliações` : '✨ Novo no app'}
+          {Number.isFinite(pro.distanceKm) ? ` · ${pro.distanceKm.toFixed(1)} km` : ''} · {pro.neighborhood}
+        </T>
       </View>
     </View>
   );

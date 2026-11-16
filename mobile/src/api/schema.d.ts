@@ -4,6 +4,78 @@
  */
 
 export interface paths {
+    "/me/services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Editar serviço (opções/escolhas com id mantêm o id) */
+        put: operations["update"];
+        post?: never;
+        /** Desativar serviço */
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/page/widgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Blocos da minha página (padrão se ainda não montou) */
+        get: operations["list"];
+        /** Salva a página inteira na ordem enviada (precisa ter SERVICOS e AGENDA) */
+        put: operations["replace"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/favorites/{professionalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Favoritar profissional (idempotente) */
+        put: operations["add"];
+        post?: never;
+        /** Desfavoritar (idempotente) */
+        delete: operations["remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/designs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Editar design */
+        put: operations["updateDesign"];
+        post?: never;
+        /** Apagar design */
+        delete: operations["deleteDesign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/upload-url": {
         parameters: {
             query?: never;
@@ -21,6 +93,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus serviços ativos */
+        get: operations["services"];
+        put?: never;
+        /** Criar serviço */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/onboarding": {
         parameters: {
             query?: never;
@@ -32,6 +122,24 @@ export interface paths {
         put?: never;
         /** Cadastro: cria o perfil de cliente ou de profissional e registra os consentimentos */
         post: operations["onboarding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/designs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus Trending Designs */
+        get: operations["designs"];
+        put?: never;
+        /** Criar design (imageKey de upload kind=DESIGN) */
+        post: operations["createDesign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -140,6 +248,40 @@ export interface paths {
         patch: operations["patchClient"];
         trace?: never;
     };
+    "/professionals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Buscar profissionais por nicho, texto e distância (lat/lng da cliente) */
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/professionals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Página pública da profissional: perfil + serviços + designs + blocos */
+        get: operations["page"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -157,10 +299,160 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ids das profissionais favoritas (mais recentes primeiro) */
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/trending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vitrine de Trending Designs (mais perto / mais recentes) */
+        get: operations["trending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ChoiceInput: {
+            /** Format: uuid */
+            id?: string;
+            label: string;
+            /** Format: int64 */
+            priceDeltaCents?: number;
+        };
+        OptionInput: {
+            /** Format: uuid */
+            id?: string;
+            label: string;
+            choices: components["schemas"]["ChoiceInput"][];
+        };
+        ServiceInput: {
+            name: string;
+            /** @enum {string} */
+            niche: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            /** Format: int32 */
+            durationMin?: number;
+            /** Format: int64 */
+            priceCents?: number;
+            /** Format: int32 */
+            depositPercent?: number;
+            /** Format: int32 */
+            returnIntervalDays?: number;
+            requiresReference?: boolean;
+            options?: components["schemas"]["OptionInput"][];
+        };
+        ChoiceView: {
+            /** Format: uuid */
+            id?: string;
+            label?: string;
+            /** Format: int64 */
+            priceDeltaCents?: number;
+        };
+        OptionView: {
+            /** Format: uuid */
+            id?: string;
+            label?: string;
+            choices?: components["schemas"]["ChoiceView"][];
+        };
+        ServiceView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            name?: string;
+            /** @enum {string} */
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            /** Format: int32 */
+            durationMin?: number;
+            /** Format: int64 */
+            priceCents?: number;
+            /** Format: int32 */
+            depositPercent?: number;
+            /** Format: int32 */
+            returnIntervalDays?: number;
+            requiresReference?: boolean;
+            options?: components["schemas"]["OptionView"][];
+        };
+        WidgetInput: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type: "CAPA" | "GALERIA" | "PORCENTAGEM" | "CONTAGEM" | "TEXTO" | "TRENDING" | "FIDELIDADE" | "AVALIACOES" | "SERVICOS" | "AGENDA";
+            title?: string;
+            subtitle?: string;
+            color?: string;
+            imageKey?: string;
+            images?: string[];
+            /** Format: int32 */
+            value?: number;
+            /** Format: date-time */
+            target?: string;
+            body?: string;
+        };
+        WidgetView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            type?: "CAPA" | "GALERIA" | "PORCENTAGEM" | "CONTAGEM" | "TEXTO" | "TRENDING" | "FIDELIDADE" | "AVALIACOES" | "SERVICOS" | "AGENDA";
+            fixed?: boolean;
+            title?: string;
+            subtitle?: string;
+            color?: string;
+            imageKey?: string;
+            imageUrl?: string;
+            images?: string[];
+            imageUrls?: string[];
+            /** Format: int32 */
+            value?: number;
+            /** Format: date-time */
+            target?: string;
+            body?: string;
+        };
+        DesignInput: {
+            /** Format: uuid */
+            serviceId: string;
+            name: string;
+            imageKey: string;
+            /** Format: int64 */
+            priceDeltaCents?: number;
+        };
+        DesignView: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            /** Format: uuid */
+            serviceId?: string;
+            name?: string;
+            imageKey?: string;
+            imageUrl?: string;
+            /** Format: int64 */
+            priceDeltaCents?: number;
+        };
         UploadRequest: {
             /** @enum {string} */
             kind: "AVATAR" | "COVER" | "PORTFOLIO" | "STORY" | "DESIGN" | "RECEIPT" | "REFERENCE";
@@ -190,6 +482,10 @@ export interface components {
             neighborhood?: string;
             city?: string;
             pixKey?: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
             acceptedTerms: boolean;
             imageConsent?: boolean;
         };
@@ -210,6 +506,7 @@ export interface components {
             roles?: ("CLIENT" | "PROFESSIONAL")[];
             client?: components["schemas"]["ClientDto"];
             professional?: components["schemas"]["ProfessionalDto"];
+            favorites?: string[];
         };
         ProfessionalDto: {
             /** Format: uuid */
@@ -226,6 +523,10 @@ export interface components {
             coverUrl?: string;
             neighborhood?: string;
             city?: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
             pixKey?: string;
             /** Format: int32 */
             depositDeadlineHours?: number;
@@ -266,6 +567,10 @@ export interface components {
             depositDeadlineHours?: number;
             /** Format: email */
             email?: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
         };
         ClientPatch: {
             name?: string;
@@ -274,6 +579,70 @@ export interface components {
             coverKey?: string;
             /** Format: email */
             email?: string;
+        };
+        ProfessionalCard: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            studio?: string;
+            handle?: string;
+            /** @enum {string} */
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            bio?: string;
+            photoUrl?: string;
+            coverUrl?: string;
+            neighborhood?: string;
+            city?: string;
+            /** Format: double */
+            distanceKm?: number;
+            /** Format: int64 */
+            minPriceCents?: number;
+            /** Format: int32 */
+            servicesCount?: number;
+        };
+        PublicPage: {
+            professional?: components["schemas"]["PublicProfessional"];
+            services?: components["schemas"]["ServiceView"][];
+            designs?: components["schemas"]["DesignView"][];
+            widgets?: components["schemas"]["WidgetView"][];
+        };
+        PublicProfessional: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            studio?: string;
+            handle?: string;
+            /** @enum {string} */
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            bio?: string;
+            photoUrl?: string;
+            coverUrl?: string;
+            neighborhood?: string;
+            city?: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
+            pixKey?: string;
+            /** Format: int32 */
+            depositDeadlineHours?: number;
+        };
+        TrendingDesign: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            studio?: string;
+            professionalPhotoUrl?: string;
+            /** Format: uuid */
+            serviceId?: string;
+            serviceName?: string;
+            name?: string;
+            imageUrl?: string;
+            /** Format: int64 */
+            priceDeltaCents?: number;
+            /** Format: double */
+            distanceKm?: number;
         };
     };
     responses: never;
@@ -284,6 +653,182 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ServiceView"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WidgetView"][];
+                };
+            };
+        };
+    };
+    replace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WidgetInput"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WidgetView"][];
+                };
+            };
+        };
+    };
+    add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                professionalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                professionalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DesignView"];
+                };
+            };
+        };
+    };
+    deleteDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     uploadUrl: {
         parameters: {
             query?: never;
@@ -308,6 +853,50 @@ export interface operations {
             };
         };
     };
+    services: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ServiceView"][];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ServiceView"];
+                };
+            };
+        };
+    };
     onboarding: {
         parameters: {
             query?: never;
@@ -328,6 +917,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    designs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DesignView"][];
+                };
+            };
+        };
+    };
+    createDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DesignView"];
                 };
             };
         };
@@ -474,6 +1107,55 @@ export interface operations {
             };
         };
     };
+    search: {
+        parameters: {
+            query?: {
+                niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+                q?: string;
+                lat?: number;
+                lng?: number;
+                radiusKm?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProfessionalCard"][];
+                };
+            };
+        };
+    };
+    page: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicPage"];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -490,6 +1172,51 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string[];
+                };
+            };
+        };
+    };
+    trending: {
+        parameters: {
+            query?: {
+                niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+                lat?: number;
+                lng?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TrendingDesign"][];
                 };
             };
         };

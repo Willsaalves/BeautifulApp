@@ -2,7 +2,8 @@
 // (mantendo as mesmas assinaturas) e este reducer passa a refletir as respostas.
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 
-import type { Me } from '@/api/client';
+import { addFavorite, removeFavorite } from '@/api/catalog';
+import { API_ENABLED, type Me } from '@/api/client';
 import * as mock from '@/data/mock';
 import {
   canEarnFeedbackVoucher,
@@ -98,6 +99,13 @@ function reducer(state: State, action: Action): State {
 }
 
 const uid = (p: string) => `${p}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+/** UUID v4 local: blocos criados no app mantêm o mesmo id quando vão para a API. */
+const uuid = () =>
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
 
 function useActions(state: State, dispatch: React.Dispatch<Action>) {
   return useMemo(() => {
@@ -208,6 +216,21 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
       },
 
       toggleFavorite(proId: string) {
+        const me = state.clients.find((c) => c.id === state.clientId);
+        const wasFav = !!me?.favorites.includes(proId);
+        if (API_ENABLED && state.role === 'cliente') {
+          (wasFav ? removeFavorite(proId) : addFavorite(proId)).catch(() => {
+            // desfaz se a API recusar
+            dispatch({
+              type: 'set',
+              patch: {
+                clients: state.clients.map((c) =>
+                  c.id !== state.clientId ? c : { ...c, favorites: wasFav ? [...c.favorites, proId] : c.favorites.filter((f) => f !== proId) },
+                ),
+              },
+            });
+          });
+        }
         dispatch({
           type: 'set',
           patch: {
@@ -384,7 +407,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           fidelidade: { title: 'Cartão fidelidade' },
           avaliacoes: { title: 'Depoimentos' },
         };
-        const w: Widget = { id: uid('w'), type, ...defaults[type] };
+        const w: Widget = { id: uuid(), type, ...defaults[type] };
         // entra logo depois da capa
         const ws = [...me.widgets];
         const capaIdx = ws.findIndex((x) => x.type === 'capa');
@@ -547,6 +570,7 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
             bio: me.client.bio,
             photo: me.client.photoUrl,
             cover: me.client.coverUrl,
+            favorites: (me.favorites as string[] | undefined) ?? existing?.favorites ?? [],
           };
           clients = existing ? clients.map((x) => (x.id === id ? c : x)) : [...clients, c];
           clientId = id;
@@ -579,6 +603,9 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
             email: me.email,
             pixKey: ap.pixKey ?? '',
             depositDeadlineHours: ap.depositDeadlineHours ?? 12,
+            latitude: ap.latitude,
+            longitude: ap.longitude,
+            remote: true,
           };
           if (!p.widgets.length) {
             p.widgets = mock.defaultWidgets(p).map((w) => (w.type === 'capa' ? { ...w, image: ap.coverUrl } : w));
@@ -594,6 +621,43 @@ function useActions(state: State, dispatch: React.Dispatch<Action>) {
           : null;
         dispatch({ type: 'set', patch: { clients, professionals, clientId, proId, role } });
         return role;
+      },
+
+      /**
+       * Junta dados vindos da API. replaceServicesOf/replaceDesignsOf: substitui o catálogo daquela profissional
+       * (o que foi apagado no servidor some do app).
+       */
+      mergeRemote(input: {
+        professionals?: Professional[];
+        services?: Service[];
+        designs?: Design[];
+        replaceServicesOf?: string;
+        replaceDesignsOf?: string;
+        widgetsOf?: { professionalId: string; widgets: Widget[] };
+      }) {
+        let professionals = state.professionals;
+        for (const p of input.professionals ?? []) {
+          professionals = professionals.some((x) => x.id === p.id) ? professionals.map((x) => (x.id === p.id ? p : x)) : [...professionals, p];
+        }
+        if (input.widgetsOf) {
+          const { professionalId, widgets } = input.widgetsOf;
+          professionals = professionals.map((p) => (p.id === professionalId ? { ...p, widgets } : p));
+        }
+        let services = state.services;
+        if (input.replaceServicesOf) services = services.filter((x) => x.professionalId !== input.replaceServicesOf);
+        for (const sv of input.services ?? []) {
+          services = services.some((x) => x.id === sv.id) ? services.map((x) => (x.id === sv.id ? sv : x)) : [...services, sv];
+        }
+        let designs = state.designs;
+        if (input.replaceDesignsOf) designs = designs.filter((x) => x.professionalId !== input.replaceDesignsOf);
+        for (const d of input.designs ?? []) {
+          designs = designs.some((x) => x.id === d.id) ? designs.map((x) => (x.id === d.id ? d : x)) : [...designs, d];
+        }
+        dispatch({ type: 'set', patch: { professionals, services, designs } });
+      },
+
+      removeServiceLocal(id: string) {
+        dispatch({ type: 'set', patch: { services: state.services.filter((x) => x.id !== id) } });
       },
 
       /** Edita o perfil de quem está logada (capa, foto, nome, bio). */

@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { patchClient } from '@/api/auth';
+import { professionalFromCard, professionalFromPublic, publicPage, serviceFromApi, trendingDesigns } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
 import { uploadImage } from '@/api/media';
 import { StoriesRow, Thumb } from '@/components/media';
@@ -36,6 +37,7 @@ import {
 } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import type { Niche } from '@/domain/types';
+import { currentCoords } from '@/lib/location';
 import { pickImage } from '@/lib/pick-image';
 import { colors, fonts, gradients, radius, space } from '@/theme';
 
@@ -80,7 +82,46 @@ export default function ClienteHome() {
   const dreamPct = dreamsProgress(me.dreams);
   const favPros = me.favorites.map(L.pro);
 
-  const trending = s.designs.slice(0, 8);
+  // API ligada: vitrine de designs mais perto / mais recentes
+  const [remoteTrending, setRemoteTrending] = useState<string[] | null>(null);
+  const latest = useRef(s);
+  latest.current = s;
+  useEffect(() => {
+    if (!API_ENABLED) return;
+    (async () => {
+      const c = await currentCoords();
+      const list = await trendingDesigns({ lat: c?.lat, lng: c?.lng });
+      const st = latest.current;
+      st.mergeRemote({
+        professionals: list
+          .filter((d) => !st.professionals.some((p) => p.id === d.professionalId))
+          .map((d) => professionalFromCard({ id: d.professionalId, studio: d.studio, photoUrl: d.professionalPhotoUrl, distanceKm: d.distanceKm })),
+        designs: list.map((d) => ({ id: d.id!, professionalId: d.professionalId!, serviceId: d.serviceId!, name: d.name ?? '', image: d.imageUrl ?? '', priceDelta: (d.priceDeltaCents ?? 0) / 100 })),
+      });
+      setRemoteTrending(list.map((d) => d.id!));
+    })().catch(() => setRemoteTrending([]));
+  }, []);
+  const trending = API_ENABLED
+    ? (remoteTrending ?? []).map((id) => s.designs.find((d) => d.id === id)!).filter(Boolean)
+    : s.designs.slice(0, 8);
+
+  /** O agendamento precisa do serviço completo (opções): carrega a página da profissional antes. */
+  const openDesign = async (d: { id: string; professionalId: string; serviceId: string }) => {
+    if (API_ENABLED && !s.services.some((x) => x.id === d.serviceId)) {
+      try {
+        const page = await publicPage(d.professionalId);
+        const st = latest.current;
+        st.mergeRemote({
+          professionals: [professionalFromPublic(page.professional!, st.professionals.find((x) => x.id === d.professionalId))],
+          services: (page.services ?? []).map((v) => serviceFromApi(v)),
+          replaceServicesOf: d.professionalId,
+        });
+      } catch (e) {
+        return notify('Não foi possível abrir', (e as Error).message);
+      }
+    }
+    router.push(`/agendar/${d.serviceId}?designId=${d.id}`);
+  };
   // Imagem do topo: a foto que a cliente escolheu (mesma da capa do perfil); sem ela, o fundo decorativo.
   const heroImage = me.cover;
   const [savingHero, setSavingHero] = useState(false);
@@ -177,13 +218,16 @@ export default function ClienteHome() {
           <T v="small" muted>Ver todos ›</T>
         </Pressable>
       </Row>
+      {API_ENABLED && remoteTrending && trending.length === 0 ? (
+        <T v="small" muted>Ainda não há designs publicados perto de você.</T>
+      ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }} style={{ marginHorizontal: -space.lg }}>
         <View style={{ width: space.lg - space.md }} />
         {trending.map((d) => {
           const pro = L.pro(d.professionalId);
           const fav = me.favorites.includes(pro.id);
           return (
-            <Pressable key={d.id} onPress={() => router.push(`/agendar/${d.serviceId}?designId=${d.id}`)} style={{ width: 140 }}>
+            <Pressable key={d.id} onPress={() => openDesign(d)} style={{ width: 140 }}>
               <View>
                 <Thumb src={d.image} bg={colors.blush} style={{ width: 140, height: 170, borderRadius: 22 }} emojiSize={56} />
                 <Pressable onPress={() => s.toggleFavorite(pro.id)} hitSlop={8} accessibilityLabel="Favoritar" style={styles.heart}>

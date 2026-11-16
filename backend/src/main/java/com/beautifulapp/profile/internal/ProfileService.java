@@ -2,6 +2,7 @@ package com.beautifulapp.profile.internal;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,15 +25,17 @@ class ProfileService {
     private final MediaApi media;
     private final ClientProfileRepository clients;
     private final ProfessionalRepository professionals;
+    private final FavoriteRepository favorites;
     private final Clock clock;
     private final String legalVersion;
 
     ProfileService(IdentityApi identity, MediaApi media, ClientProfileRepository clients, ProfessionalRepository professionals,
-                   Clock clock, @Value("${app.legal.version}") String legalVersion) {
+                   FavoriteRepository favorites, Clock clock, @Value("${app.legal.version}") String legalVersion) {
         this.identity = identity;
         this.media = media;
         this.clients = clients;
         this.professionals = professionals;
+        this.favorites = favorites;
         this.clock = clock;
         this.legalVersion = legalVersion;
     }
@@ -43,11 +46,14 @@ class ProfileService {
                 .orElseThrow(() -> ApiException.unauthorized("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
         ClientDto client = clients.findById(accountId).map(this::dto).orElse(null);
         ProfessionalDto pro = professionals.findByAccountId(accountId).map(this::dto).orElse(null);
-        return new Me(acc.id(), acc.phone(), acc.email(), acc.roles(), client, pro);
+        List<UUID> favs = favorites.findByClientAccountIdOrderByCreatedAtDesc(accountId).stream().map(Favorite::professionalId).toList();
+        return new Me(acc.id(), acc.phone(), acc.email(), acc.roles(), client, pro, favs);
     }
 
     @Transactional
     Me onboard(UUID accountId, Onboarding in) {
+        in = new Onboarding(in.role(), in.name(), in.email(), in.bio(), media.normalizeKey(in.photoKey()), media.normalizeKey(in.coverKey()),
+                in.studio(), in.niche(), in.neighborhood(), in.city(), in.pixKey(), in.latitude(), in.longitude(), in.acceptedTerms(), in.imageConsent());
         media.assertOwned(in.photoKey(), accountId, MediaKind.AVATAR);
         media.assertOwned(in.coverKey(), accountId, MediaKind.COVER);
         Instant now = clock.instant();
@@ -75,6 +81,7 @@ class ProfileService {
             p.photoKey = in.photoKey();
             p.coverKey = in.coverKey();
             p.pixKey = blankToNull(in.pixKey());
+            setLocation(p, in.latitude(), in.longitude());
             professionals.save(p);
         }
 
@@ -90,6 +97,7 @@ class ProfileService {
     Me patchClient(UUID accountId, ClientPatch in) {
         ClientProfile c = clients.findById(accountId)
                 .orElseThrow(() -> ApiException.notFound("PROFILE_NOT_FOUND", "Perfil de cliente não encontrado."));
+        in = new ClientPatch(in.name(), in.bio(), media.normalizeKey(in.photoKey()), media.normalizeKey(in.coverKey()), in.email());
         media.assertOwned(in.photoKey(), accountId, MediaKind.AVATAR);
         media.assertOwned(in.coverKey(), accountId, MediaKind.COVER);
         if (in.name() != null) c.name = in.name().trim();
@@ -105,6 +113,8 @@ class ProfileService {
     Me patchProfessional(UUID accountId, ProfessionalPatch in) {
         Professional p = professionals.findByAccountId(accountId)
                 .orElseThrow(() -> ApiException.notFound("PROFILE_NOT_FOUND", "Perfil de profissional não encontrado."));
+        in = new ProfessionalPatch(in.name(), in.studio(), in.bio(), media.normalizeKey(in.photoKey()), media.normalizeKey(in.coverKey()),
+                in.neighborhood(), in.city(), in.pixKey(), in.depositDeadlineHours(), in.email(), in.latitude(), in.longitude());
         media.assertOwned(in.photoKey(), accountId, MediaKind.AVATAR);
         media.assertOwned(in.coverKey(), accountId, MediaKind.COVER);
         if (in.name() != null) p.name = in.name().trim();
@@ -116,6 +126,7 @@ class ProfileService {
         if (in.city() != null) p.city = in.city().trim();
         if (in.pixKey() != null) p.pixKey = blankToNull(in.pixKey());
         if (in.depositDeadlineHours() != null) p.depositDeadlineHours = in.depositDeadlineHours();
+        if (in.latitude() != null || in.longitude() != null) setLocation(p, in.latitude(), in.longitude());
         if (in.email() != null) identity.updateEmail(accountId, blankToNull(in.email()));
         p.updatedAt = clock.instant();
         return me(accountId);
@@ -127,7 +138,13 @@ class ProfileService {
 
     private ProfessionalDto dto(Professional p) {
         return new ProfessionalDto(p.id, p.name, p.studio, p.handle, p.niche, p.bio, p.photoKey, media.publicUrl(p.photoKey),
-                p.coverKey, media.publicUrl(p.coverKey), p.neighborhood, p.city, p.pixKey, p.depositDeadlineHours);
+                p.coverKey, media.publicUrl(p.coverKey), p.neighborhood, p.city, p.latitude, p.longitude, p.pixKey, p.depositDeadlineHours);
+    }
+
+    private static void setLocation(Professional p, Double lat, Double lng) {
+        if ((lat == null) != (lng == null)) throw ApiException.badRequest("LOCATION_INCOMPLETE", "Envie latitude e longitude juntas.");
+        p.latitude = lat;
+        p.longitude = lng;
     }
 
     private static String blankToNull(String s) {

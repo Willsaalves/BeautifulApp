@@ -54,6 +54,13 @@ class MediaService implements MediaApi {
     }
 
     @Override
+    public String normalizeKey(String keyOrUrl) {
+        if (!StringUtils.hasText(keyOrUrl)) return null;
+        String base = props.publicBaseUrl().replaceAll("/$", "") + "/";
+        return keyOrUrl.startsWith(base) ? keyOrUrl.substring(base.length()) : keyOrUrl;
+    }
+
+    @Override
     public void assertOwned(String key, UUID accountId, MediaKind kind) {
         if (key == null) return;
         if (!key.startsWith(kind.prefix() + "/" + accountId + "/")) {

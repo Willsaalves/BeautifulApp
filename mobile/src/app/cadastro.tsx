@@ -7,6 +7,7 @@ import { fetchMe, onboarding, requestOtp, verifyOtp } from '@/api/auth';
 import { API_ENABLED, ApiError } from '@/api/client';
 import { isLocalUri, uploadImage } from '@/api/media';
 import { OtpInput, PhoneField, phoneValid } from '@/components/auth';
+import { currentCoords } from '@/lib/location';
 import { ProfileHeader, handleOf } from '@/components/profile-header';
 import { Button, Card, Chip, Field, IconCircle, ProgressBar, Row, Screen, T } from '@/components/ui';
 import { NICHE_ICON, NICHE_LABEL } from '@/domain/rules';
@@ -70,6 +71,8 @@ export default function Cadastro() {
       if (Platform.OS === 'web') window.alert(msg);
       else Alert.alert('Quase lá', msg);
     };
+    // profissional: localização do estúdio para aparecer na busca "perto de mim" (opcional)
+    const coords = isPro ? await currentCoords() : null;
     try {
       const me = await onboarding({
         role: isPro ? 'PROFESSIONAL' : 'CLIENT',
@@ -83,6 +86,8 @@ export default function Cadastro() {
         neighborhood: isPro ? neighborhood.trim() : undefined,
         city: isPro ? city.trim() : undefined,
         pixKey: isPro ? pixKey.trim() || undefined : undefined,
+        latitude: coords?.lat,
+        longitude: coords?.lng,
         acceptedTerms: terms,
         imageConsent,
       });

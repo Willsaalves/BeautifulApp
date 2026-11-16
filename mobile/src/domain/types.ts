@@ -71,6 +71,10 @@ export interface Professional {
   loyalty: LoyaltyProgram;
   workHours: { start: string; end: string; days: number[] }; // 0=dom
   widgets: Widget[];
+  latitude?: number;
+  longitude?: number;
+  minPrice?: number;     // "a partir de" (vem da busca da API)
+  remote?: boolean;      // veio da API (não é dado de exemplo)
 }
 
 export interface LoyaltyProgram {

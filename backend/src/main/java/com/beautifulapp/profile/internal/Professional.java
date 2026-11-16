@@ -32,6 +32,8 @@ class Professional {
     String neighborhood;
     @Column(nullable = false)
     String city;
+    Double latitude;
+    Double longitude;
     @Column(name = "pix_key")
     String pixKey;
     @Column(name = "deposit_deadline_hours", nullable = false)

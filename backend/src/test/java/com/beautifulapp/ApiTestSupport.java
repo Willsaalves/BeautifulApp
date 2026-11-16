@@ -46,6 +46,39 @@ public abstract class ApiTestSupport {
         return postJson("/auth/otp/verify", json("{'phone':'%s','code':'123456'}", phone), null, 200);
     }
 
+    protected String send(String method, String url, String body, String token, int expectedStatus) throws Exception {
+        var req = org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(org.springframework.http.HttpMethod.valueOf(method), url);
+        if (body != null) req.contentType(MediaType.APPLICATION_JSON).content(body);
+        if (token != null) req.header("Authorization", "Bearer " + token);
+        var res = mvc.perform(req).andReturn().getResponse();
+        String resBody = res.getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        org.assertj.core.api.Assertions.assertThat(res.getStatus()).as("%s %s %s -> %s", method, url, resBody, res.getStatus()).isEqualTo(expectedStatus);
+        return resBody;
+    }
+
+    protected String getJson(String url, String token) throws Exception {
+        return send("GET", url, null, token, 200);
+    }
+
+    /** Cria conta de profissional (opcionalmente com localização) e devolve o token. */
+    protected String newProfessional(String studio, String niche, Double lat, Double lng) throws Exception {
+        String token = read(login(newPhone()), "$.accessToken");
+        String loc = lat == null ? "" : ",'latitude':%s,'longitude':%s".formatted(lat, lng);
+        postJson("/me/onboarding", json("{'role':'PROFESSIONAL','name':'Pro %s','studio':'%s','niche':'%s','neighborhood':'Pinheiros','acceptedTerms':true%s}",
+                studio, studio, niche, loc), token, 200);
+        return token;
+    }
+
+    protected String newClient() throws Exception {
+        String token = read(login(newPhone()), "$.accessToken");
+        postJson("/me/onboarding", json("{'role':'CLIENT','name':'Cliente','acceptedTerms':true}"), token, 200);
+        return token;
+    }
+
+    protected String upload(String token, String kind) throws Exception {
+        return read(postJson("/media/upload-url", json("{'kind':'%s','contentType':'image/jpeg','sizeBytes':1000}", kind), token, 200), "$.key");
+    }
+
     protected static String read(String body, String path) {
         Object v = JsonPath.read(body, path);
         return v == null ? null : v.toString();

@@ -8,6 +8,8 @@ import { Button, Card, Chip, Empty, Field, Header, Row, Screen, SectionTitle, T 
 import { WidgetView, widgetLabel } from '@/components/widgets';
 import { brl, fmtDateTime } from '@/domain/rules';
 import type { Design } from '@/domain/types';
+import { deleteDesign, designFromApi, saveDesign } from '@/api/catalog';
+import { API_ENABLED } from '@/api/client';
 import { pickImage } from '@/lib/pick-image';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
@@ -132,12 +134,47 @@ function DesignsEditor() {
   const mine = s.designs.filter((d) => d.professionalId === s.proId);
   const services = L.myServices;
   const [editing, setEditing] = useState<Design | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const remote = API_ENABLED && !!L.myPro.remote;
+
+  const saveEditing = async () => {
+    if (!editing) return;
+    if (!remote) {
+      s.upsertDesign(editing);
+      return setEditing(null);
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const saved = designFromApi(await saveDesign(editing));
+      if (saved.id !== editing.id) s.removeDesign(editing.id);
+      s.mergeRemote({ designs: [saved] });
+      setEditing(null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (remote) {
+      try {
+        await deleteDesign(id);
+      } catch (e) {
+        return setError((e as Error).message);
+      }
+    }
+    s.removeDesign(id);
+  };
 
   const blank = (): Design => ({ id: s.newId('dz'), professionalId: s.proId, serviceId: services[0]?.id ?? '', name: '', image: '', priceDelta: 0 });
 
   return (
     <>
       <SectionTitle title={`Seus designs (${mine.length})`} action="+ Novo" onAction={() => setEditing(blank())} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
       {editing ? (
         <Card tone="soft">
           <Pressable onPress={async () => { const uri = await pickImage(); if (uri) setEditing({ ...editing, image: uri }); }}
@@ -157,8 +194,8 @@ function DesignsEditor() {
           <Field label="Acréscimo no preço (R$)" keyboardType="decimal-pad" value={String(editing.priceDelta)} onChangeText={(v) => setEditing({ ...editing, priceDelta: num(v) })} />
           <Row>
             <Button title="Cancelar" variant="outline" style={{ flex: 1 }} onPress={() => setEditing(null)} />
-            <Button title="Salvar" style={{ flex: 1 }} disabled={!editing.name.trim() || !editing.image || !editing.serviceId}
-              onPress={() => { s.upsertDesign(editing); setEditing(null); }} />
+            <Button title={busy ? 'Salvando…' : 'Salvar'} style={{ flex: 1 }} disabled={busy || !editing.name.trim() || !editing.image || !editing.serviceId}
+              onPress={saveEditing} />
           </Row>
         </Card>
       ) : null}
@@ -171,7 +208,7 @@ function DesignsEditor() {
               <T v="small" muted>{L.service(d.serviceId).name}{d.priceDelta ? ` · +${brl(d.priceDelta)}` : ''}</T>
             </View>
             <Pressable onPress={() => setEditing(d)} hitSlop={8} accessibilityLabel="Editar design"><Ionicons name="create-outline" size={20} /></Pressable>
-            <Pressable onPress={() => s.removeDesign(d.id)} hitSlop={8} accessibilityLabel="Remover design"><Ionicons name="trash-outline" size={20} color={colors.textMuted} /></Pressable>
+            <Pressable onPress={() => remove(d.id)} hitSlop={8} accessibilityLabel="Remover design"><Ionicons name="trash-outline" size={20} color={colors.textMuted} /></Pressable>
           </Row>
         </Card>
       ))}

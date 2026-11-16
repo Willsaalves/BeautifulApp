@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { createService, deleteService, serviceFromApi, updateService } from '@/api/catalog';
+import { API_ENABLED } from '@/api/client';
 import { NICHE_ICON, NICHE_LABEL } from '@/domain/rules';
 import type { Consumption, Niche, Service } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
@@ -27,7 +29,10 @@ export default function EditarServico() {
 
   const unused = L.myProducts.filter((p) => !consumption.some((c) => c.productId === p.id));
 
-  const save = () => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const save = async () => {
     const svc: Service = {
       id: existing?.id ?? s.newId('s'),
       professionalId: s.proId,
@@ -41,7 +46,33 @@ export default function EditarServico() {
       consumption: consumption.filter((c) => c.amount > 0),
       requiresReference: needsRef,
     };
-    s.upsertService(svc);
+    if (!API_ENABLED || !L.myPro.remote) {
+      s.upsertService(svc);
+      return router.back();
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const saved = existing ? await updateService(svc) : await createService(svc);
+      s.mergeRemote({ services: [serviceFromApi(saved, svc)] });
+      router.back();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deactivate = async () => {
+    if (!existing) return;
+    if (API_ENABLED && L.myPro.remote) {
+      try {
+        await deleteService(existing.id);
+      } catch (e) {
+        return setError((e as Error).message);
+      }
+    }
+    s.removeServiceLocal(existing.id);
     router.back();
   };
 
@@ -96,7 +127,9 @@ export default function EditarServico() {
           </>
         ) : null}
       </Card>
-      <Button title="Salvar serviço" disabled={!name.trim() || !num(price)} onPress={save} />
+      {error ? <T v="small" color={colors.danger}>{error}</T> : null}
+      <Button title={busy ? 'Salvando…' : 'Salvar serviço'} disabled={!name.trim() || !num(price) || busy} onPress={save} />
+      {existing ? <Button title="Desativar serviço" variant="ghost" onPress={deactivate} /> : null}
     </Screen>
   );
 }

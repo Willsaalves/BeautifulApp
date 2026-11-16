@@ -38,7 +38,10 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | Pacote | O que faz |
 |---|---|
 | `identity` | Conta por celular, OTP (hash + validade de 5 min + 5 tentativas + 5 envios/h), JWT de 15 min, refresh token rotativo com detecção de reuso, papéis, consentimentos LGPD |
-| `profile` | `/me`, cadastro (cliente/profissional), @handle único, edição de perfil (foto/capa) |
+| `profile` | `/me`, cadastro (cliente/profissional), @handle único, edição de perfil (foto/capa), localização do estúdio, favoritas |
+| `catalog` | Serviços (opções e escolhas com acréscimo, ids estáveis na edição), Trending Designs com foto |
+| `page` | Página da profissional em blocos (capa, galeria, porcentagem, contagem, texto, trending…); SERVICOS e AGENDA obrigatórios |
+| `discovery` | Busca por nicho, texto e distância (PostGIS), página pública composta, vitrine de designs |
 | `media` | URL pré-assinada para upload direto ao storage; prefixos públicos (avatar, capa, portfólio, story, design) e privados (comprovante, referência); valida o dono da chave |
 | `common` | Erros RFC 7807 com `code`, UUID v7, normalização de celular |
 
@@ -54,6 +57,13 @@ Os testes de integração sobem um Postgres + PostGIS real com Testcontainers (p
 | POST | `/me/onboarding` | cria perfil de cliente ou profissional + consentimentos |
 | PATCH | `/me/client-profile` · `/me/professional` | edita perfil |
 | POST | `/media/upload-url` | `{kind, contentType, sizeBytes}` → `{key, uploadUrl, publicUrl}` |
+| GET/POST/PUT/DELETE | `/me/services` | Serviços da profissional logada |
+| GET/POST/PUT/DELETE | `/me/designs` | Trending Designs da profissional |
+| GET/PUT | `/me/page/widgets` | Blocos da página (PUT salva a lista inteira, na ordem) |
+| GET | `/professionals?niche&q&lat&lng&radiusKm` | Busca, ordenada por distância |
+| GET | `/professionals/{id}` | Página pública: perfil + serviços + designs + blocos |
+| GET | `/designs/trending?niche&lat&lng` | Vitrine de designs |
+| GET/PUT/DELETE | `/me/favorites[/{professionalId}]` | Favoritas |
 
 ## Variáveis de ambiente (deploy de testes / produção)
 

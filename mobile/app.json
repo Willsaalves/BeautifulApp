@@ -41,7 +41,13 @@
           "photosPermission": "Usamos suas fotos para anexar referências e comprovantes do Pix."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos sua localização para mostrar profissionais perto de você."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
