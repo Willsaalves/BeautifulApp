@@ -155,6 +155,40 @@ Leia o QR code com o Expo Go, de qualquer rede.
 
 ---
 
+## Dados de teste: profissionais de todos os nichos
+
+Com a API rodando (modo B ou C), em outro terminal na pasta do projeto:
+```powershell
+.\seed-demo.cmd
+```
+O script leva uns 2 minutos e cria **24 profissionais** (4 de cada nicho: unha, cílios, sobrancelha, estética, cabelo e depilação), espalhadas por 12 bairros de São Paulo. Cada profissional vem com:
+- foto, capa, bio e chave Pix;
+- 3 serviços (alguns com opções de formato, tamanho ou efeito);
+- expediente de segunda a sábado;
+- página completa: capa, contagem regressiva, Trending Designs, porcentagem, portfólio com 6 fotos, "sobre mim", fidelidade e depoimentos;
+- estoque com baixa automática e 2 stories;
+- 3 atendimentos concluídos e avaliados, 1 confirmado e 1 com comprovante para conferir.
+
+Ele também cria **8 clientes**, com favoritas e stories.
+
+Login no app com o código **123456**:
+
+| Quem | Telefones |
+|---|---|
+| Clientes | (11) 95556-1001 até 95556-1008 |
+| Nail designer | (11) 95555-1001 até 95555-1004 |
+| Lash designer | (11) 95555-2001 até 95555-2004 |
+| Sobrancelha | (11) 95555-3001 até 95555-3004 |
+| Esteticista | (11) 95555-4001 até 95555-4004 |
+| Cabeleireira | (11) 95555-5001 até 95555-5004 |
+| Depiladora | (11) 95555-6001 até 95555-6004 |
+
+Opções: `.\seed-demo.cmd --por-nicho 8 --clientes 12` (mais contas) ou `--api URL_API` (outra API).
+Rodar de novo é seguro: as contas que já existem são puladas. Para começar do zero, rode `docker compose down -v` na pasta `backend`, suba tudo de novo e rode o seed.
+
+> As imagens são desenhadas pelo próprio script (degradês com unhas, cílios, lábios…), sem precisar de internet.
+> Os telefones são de teste e funcionam porque o código fixo 123456 só existe no ambiente de desenvolvimento.
+
 ## Notificações push (opcional)
 
 A caixa de notificações (sino) funciona sempre. Para o **push** chegar no celular:
@@ -182,4 +216,5 @@ A caixa de notificações (sino) funciona sempre. Para o **push** chegar no celu
 | `'&&' não é um separador válido` | O PowerShell 5 não aceita `&&`: rode um comando por linha. |
 | `package-lock.json: needs merge` | Rode `git restore mobile/package.json mobile/package-lock.json`, depois `git pull` e `npm install`. |
 | Expo pede para instalar `@expo/ngrok` | Responda **Y** (ou `npm install -g @expo/ngrok`). |
+| `PluginError: Failed to resolve plugin for module "expo-..."` | Faltam pacotes novos: `cd mobile` e `npm install`. Se continuar, apague a pasta `node_modules` e rode `npm install` de novo. |
 | Login responde "Muitos códigos pedidos" | Limite de 5 códigos por hora por número: use outro número ou espere. |
