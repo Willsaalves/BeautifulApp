@@ -7,6 +7,8 @@ App de agendamento para profissionais de beleza autônomas (unha, cílios, sobra
 
 ## Rodar
 
+Passo a passo completo (Windows, backend, mesma rede e túnel): [`docs/COMO-RODAR.md`](docs/COMO-RODAR.md).
+
 ```bash
 cd mobile
 npm install
