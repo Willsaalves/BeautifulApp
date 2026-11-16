@@ -94,6 +94,28 @@ Leia o QR code com o Expo Go (celular no mesmo Wi‑Fi).
 
 O túnel do Expo só leva o **app** até o celular. A API (8080) e o storage de fotos (9090) precisam dos túneis deles, e o Cloudflare cria esses túneis de graça.
 
+### Jeito rápido: um comando só
+
+Com o Docker Desktop aberto, na pasta do projeto:
+```powershell
+.\dev-tunnel.cmd
+```
+O script faz os passos C1 a C5 sozinho:
+- sobe o banco e o storage;
+- abre os dois túneis do Cloudflare e lê as URLs novas;
+- grava a URL da API no `mobile\.env.local`;
+- abre a API numa janela nova, já apontando as fotos para o túnel;
+- espera a API responder e roda o Expo com `--tunnel -c`.
+
+**Ctrl + C** no Expo fecha os túneis e a API. Toda vez que você mudar o backend, rode `.\dev-tunnel.cmd` de novo: ele encerra a API antiga e os túneis antigos e grava as URLs novas.
+
+| Opção | Para quê |
+|---|---|
+| `.\dev-tunnel.cmd -SemExpo` | Sobe só backend e túneis (o Expo você abre em outro terminal) |
+| `.\dev-tunnel.cmd -SemDocker` | Pula o `docker compose up` (banco já no ar) |
+
+Se algo falhar, os logs dos túneis ficam em `.tunnel-logs\`. Os passos abaixo são o mesmo processo feito à mão.
+
 ### C1. Terminal 1: banco e storage
 ```powershell
 cd backend
