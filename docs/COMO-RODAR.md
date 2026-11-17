@@ -1,5 +1,7 @@
 # Como rodar o BeautifulApp (Windows / PowerShell)
 
+> Para colocar a API na nuvem (AWS), veja [AWS.md](AWS.md).
+
 Há três formas de rodar:
 
 | Modo | Quando usar | O celular precisa estar… |

@@ -33,7 +33,7 @@ class SqsQueueTransport implements QueueTransport, AutoCloseable {
         } else {
             b.credentialsProvider(DefaultCredentialsProvider.builder().build());
         }
-        if (props.endpoint() != null) b.endpointOverride(props.endpoint());
+        if (props.endpoint() != null && !props.endpoint().toString().isBlank()) b.endpointOverride(props.endpoint());
         this.sqs = b.build();
         this.createQueues = props.createQueues();
     }

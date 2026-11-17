@@ -1,0 +1,51 @@
+name: Deploy API
+
+# Manual (Actions → Deploy API → Run workflow) ou a cada push na main que mexa no backend.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Ambiente
+        type: choice
+        options: [staging, prod]
+        default: staging
+  push:
+    branches: [main]
+    paths: ["backend/**"]
+
+permissions:
+  id-token: write # OIDC: o GitHub prova quem é para a AWS, sem chave guardada
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build e push da imagem
+        env:
+          REPO: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}
+        run: |
+          docker build -t "$REPO:${GITHUB_SHA::12}" -t "$REPO:latest" backend
+          docker push "$REPO:${GITHUB_SHA::12}"
+          docker push "$REPO:latest"
+
+      - name: Atualiza a API (troca as tasks sem tirar do ar)
+        run: |
+          aws ecs update-service --cluster "${{ vars.ECS_CLUSTER }}" --service "${{ vars.ECS_SERVICE }}" --force-new-deployment > /dev/null
+          aws ecs wait services-stable --cluster "${{ vars.ECS_CLUSTER }}" --services "${{ vars.ECS_SERVICE }}"
+          echo "Versão ${GITHUB_SHA::12} no ar."

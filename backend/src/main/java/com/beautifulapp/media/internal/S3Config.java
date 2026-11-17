@@ -24,7 +24,7 @@ class S3Config {
         } else {
             b.credentialsProvider(DefaultCredentialsProvider.builder().build());
         }
-        if (p.endpoint() != null) {
+        if (hasEndpoint(p)) {
             b.endpointOverride(p.endpoint()).forcePathStyle(true);
         }
         return b.build();
@@ -38,10 +38,15 @@ class S3Config {
         } else {
             b.credentialsProvider(DefaultCredentialsProvider.builder().build());
         }
-        if (p.endpoint() != null) {
+        if (hasEndpoint(p)) {
             b.endpointOverride(p.endpoint())
                     .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build());
         }
         return b.build();
+    }
+
+    /** Na AWS o endpoint fica vazio (usa o S3 da região); em desenvolvimento aponta para o S3Mock. */
+    static boolean hasEndpoint(MediaProperties p) {
+        return p.endpoint() != null && !p.endpoint().toString().isBlank();
     }
 }

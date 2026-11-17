@@ -40,3 +40,23 @@ jobs:
       - name: Textos legais iguais aos do backend?
         run: npm run legal:gen && git diff --exit-code src/legal/docs.ts
       - run: npx tsc --noEmit
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Formatação (mostra o que o terraform fmt mudaria)
+        run: terraform fmt -recursive -diff || true
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: A imagem da API compila
+        run: docker build -t beautifulapp-api backend

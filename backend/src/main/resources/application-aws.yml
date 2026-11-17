@@ -1,0 +1,21 @@
+# Perfil usado na AWS (SPRING_PROFILES_ACTIVE=aws, definido pelo Terraform).
+# Sem endpoint e sem chave = S3 e SQS de verdade, com as permissões do papel da task (nada de chave no código).
+app:
+  media:
+    endpoint: ""
+    access-key: ""
+    secret-key: ""
+  events:
+    transport: sqs
+    sqs:
+      endpoint: ""
+      access-key: ""
+      secret-key: ""
+
+server:
+  forward-headers-strategy: framework
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
