@@ -189,6 +189,20 @@ Rodar de novo é seguro: as contas que já existem são puladas. Para começar d
 > As imagens são desenhadas pelo próprio script (degradês com unhas, cílios, lábios…), sem precisar de internet.
 > Os telefones são de teste e funcionam porque o código fixo 123456 só existe no ambiente de desenvolvimento.
 
+## Ver os eventos chegando na fila (opcional)
+
+A API publica eventos (agendamento criado, sinal confirmado, conta excluída…). Por padrão, eles só aparecem no log da API como `[FILA ...]`. Para vê-los numa fila de verdade, igual à da AWS:
+```powershell
+cd backend
+docker compose up -d
+$env:APP_EVENTS_TRANSPORT="sqs"
+$env:APP_EVENTS_SQS_ENDPOINT="http://localhost:9324"
+$env:APP_EVENTS_SQS_ACCESS_KEY="x"
+$env:APP_EVENTS_SQS_SECRET_KEY="x"
+.\gradlew.bat bootRun
+```
+Abra http://localhost:9325 para ver as filas `beautifulapp-appointment-events` e `beautifulapp-account-events` com as mensagens.
+
 ## Notificações push (opcional)
 
 A caixa de notificações (sino) funciona sempre. Para o **push** chegar no celular:

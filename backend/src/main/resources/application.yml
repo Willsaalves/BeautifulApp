@@ -13,6 +13,14 @@ spring:
   docker:
     compose:
       lifecycle-management: start-only
+  modulith:
+    events:
+      # tabela event_publication criada pelo Flyway (V11)
+      jdbc:
+        schema-initialization:
+          enabled: false
+      # ao subir, reenvia o que ficou pendente (ex.: a fila estava fora do ar)
+      republish-outstanding-events-on-restart: true
 
 server:
   error:
@@ -35,6 +43,17 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  events:
+    # log: só mostra no log o que iria para a fila (desenvolvimento) · sqs: envia de verdade
+    transport: ${APP_EVENTS_TRANSPORT:log}
+    queue-prefix: ${APP_EVENTS_QUEUE_PREFIX:beautifulapp-}
+    sqs:
+      # vazio = AWS real (credenciais da role); http://localhost:9324 = ElasticMQ do docker compose
+      endpoint: ${APP_EVENTS_SQS_ENDPOINT:}
+      region: ${APP_EVENTS_SQS_REGION:us-east-1}
+      access-key: ${APP_EVENTS_SQS_ACCESS_KEY:}
+      secret-key: ${APP_EVENTS_SQS_SECRET_KEY:}
+      create-queues: ${APP_EVENTS_SQS_CREATE_QUEUES:false}
   cors:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}
   identity:

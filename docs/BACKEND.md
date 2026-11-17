@@ -167,6 +167,35 @@ AWAITING_DEPOSIT ──comprovante──► RECEIPT_SENT ──confirmar──�
 - Story: `expires_at = created_at + 24h`. O feed filtra por `expires_at > now()` e um job remove os arquivos antigos do S3.
 - Chat: v1 via REST + push. v2 via WebSocket (STOMP), com relay em Redis/RabbitMQ se houver mais de uma instância.
 
+### messaging: eventos por fila (outbox)
+Os eventos que interessam a sistemas de fora saem por fila. São os marcados com `@Externalized`:
+
+| Evento | Fila | Chave (ordem) |
+|---|---|---|
+| `AppointmentEvent` (criado, sinal, ajuste, cancelado, expirado…) | `beautifulapp-appointment-events` | id do agendamento |
+| `AppointmentCompleted` | `beautifulapp-appointment-events` | id do agendamento |
+| `AccountDeleted` | `beautifulapp-account-events` | id da conta |
+
+**Como funciona (outbox do Spring Modulith):**
+1. O evento é gravado na tabela `event_publication` **na mesma transação** da mudança. Se a transação for desfeita, o evento some junto.
+2. Depois do commit, o `messaging` monta o envelope e envia para a fila.
+3. Se a fila estiver fora do ar, o evento fica pendente. Ele é reenviado a cada minuto (`OutboxJobs`) e ao reiniciar a API. Os já entregues são apagados depois de 7 dias.
+
+**Envelope** (corpo da mensagem):
+```json
+{"id":"…eventId…","type":"AccountDeleted","version":1,"occurredAt":"…","key":"…","data":{ …o evento… }}
+```
+- `id` é o mesmo em todo reenvio: o consumidor usa para **ignorar duplicatas** (o SQS comum entrega pelo menos uma vez).
+- `type` + `version` formam o contrato. Mudança incompatível = nova versão.
+- Filas FIFO (nome terminando em `.fifo`) recebem `MessageGroupId = key` (ordem por agendamento) e deduplicação pelo `id`.
+
+**Configuração** (`app.events.*`):
+- `transport=log`: padrão, só mostra no log o que iria para a fila.
+- `transport=sqs`: envia de verdade. Com `sqs.endpoint` vazio, vai para a AWS com as credenciais da role. Com `http://localhost:9324`, vai para o ElasticMQ do `docker compose`, que tem um painel em http://localhost:9325.
+- **Na AWS:** criar as duas filas (de preferência com DLQ) e dar à role da API `sqs:SendMessage` e `sqs:GetQueueUrl`.
+
+**Extrair um serviço no futuro:** o serviço novo consome a fila (ex.: um `notification` separado lendo `appointment-events`). Depois, o listener interno equivalente é removido do monólito.
+
 ### legal (Termos de Uso e Política de Privacidade)
 - **Fonte única:** os textos ficam em `backend/src/main/resources/legal/` (`termos.md`, `privacidade.md`); os dados da empresa e a versão, em `_dados.yml`.
 - **Páginas públicas:** a API publica `/legal/termos` e `/legal/privacidade`. Use a URL da política na App Store e na Play Store.

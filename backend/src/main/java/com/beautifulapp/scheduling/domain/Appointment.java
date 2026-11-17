@@ -142,6 +142,7 @@ public final class Appointment {
     public void remindDeposit(Instant now) {
         if (depositRemindedAt != null) return;
         this.depositRemindedAt = now;
+        this.updatedAt = now;
         record(Change.DEPOSIT_DUE_SOON);
     }
 
@@ -229,6 +230,6 @@ public final class Appointment {
     }
 
     private void record(Change change) {
-        events.add(new AppointmentChanged(change, id, clientAccountId, professionalId, serviceId, serviceName, startsAt, depositDueAt, paidCents()));
+        events.add(new AppointmentChanged(change, id, clientAccountId, professionalId, serviceId, serviceName, startsAt, depositDueAt, paidCents(), updatedAt));
     }
 }

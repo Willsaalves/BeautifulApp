@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.beautifulapp.common.AccountDeleted;
 import com.beautifulapp.common.ApiException;
 import com.beautifulapp.common.CurrentAccount;
+import com.beautifulapp.common.Ids;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,7 +44,7 @@ class AccountDeletionService {
         Account a = accounts.findById(accountId).filter(x -> !x.deleted())
                 .orElseThrow(() -> ApiException.notFound("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
         Instant now = clock.instant();
-        events.publishEvent(new AccountDeleted(accountId, now));
+        events.publishEvent(new AccountDeleted(accountId, now, Ids.newId()));
         refreshTokens.revokeAll(accountId, now);
         a.markDeleted(now);
         log.info("Conta {} excluída a pedido da usuária", accountId);

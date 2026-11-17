@@ -33,6 +33,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
+    // Outbox: cada evento é gravado na tabela event_publication na mesma transação e só sai dela quando entregue
+    implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
+    implementation("org.springframework.modulith:spring-modulith-events-api")
+    implementation("org.springframework.modulith:spring-modulith-events-core")
+    implementation("software.amazon.awssdk:sqs")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
     implementation("software.amazon.awssdk:s3")
     runtimeOnly("org.postgresql:postgresql")

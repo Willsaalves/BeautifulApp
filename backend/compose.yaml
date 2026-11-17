@@ -21,5 +21,14 @@ services:
     labels:
       org.springframework.boot.ignore: true
 
+  sqs:
+    # Fila local compatível com SQS (ElasticMQ). Painel com as filas e mensagens: http://localhost:9325
+    # Só é usada com APP_EVENTS_TRANSPORT=sqs (o padrão "log" mostra os eventos no log da API).
+    image: softwaremill/elasticmq-native:1.6.11
+    ports: ["9324:9324", "9325:9325"]
+    volumes: ["./elasticmq.conf:/opt/elasticmq.conf:ro"]
+    labels:
+      org.springframework.boot.ignore: true
+
 volumes:
   pgdata:
