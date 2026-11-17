@@ -59,6 +59,9 @@ class AppointmentService implements ClientAppointments, ProfessionalAppointments
                 .orElseThrow(() -> SchedulingException.notFound("SERVICE_NOT_FOUND", "Serviço não encontrado."));
         var pro = participants.professional(svc.professionalId())
                 .orElseThrow(() -> SchedulingException.notFound("PROFESSIONAL_NOT_FOUND", "Profissional não encontrada."));
+        if (!pro.active()) {
+            throw SchedulingException.forbidden("PROFESSIONAL_UNAVAILABLE", "Esta profissional não está recebendo agendamentos.");
+        }
         if (blockList.blockedBetween(c.clientAccountId(), pro.accountId())) {
             throw SchedulingException.forbidden("BLOCKED", "Não é possível agendar com esta profissional.");
         }

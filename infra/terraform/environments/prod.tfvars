@@ -12,5 +12,8 @@ api_desired_count      = 2 # duas cópias: uma pode cair ou ser atualizada sem t
 db_instance_class      = "db.t4g.small"
 db_deletion_protection = true
 
+# celulares com acesso ao painel de administração (Perfil → Painel de administração)
+admin_phones = []
+
 monthly_budget_usd = 200
 alert_email        = ""

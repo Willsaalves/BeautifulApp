@@ -14,8 +14,9 @@ public interface Participants {
     Optional<ClientCard> client(UUID accountId);
 
     /** Regras da profissional que o agendamento usa. */
+    /** active=false: conta suspensa pela moderação (não recebe agendamentos novos). */
     record ProfessionalTerms(UUID professionalId, UUID accountId, int depositDeadlineHours, String studio, String photoUrl,
-                             String neighborhood, String city, String pixKey) {}
+                             String neighborhood, String city, String pixKey, boolean active) {}
 
     record ClientCard(UUID accountId, String name, String photoUrl, String phone) {}
 }

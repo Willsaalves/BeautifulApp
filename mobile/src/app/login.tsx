@@ -55,7 +55,11 @@ export default function Login() {
       try {
         const session = await verifyOtp(phone, c);
         if (session.isNew) return go(null);
-        go(s.applyMe(await fetchMe()));
+        const me = await fetchMe();
+        const role = s.applyMe(me);
+        // conta só de administração (sem perfil de cliente/profissional): direto para o painel
+        if (!role && me.roles?.includes('ADMIN')) return router.replace('/admin');
+        go(role);
       } catch (e) {
         setError((e as Error).message);
         setCode('');

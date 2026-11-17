@@ -55,6 +55,7 @@ class ProfileService {
 
     @Transactional
     Me onboard(UUID accountId, Onboarding in) {
+        if (in.role() == Role.ADMIN) throw ApiException.badRequest("ROLE_INVALID", "Escolha cliente ou profissional.");
         in = new Onboarding(in.role(), in.name(), in.email(), in.bio(), media.normalizeKey(in.photoKey()), media.normalizeKey(in.coverKey()),
                 in.studio(), in.niche(), in.neighborhood(), in.city(), in.pixKey(), in.latitude(), in.longitude(), in.acceptedTerms(), in.imageConsent());
         media.assertOwned(in.photoKey(), accountId, MediaKind.AVATAR);

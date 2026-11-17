@@ -682,6 +682,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/reports/{targetType}/{targetId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decidir: manter (DISMISS), remover o conteúdo (REMOVE_CONTENT) ou suspender quem publicou (SUSPEND_AUTHOR) */
+        post: operations["resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspender (login e sessões param; some da busca; stories saem do ar) */
+        post: operations["suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reativar conta suspensa */
+        post: operations["reactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Excluir conta (mesmo efeito de a pessoa excluir pelo app) */
+        post: operations["delete_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/professional": {
         parameters: {
             query?: never;
@@ -796,7 +864,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Excluir minha conta (apaga perfil, fotos, stories e favoritas; cancela agendamentos futuros) */
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1057,6 +1125,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Denúncias abertas, agrupadas por conteúdo, mais antigas primeiro */
+        get: operations["reports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Números do app e saúde da moderação (SLA de 24h) */
+        get: operations["overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Histórico de ações da administração */
+        get: operations["audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Buscar contas por nome, estúdio, @ ou celular */
+        get: operations["accounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe da conta: perfil, números, denúncias abertas e histórico de ações */
+        get: operations["account"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/stories/{id}": {
         parameters: {
             query?: never;
@@ -1068,7 +1221,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Apagar meu story */
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1388,7 +1541,7 @@ export interface components {
         };
         Onboarding: {
             /** @enum {string} */
-            role: "CLIENT" | "PROFESSIONAL";
+            role: "CLIENT" | "PROFESSIONAL" | "ADMIN";
             name: string;
             /** Format: email */
             email?: string;
@@ -1427,7 +1580,7 @@ export interface components {
             accountId?: string;
             phone?: string;
             email?: string;
-            roles?: ("CLIENT" | "PROFESSIONAL")[];
+            roles?: ("CLIENT" | "PROFESSIONAL" | "ADMIN")[];
             client?: components["schemas"]["ClientDto"];
             professional?: components["schemas"]["ProfessionalDto"];
             favorites?: string[];
@@ -1506,7 +1659,7 @@ export interface components {
             /** Format: int64 */
             expiresIn?: number;
             isNew?: boolean;
-            roles?: ("CLIENT" | "PROFESSIONAL")[];
+            roles?: ("CLIENT" | "PROFESSIONAL" | "ADMIN")[];
         };
         OtpVerify: {
             phone: string;
@@ -1664,6 +1817,14 @@ export interface components {
             /** Format: int64 */
             newPriceCents?: number;
             note?: string;
+        };
+        ResolveInput: {
+            /** @enum {string} */
+            decision: "DISMISS" | "REMOVE_CONTENT" | "SUSPEND_AUTHOR";
+            note?: string;
+        };
+        SuspendInput: {
+            reason: string;
         };
         ProfessionalPatch: {
             name?: string;
@@ -1893,6 +2054,106 @@ export interface components {
             priceDeltaCents?: number;
             /** Format: double */
             distanceKm?: number;
+        };
+        Preview: {
+            exists?: boolean;
+            title?: string;
+            text?: string;
+            imageUrl?: string;
+            /** Format: uuid */
+            authorAccountId?: string;
+            authorName?: string;
+            hidden?: boolean;
+            /** Format: uuid */
+            professionalId?: string;
+        };
+        ReportGroup: {
+            targetType?: string;
+            /** Format: uuid */
+            targetId?: string;
+            /** Format: int32 */
+            reports?: number;
+            /** Format: int32 */
+            reporters?: number;
+            reasons?: string[];
+            details?: string[];
+            /** Format: date-time */
+            firstAt?: string;
+            /** Format: date-time */
+            lastAt?: string;
+            preview?: components["schemas"]["Preview"];
+        };
+        Overview: {
+            /** Format: int64 */
+            clients?: number;
+            /** Format: int64 */
+            professionals?: number;
+            /** Format: int64 */
+            newAccounts7d?: number;
+            /** Format: int64 */
+            suspendedAccounts?: number;
+            /** Format: int64 */
+            appointments7d?: number;
+            /** Format: int64 */
+            completed30d?: number;
+            /** Format: int64 */
+            revenue30dCents?: number;
+            /** Format: int64 */
+            openReports?: number;
+            /** Format: date-time */
+            oldestOpenReportAt?: string;
+            slaBreached?: boolean;
+            /** Format: int64 */
+            outboxPending?: number;
+        };
+        AuditEntry: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            adminAccountId?: string;
+            adminName?: string;
+            action?: string;
+            targetType?: string;
+            /** Format: uuid */
+            targetId?: string;
+            note?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        AccountRow: {
+            /** Format: uuid */
+            accountId?: string;
+            phone?: string;
+            name?: string;
+            /** Format: uuid */
+            professionalId?: string;
+            client?: boolean;
+            professional?: boolean;
+            admin?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            suspendedAt?: string;
+            /** Format: date-time */
+            deletedAt?: string;
+            /** Format: int32 */
+            openReports?: number;
+        };
+        AccountDetail: {
+            account?: components["schemas"]["AccountRow"];
+            email?: string;
+            suspendedReason?: string;
+            bio?: string;
+            photoUrl?: string;
+            neighborhood?: string;
+            /** Format: int64 */
+            appointmentsAsClient?: number;
+            /** Format: int64 */
+            appointmentsAsProfessional?: number;
+            /** Format: int64 */
+            completedAsProfessional?: number;
+            openReports?: components["schemas"]["ReportGroup"][];
+            history?: components["schemas"]["AuditEntry"][];
         };
     };
     responses: never;
@@ -3135,6 +3396,99 @@ export interface operations {
             };
         };
     };
+    resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                targetType: string;
+                targetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveInput"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendInput"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendInput"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     patchProfessional: {
         parameters: {
             query?: never;
@@ -3301,7 +3655,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3638,7 +3992,111 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    reports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReportGroup"][];
+                };
+            };
+        };
+    };
+    overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Overview"];
+                };
+            };
+        };
+    };
+    audit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuditEntry"][];
+                };
+            };
+        };
+    };
+    accounts: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AccountRow"][];
+                };
+            };
+        };
+    };
+    account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AccountDetail"];
+                };
+            };
+        };
+    };
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;

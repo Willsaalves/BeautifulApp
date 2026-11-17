@@ -123,6 +123,10 @@ export default function ProPerfil() {
         sub={`${me.loyalty.enabled ? `${brl(me.loyalty.goalAmount)} → ${me.loyalty.discountPercent}% OFF` : 'Fidelidade desativada'} · sinal em ${me.depositDeadlineHours}h`}
         onPress={() => router.push('/config/fidelidade')} />
 
+      {s.admin ? (
+        <Item icon="shield-outline" title="Painel de administração" sub="Denúncias, contas e números do app" onPress={() => router.push('/admin')} />
+      ) : null}
+
       <SectionTitle title="Privacidade e segurança" />
       <Item icon="shield-checkmark-outline" title="Privacidade, termos e dados" sub="Uso de imagem, Termos de Uso e Política de Privacidade"
         onPress={() => router.push('/config/privacidade')} />

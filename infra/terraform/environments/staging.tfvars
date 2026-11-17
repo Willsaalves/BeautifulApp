@@ -12,5 +12,8 @@ api_memory        = 1024
 api_desired_count = 1
 db_instance_class = "db.t4g.micro"
 
+# celulares com acesso ao painel de administração (Perfil → Painel de administração)
+admin_phones = []
+
 monthly_budget_usd = 100
 alert_email        = "" # coloque seu e-mail para receber alerta de custo

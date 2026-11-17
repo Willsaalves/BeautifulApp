@@ -57,6 +57,8 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}
   identity:
+    # celulares com acesso ao painel de administração, separados por vírgula (ex: 11999990000,11988887777)
+    admin-phones: ${APP_ADMIN_PHONES:}
     jwt:
       issuer: ${APP_JWT_ISSUER:https://api.beautifulapp.dev}
       access-ttl: 15m

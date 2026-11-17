@@ -157,6 +157,15 @@ Leia o QR code com o Expo Go, de qualquer rede.
 
 ---
 
+## Painel de administração
+
+Para ter acesso, suba a API com o seu número na lista de administradores (DDD + número, separados por vírgula):
+```powershell
+$env:APP_ADMIN_PHONES="11999990000"
+.\gradlew.bat bootRun
+```
+Entre no app com esse número. Se ele já tiver perfil, use **Perfil → Painel de administração**; se não tiver, o app abre direto no painel.
+
 ## Dados de teste: profissionais de todos os nichos
 
 Com a API rodando (modo B ou C), em outro terminal na pasta do projeto:

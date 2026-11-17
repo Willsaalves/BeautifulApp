@@ -62,6 +62,12 @@ variable "otp_fixed_code" {
   default     = ""
 }
 
+variable "admin_phones" {
+  description = "Celulares com acesso ao painel de administração (DDD + número, ex: [\"11999990000\"])."
+  type        = list(string)
+  default     = []
+}
+
 variable "push_sender" {
   description = "expo (envia push) ou log (só registra)."
   type        = string

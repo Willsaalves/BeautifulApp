@@ -61,6 +61,7 @@ interface State {
   blockedPros: string[];         // profissionais bloqueadas (somem da busca)
   blockedAccounts: string[];     // contas bloqueadas (stories e mensagens somem)
   legal: { version: string; accepted: boolean; imageConsent: boolean } | null; // aceite dos Termos (com API)
+  admin: boolean;                // conta com acesso ao painel de administração
 }
 
 const initial: State = {
@@ -85,6 +86,7 @@ const initial: State = {
   blockedPros: [],
   blockedAccounts: [],
   legal: null,
+  admin: false,
 };
 
 type Action =
@@ -643,7 +645,7 @@ function useActions(stateRef: React.RefObject<State>, dispatch: React.Dispatch<A
           : roles.includes('CLIENT') ? 'cliente'
           : null;
         const legal = me.legal ? { version: me.legal.version ?? '', accepted: !!me.legal.accepted, imageConsent: !!me.legal.imageConsent } : null;
-        dispatch({ type: 'set', patch: { clients, professionals, clientId, proId, role, legal } });
+        dispatch({ type: 'set', patch: { clients, professionals, clientId, proId, role, legal, admin: roles.includes('ADMIN') } });
         return role;
       },
 

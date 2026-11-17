@@ -17,6 +17,14 @@ public interface IdentityApi {
     /** Aceite em vigor (não revogado) deste tipo; com versão, só conta se for a mesma versão. */
     boolean hasConsent(UUID accountId, String kind, String versionOrNull);
 
+    /** Suspende a conta (moderação): o login e os tokens deixam de valer. */
+    void suspend(UUID accountId, String reason);
+
+    void reactivate(UUID accountId);
+
+    /** Exclui a conta como se a própria pessoa pedisse (moderação / LGPD). */
+    void delete(UUID accountId);
+
     /** Revoga o aceite deste tipo (ex: "image_use"). */
     void revokeConsent(UUID accountId, String kind);
 }

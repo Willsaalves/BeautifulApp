@@ -5,6 +5,7 @@ import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import com.beautifulapp.common.ApiException;
 import com.beautifulapp.common.Ids;
 import com.beautifulapp.common.Phones;
 import com.beautifulapp.identity.Role;
@@ -24,7 +25,10 @@ class AuthController {
     private final AccountRepository accounts;
     private final java.time.Clock clock;
 
-    AuthController(OtpService otp, TokenService tokens, AccountRepository accounts, java.time.Clock clock) {
+    private final Set<String> adminPhones;
+
+    AuthController(OtpService otp, TokenService tokens, AccountRepository accounts, java.time.Clock clock, com.beautifulapp.identity.IdentityProperties props) {
+        this.adminPhones = props.adminPhones().stream().filter(s -> !s.isBlank()).map(Phones::normalize).collect(java.util.stream.Collectors.toUnmodifiableSet());
         this.otp = otp;
         this.tokens = tokens;
         this.accounts = accounts;
@@ -52,6 +56,11 @@ class AuthController {
         otp.verify(phone, body.code()); // transação própria: tentativas erradas ficam gravadas
         Account account = accounts.findByPhone(phone)
                 .orElseGet(() -> accounts.save(new Account(Ids.newId(), phone, clock.instant())));
+        if (account.suspended()) {
+            throw ApiException.forbidden("ACCOUNT_SUSPENDED", "Sua conta foi suspensa por descumprir os Termos de Uso. Fale com o suporte.");
+        }
+        account.syncAdmin(adminPhones.contains(phone));
+        accounts.save(account);
         var t = tokens.issue(account);
         return new Session(t.accessToken(), t.refreshToken(), t.expiresIn(), account.isNew(), Set.copyOf(account.roles()));
     }

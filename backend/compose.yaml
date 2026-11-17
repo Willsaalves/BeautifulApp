@@ -17,6 +17,13 @@ services:
     environment:
       COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: beautifulapp
       COMMAND_LINE_INITIAL_BUCKETS: beautifulapp
+      # guarda as fotos num volume: sem isso elas somem quando o Docker reinicia
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /data
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+      ROOT: /data
+      RETAIN_FILES_ON_EXIT: "true"
+    volumes: [s3data:/data]
+    user: "0" # o volume é criado como root; sem isso o S3Mock não consegue gravar
     ports: ["9090:9090"]
     labels:
       org.springframework.boot.ignore: true
@@ -32,3 +39,4 @@ services:
 
 volumes:
   pgdata:
+  s3data:

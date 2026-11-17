@@ -53,7 +53,7 @@ class TokenService {
         }
         if (!current.expiresAt().isAfter(now)) throw invalid();
         current.revoke(now);
-        Account account = accounts.findById(current.accountId()).orElseThrow(TokenService::invalid);
+        Account account = accounts.findById(current.accountId()).filter(a -> !a.deleted() && !a.suspended()).orElseThrow(TokenService::invalid);
         return issue(account.id(), account.phone(), current.familyId());
     }
 

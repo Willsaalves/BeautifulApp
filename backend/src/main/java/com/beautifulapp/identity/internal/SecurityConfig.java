@@ -52,14 +52,14 @@ class SecurityConfig {
     @Bean
     JwtDecoder jwtDecoder(JwtKeys keys, IdentityProperties props, AccountRepository accounts) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(keys.publicKey).build();
-        // Conta excluída: o token de acesso que ainda não venceu deixa de valer na hora
+        // Conta excluída ou suspensa: o token de acesso que ainda não venceu deixa de valer na hora
         OAuth2TokenValidator<Jwt> notDeleted = jwt -> {
             try {
-                if (accounts.existsByIdAndDeletedAtIsNull(UUID.fromString(jwt.getSubject()))) return OAuth2TokenValidatorResult.success();
+                if (accounts.existsByIdAndDeletedAtIsNullAndSuspendedAtIsNull(UUID.fromString(jwt.getSubject()))) return OAuth2TokenValidatorResult.success();
             } catch (IllegalArgumentException ignored) {
                 // sub inválido
             }
-            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Conta excluída.", null));
+            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Conta excluída ou suspensa.", null));
         };
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefaultWithIssuer(props.jwt().issuer()), notDeleted));
         return decoder;

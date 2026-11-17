@@ -22,6 +22,7 @@ locals {
     APP_JWT_ISSUER             = local.api_url
     APP_OTP_FIXED_CODE         = var.otp_fixed_code
     APP_PUSH_SENDER            = var.push_sender
+    APP_ADMIN_PHONES           = join(",", var.admin_phones)
     APP_MEDIA_BUCKET           = aws_s3_bucket.media.bucket
     APP_MEDIA_REGION           = var.region
     APP_MEDIA_PUBLIC_URL       = local.media_url

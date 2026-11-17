@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.beautifulapp.common.AccountSuspended;
 import com.beautifulapp.common.ApiException;
 import com.beautifulapp.common.Ids;
 import com.beautifulapp.identity.AccountView;
@@ -19,7 +20,15 @@ class IdentityApiImpl implements IdentityApi {
     private final ConsentRepository consents;
     private final Clock clock;
 
-    IdentityApiImpl(AccountRepository accounts, ConsentRepository consents, Clock clock) {
+    private final RefreshTokenRepository refreshTokens;
+    private final org.springframework.context.ApplicationEventPublisher events;
+    private final AccountDeletionService deletion;
+
+    IdentityApiImpl(AccountRepository accounts, ConsentRepository consents, Clock clock, RefreshTokenRepository refreshTokens,
+                    org.springframework.context.ApplicationEventPublisher events, AccountDeletionService deletion) {
+        this.refreshTokens = refreshTokens;
+        this.events = events;
+        this.deletion = deletion;
         this.accounts = accounts;
         this.consents = consents;
         this.clock = clock;
@@ -62,6 +71,28 @@ class IdentityApiImpl implements IdentityApi {
     @Transactional
     public void revokeConsent(UUID accountId, String kind) {
         consents.history(accountId, kind).forEach(c -> c.revoke(clock.instant()));
+    }
+
+    @Override
+    @Transactional
+    public void suspend(UUID accountId, String reason) {
+        Account a = load(accountId);
+        if (a.deleted()) throw ApiException.conflict("ACCOUNT_DELETED", "Essa conta já foi excluída.");
+        if (a.suspended()) return;
+        a.suspend(reason, clock.instant());
+        refreshTokens.revokeAll(accountId, clock.instant());
+        events.publishEvent(new AccountSuspended(accountId, clock.instant(), reason));
+    }
+
+    @Override
+    @Transactional
+    public void reactivate(UUID accountId) {
+        load(accountId).reactivate();
+    }
+
+    @Override
+    public void delete(UUID accountId) {
+        deletion.delete(accountId);
     }
 
     private Account load(UUID id) {

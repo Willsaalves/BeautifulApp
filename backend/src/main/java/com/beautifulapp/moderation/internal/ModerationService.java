@@ -144,6 +144,16 @@ class ModerationService implements ModerationApi {
                 .param("id", accountId).query(UUID.class).list());
     }
 
+    @Override
+    @Transactional
+    public int resolve(String targetType, UUID targetId, boolean actioned, UUID reviewer, String note) {
+        return jdbc.sql("""
+                UPDATE report SET status = :status, reviewed_at = :at, reviewed_by = :by, resolution_note = :note
+                 WHERE target_type = :type AND target_id = :id AND status = 'OPEN'""")
+                .param("status", actioned ? "ACTIONED" : "DISMISSED").param("at", java.sql.Timestamp.from(clock.instant()))
+                .param("by", reviewer).param("note", note).param("type", targetType).param("id", targetId).update();
+    }
+
     /** Exclusão de conta: bloqueios dela somem (as denúncias ficam para a revisão). */
     @EventListener
     void on(AccountDeleted e) {

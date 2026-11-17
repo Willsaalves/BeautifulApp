@@ -64,6 +64,7 @@ class DiscoveryService {
                        (SELECT count(*) FROM review r WHERE r.professional_id = p.id AND r.hidden_at IS NULL) AS reviews
                   FROM professional p
                  WHERE p.deleted_at IS NULL
+                   AND NOT EXISTS (SELECT 1 FROM account a WHERE a.id = p.account_id AND a.suspended_at IS NOT NULL)
                 """.formatted(distance));
         excludeBlocked(sql, params);
         if (geo) {
@@ -98,7 +99,9 @@ class DiscoveryService {
 
     @Transactional(readOnly = true)
     PublicPage page(UUID professionalId) {
-        boolean visible = jdbc.sql("SELECT account_id FROM professional WHERE id = :id AND deleted_at IS NULL").param("id", professionalId)
+        boolean visible = jdbc.sql("""
+                SELECT p.account_id FROM professional p JOIN account a ON a.id = p.account_id
+                 WHERE p.id = :id AND p.deleted_at IS NULL AND a.suspended_at IS NULL""").param("id", professionalId)
                 .query(UUID.class).optional().filter(acc -> !moderation.blockedBetween(CurrentAccount.id(), acc)).isPresent();
         var pro = profiles.publicProfessional(professionalId).filter(x -> visible)
                 .orElseThrow(() -> ApiException.notFound("PROFESSIONAL_NOT_FOUND", "Profissional não encontrada."));
@@ -118,6 +121,7 @@ class DiscoveryService {
                   JOIN service s ON s.id = d.service_id AND s.active
                   JOIN professional p ON p.id = d.professional_id
                  WHERE p.deleted_at IS NULL
+                   AND NOT EXISTS (SELECT 1 FROM account a WHERE a.id = p.account_id AND a.suspended_at IS NOT NULL)
                 """.formatted(distance));
         excludeBlocked(sql, params);
         if (geo) {

@@ -95,6 +95,16 @@ export default function ClientePerfil() {
         </Card>
       ))}
 
+      {s.admin ? (
+        <Card tone="black" onPress={() => router.push('/admin')}>
+          <Row>
+            <Ionicons name="shield" size={20} color={colors.cardSolid} />
+            <T v="h3" color={colors.cardSolid} style={{ flex: 1 }}>Painel de administração</T>
+            <Ionicons name="chevron-forward" size={18} color={colors.offWhite} />
+          </Row>
+        </Card>
+      ) : null}
+
       <SectionTitle title="Privacidade e segurança" />
       <Card onPress={() => router.push('/config/privacidade')}>
         <Row>

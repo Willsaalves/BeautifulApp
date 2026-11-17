@@ -29,8 +29,10 @@ export default function Welcome() {
     (async () => {
       if (!(await hasSession())) return;
       try {
-        const role = store.applyMe(await fetchMe());
+        const me = await fetchMe();
+        const role = store.applyMe(me);
         if (role) router.replace(role === 'profissional' ? '/pro' : '/cliente');
+        else if (me.roles?.includes('ADMIN')) router.replace('/admin');
       } catch {
         // sessão inválida: fica na tela inicial
       }

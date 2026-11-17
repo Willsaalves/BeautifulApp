@@ -167,6 +167,17 @@ AWAITING_DEPOSIT ──comprovante──► RECEIPT_SENT ──confirmar──�
 - Story: `expires_at = created_at + 24h`. O feed filtra por `expires_at > now()` e um job remove os arquivos antigos do S3.
 - Chat: v1 via REST + push. v2 via WebSocket (STOMP), com relay em Redis/RabbitMQ se houver mais de uma instância.
 
+### admin: painel de administração
+- **Quem acessa:** contas com o papel **ADMIN**, que vem só da lista de celulares `APP_ADMIN_PHONES` (no Terraform, `admin_phones`). O papel é conferido a cada login: tirar o número da lista tira o acesso. Ninguém vira administrador pelo cadastro ou por uma rota da API.
+- **No app:** Perfil → **Painel de administração**. Uma conta só de administração, sem perfil de cliente ou profissional, cai direto no painel.
+- **Números:** clientes, profissionais, contas novas, agendamentos, atendimentos e valor movimentado em 30 dias, além de eventos pendentes na fila.
+- **Denúncias:** agrupadas por conteúdo e mais antigas primeiro, com aviso quando passam de 24h (prazo da App Store). Cada uma mostra a prévia do conteúdo e quem publicou. As decisões são:
+  - **Manter:** o conteúdo volta ao ar.
+  - **Remover:** o story é apagado, a avaliação sai da página e a mensagem vira "removida pela moderação".
+  - **Suspender autor:** remove o conteúdo e suspende a conta.
+- **Contas:** busca por nome, estúdio, @ ou celular. O detalhe mostra números, denúncias abertas e histórico, e permite **suspender** (login e sessões param, a conta some da busca, os stories saem do ar e não recebe agendamento novo), **reativar** ou **excluir**.
+- **Auditoria:** toda ação fica em `admin_action`, com quem fez, o quê e o motivo. A tela "Histórico" mostra esse registro.
+
 ### messaging: eventos por fila (outbox)
 Os eventos que interessam a sistemas de fora saem por fila. São os marcados com `@Externalized`:
 
@@ -217,7 +228,7 @@ Os eventos que interessam a sistemas de fora saem por fila. São os marcados com
   - Com **3 denúncias de pessoas diferentes**, o story ou a avaliação sai do ar até a revisão (evento `ContentFlagged`).
   - Cada denúncia aparece no log como `[DENÚNCIA]`.
 - **Bloquear** (`POST /me/blocked`, `DELETE /me/blocked/{accountId}`, `GET /me/blocked`): vale nos dois sentidos. Uma não vê a outra na busca, na vitrine, na página e nos stories, e não consegue agendar nem mandar mensagem.
-- **Revisão das denúncias** (a Apple pede ação em até 24h): até existir o painel de administração, a revisão é feita direto no banco:
+- **Revisão das denúncias** (a Apple pede ação em até 24h): pelo **painel de administração** (seção admin abaixo). Para consultar direto no banco:
   ```sql
   SELECT created_at, target_type, target_id, reason, details FROM report WHERE status = 'OPEN' ORDER BY created_at;
   -- conteúdo ok: devolve ao ar e fecha a denúncia
