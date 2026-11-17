@@ -4,4 +4,4 @@ build/
 *.iml
 .idea/
 .vscode/
-out/
+/out/
