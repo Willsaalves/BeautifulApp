@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "BeautifulApp",
-    "slug": "beautifulapp",
+    "name": "Glammi",
+    "slug": "glammi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "beautifulapp",
+    "scheme": "glammi",
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.beautifulapp.app"
+      "bundleIdentifier": "com.glammi.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.beautifulapp.app"
+      "package": "com.glammi.app"
     },
     "web": {
       "output": "single",

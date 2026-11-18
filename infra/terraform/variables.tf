@@ -1,7 +1,7 @@
 variable "project" {
   description = "Prefixo dos nomes dos recursos."
   type        = string
-  default     = "beautifulapp"
+  default     = "glammi"
 }
 
 variable "environment" {

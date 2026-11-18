@@ -1,4 +1,4 @@
-# BeautifulApp
+# Glammi
 
 App de agendamento para profissionais de beleza autônomas (unha, cílios, sobrancelha, estética) e suas clientes.
 

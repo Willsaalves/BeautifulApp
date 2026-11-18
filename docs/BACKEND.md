@@ -1,4 +1,4 @@
-# Levantamento do Backend — BeautifulApp
+# Levantamento do Backend — Glammi
 
 ## 1. Stack
 
@@ -183,9 +183,9 @@ Os eventos que interessam a sistemas de fora saem por fila. São os marcados com
 
 | Evento | Fila | Chave (ordem) |
 |---|---|---|
-| `AppointmentEvent` (criado, sinal, ajuste, cancelado, expirado…) | `beautifulapp-appointment-events` | id do agendamento |
-| `AppointmentCompleted` | `beautifulapp-appointment-events` | id do agendamento |
-| `AccountDeleted` | `beautifulapp-account-events` | id da conta |
+| `AppointmentEvent` (criado, sinal, ajuste, cancelado, expirado…) | `glammi-appointment-events` | id do agendamento |
+| `AppointmentCompleted` | `glammi-appointment-events` | id do agendamento |
+| `AccountDeleted` | `glammi-account-events` | id da conta |
 
 **Como funciona (outbox do Spring Modulith):**
 1. O evento é gravado na tabela `event_publication` **na mesma transação** da mudança. Se a transação for desfeita, o evento some junto.

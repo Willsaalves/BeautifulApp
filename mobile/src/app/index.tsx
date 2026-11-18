@@ -48,7 +48,7 @@ export default function Welcome() {
           {/* topo */}
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={styles.brand}>
-              <T v="overline" style={{ fontSize: 10 }}>✦ Beautiful</T>
+              <T v="overline" style={{ fontSize: 10 }}>✦ Glammi</T>
             </View>
             <View style={styles.roundBtn}>
               <Ionicons name="sparkles" size={18} color={colors.black} />

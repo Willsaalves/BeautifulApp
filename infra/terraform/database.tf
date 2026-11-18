@@ -12,8 +12,8 @@ resource "aws_db_instance" "main" {
   engine_version = "16"
   instance_class = var.db_instance_class
 
-  db_name                     = "beautifulapp"
-  username                    = "beautifulapp"
+  db_name                     = "glammi"
+  username                    = "glammi"
   manage_master_user_password = true
 
   allocated_storage     = 20

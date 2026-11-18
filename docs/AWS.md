@@ -1,4 +1,4 @@
-# Subindo o BeautifulApp na AWS
+# Subindo o Glammi na AWS
 
 Tudo é criado pelo Terraform (`infra/terraform`). Você roda os comandos uma vez. Depois disso, cada push na `main` que mexer no backend faz o deploy sozinho pelo GitHub.
 
@@ -70,15 +70,15 @@ Feche e abra o PowerShell, e confira com `aws --version` e `terraform -version` 
 aws configure sso
 ```
 Responda assim:
-- **SSO session name:** `beautifulapp`
+- **SSO session name:** `glammi`
 - **SSO start URL:** o access portal URL do passo 1
 - **SSO region:** a região onde você ativou o Identity Center (ex.: `sa-east-1`)
 - **CLI default client Region:** `sa-east-1`
-- **Profile name:** `beautifulapp`
+- **Profile name:** `glammi`
 
 Em todo terminal novo:
 ```powershell
-$env:AWS_PROFILE="beautifulapp"
+$env:AWS_PROFILE="glammi"
 aws sso login          # quando a sessão expirar
 aws sts get-caller-identity   # confere: mostra sua conta
 ```
@@ -103,7 +103,7 @@ Abra `infra\terraform\environments\staging.tfvars` e confira:
 
 ```powershell
 cd infra\terraform
-terraform init -backend-config="bucket=beautifulapp-tfstate-SUA_CONTA" -backend-config="key=staging/terraform.tfstate" -backend-config="region=sa-east-1"
+terraform init -backend-config="bucket=glammi-tfstate-SUA_CONTA" -backend-config="key=staging/terraform.tfstate" -backend-config="region=sa-east-1"
 terraform plan -var-file="environments/staging.tfvars"
 terraform apply -var-file="environments/staging.tfvars"
 ```
@@ -158,15 +158,15 @@ O GitHub entra na AWS por **OIDC**: nenhuma chave da AWS fica guardada no GitHub
 
 **Ver os logs da API:**
 ```powershell
-aws logs tail /ecs/beautifulapp-staging-api --follow
+aws logs tail /ecs/glammi-staging-api --follow
 ```
 
 **Consultar o banco** (ex.: revisar denúncias): o banco não tem acesso pela internet, então use o **CloudShell** dentro da rede da AWS.
 1. Console → CloudShell → Actions → **Create VPC environment**.
-2. Escolha a VPC `beautifulapp-staging`, uma das `private_subnet_ids` e o grupo `admin_security_group_id` (ambos estão nos outputs).
+2. Escolha a VPC `glammi-staging`, uma das `private_subnet_ids` e o grupo `admin_security_group_id` (ambos estão nos outputs).
 3. Pegue a senha no Secrets Manager (output `database_secret_arn`) e rode:
    ```bash
-   psql "host=ENDPOINT_DO_BANCO dbname=beautifulapp user=beautifulapp sslmode=require"
+   psql "host=ENDPOINT_DO_BANCO dbname=glammi user=glammi sslmode=require"
    ```
 
 **Ver as filas:** Console → SQS. As filas `*-dlq` guardam as mensagens que falharam 5 vezes.
@@ -174,14 +174,14 @@ aws logs tail /ecs/beautifulapp-staging-api --follow
 ### Desligar para economizar
 
 - **Desligar a API:** no `staging.tfvars`, `api_desired_count = 0`, depois `terraform apply`.
-- **Parar o banco por até 7 dias:** `aws rds stop-db-instance --db-instance-identifier beautifulapp-staging` (ele religa sozinho depois de 7 dias).
+- **Parar o banco por até 7 dias:** `aws rds stop-db-instance --db-instance-identifier glammi-staging` (ele religa sozinho depois de 7 dias).
 - **Apagar tudo:** `terraform destroy -var-file="environments/staging.tfvars"`. Os dados do banco do staging são perdidos.
 
 ### Produção
 
 Use `environments/prod.tfvars`, com outro `key` no `terraform init` (ex.: `prod/terraform.tfstate`) e um environment `prod` no GitHub. Antes, falta:
 - **Login por SMS/WhatsApp:** em produção não existe código fixo.
-- **Domínio próprio** (ex.: `api.beautifulapp.com.br`) com certificado no ALB, para o trecho CloudFront → ALB também ser HTTPS.
+- **Domínio próprio** (ex.: `api.glammi.com.br`) com certificado no ALB, para o trecho CloudFront → ALB também ser HTTPS.
 - **Revisão** das peças de produção: 2 cópias da API, banco maior e proteção contra exclusão. O `prod.tfvars` já vem assim.
 
 ## Problemas comuns
@@ -191,7 +191,7 @@ Use `environments/prod.tfvars`, com outro `key` no `terraform init` (ex.: `prod/
 | `The SSO session has expired` | `aws sso login` |
 | `terraform init` reclama do backend | Confira o nome do bucket que o `aws-bootstrap.ps1` mostrou |
 | `EntityAlreadyExists ... oidc-provider` | A conta já tem o provedor do GitHub: no tfvars, `create_github_oidc_provider = false` |
-| API não fica saudável | `aws logs tail /ecs/beautifulapp-staging-api --since 15m`. Na primeira subida, as migrações levam alguns segundos |
+| API não fica saudável | `aws logs tail /ecs/glammi-staging-api --since 15m`. Na primeira subida, as migrações levam alguns segundos |
 | App: "Sem conexão com o servidor" | Confira o `.env.local` e reinicie com `npx expo start -c` |
 | Foto não aparece | As fotos vêm do `media_url`. Se a API foi criada antes do CloudFront de mídia, rode o `apply` de novo |
 | Gasto maior que o esperado | Console → Billing → Cost Explorer, agrupado por serviço |

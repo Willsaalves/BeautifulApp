@@ -17,7 +17,7 @@ locals {
 
   api_environment = {
     SPRING_PROFILES_ACTIVE     = "aws"
-    SPRING_DATASOURCE_URL      = "jdbc:postgresql://${aws_db_instance.main.address}:${aws_db_instance.main.port}/beautifulapp"
+    SPRING_DATASOURCE_URL      = "jdbc:postgresql://${aws_db_instance.main.address}:${aws_db_instance.main.port}/glammi"
     SPRING_DATASOURCE_USERNAME = aws_db_instance.main.username
     APP_JWT_ISSUER             = local.api_url
     APP_OTP_FIXED_CODE         = var.otp_fixed_code

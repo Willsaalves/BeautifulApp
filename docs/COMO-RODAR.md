@@ -1,4 +1,4 @@
-# Como rodar o BeautifulApp (Windows / PowerShell)
+# Como rodar o Glammi (Windows / PowerShell)
 
 > Para colocar a API na nuvem (AWS), veja [AWS.md](AWS.md).
 
@@ -30,7 +30,7 @@ Há três formas de rodar:
 
 ```powershell
 git clone https://github.com/Willsaalves/BeautifulApp.git   # só na primeira vez
-cd BeautifulApp
+cd Glammi
 git checkout claude/confident-babbage-ynfils
 git pull
 cd mobile
@@ -66,7 +66,7 @@ Use o **Endereço IPv4** do adaptador Wi‑Fi, ex: `192.168.0.10`. Nos comandos 
 
 ### B2. Liberar as portas no Firewall (uma vez, PowerShell **como administrador**)
 ```powershell
-New-NetFirewallRule -DisplayName "BeautifulApp API" -Direction Inbound -Protocol TCP -LocalPort 8080,9090,8081 -Action Allow
+New-NetFirewallRule -DisplayName "Glammi API" -Direction Inbound -Protocol TCP -LocalPort 8080,9090,8081 -Action Allow
 ```
 
 ### B3. Terminal 1: banco, storage e API
@@ -212,7 +212,7 @@ $env:APP_EVENTS_SQS_ACCESS_KEY="x"
 $env:APP_EVENTS_SQS_SECRET_KEY="x"
 .\gradlew.bat bootRun
 ```
-Abra http://localhost:9325 para ver as filas `beautifulapp-appointment-events` e `beautifulapp-account-events` com as mensagens.
+Abra http://localhost:9325 para ver as filas `glammi-appointment-events` e `glammi-account-events` com as mensagens.
 
 ## Notificações push (opcional)
 

@@ -4,7 +4,7 @@
 # Uso:  .\scripts\aws-bootstrap.ps1 -Region sa-east-1
 param(
   [string]$Region = "sa-east-1",
-  [string]$Project = "beautifulapp"
+  [string]$Project = "glammi"
 )
 $ErrorActionPreference = 'Stop'
 

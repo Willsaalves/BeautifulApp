@@ -1,4 +1,4 @@
-# Arquitetura — BeautifulApp
+# Arquitetura — Glammi
 
 > O levantamento completo do backend (stack, módulos, modelo de dados, API, segurança, AWS e fases) está em [`BACKEND.md`](./BACKEND.md).
 

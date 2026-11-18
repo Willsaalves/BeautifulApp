@@ -34,7 +34,7 @@ class LegalController {
     @GetMapping(value = "/legal/{slug}", produces = MediaType.TEXT_HTML_VALUE)
     ResponseEntity<String> page(@PathVariable String slug) {
         var doc = legal.doc(slug).orElseThrow(() -> ApiException.notFound("LEGAL_NOT_FOUND", "Documento não encontrado."));
-        String app = legal.vars().getOrDefault("app", "BeautifulApp");
+        String app = legal.vars().getOrDefault("app", "Glammi");
         String html = """
                 <!doctype html>
                 <html lang="pt-BR"><head><meta charset="utf-8">

@@ -46,7 +46,7 @@ app:
   events:
     # log: só mostra no log o que iria para a fila (desenvolvimento) · sqs: envia de verdade
     transport: ${APP_EVENTS_TRANSPORT:log}
-    queue-prefix: ${APP_EVENTS_QUEUE_PREFIX:beautifulapp-}
+    queue-prefix: ${APP_EVENTS_QUEUE_PREFIX:glammi-}
     sqs:
       # vazio = AWS real (credenciais da role); http://localhost:9324 = ElasticMQ do docker compose
       endpoint: ${APP_EVENTS_SQS_ENDPOINT:}
@@ -60,7 +60,7 @@ app:
     # celulares com acesso ao painel de administração, separados por vírgula (ex: 11999990000,11988887777)
     admin-phones: ${APP_ADMIN_PHONES:}
     jwt:
-      issuer: ${APP_JWT_ISSUER:https://api.beautifulapp.dev}
+      issuer: ${APP_JWT_ISSUER:https://api.glammi.dev}
       access-ttl: 15m
       refresh-ttl: 60d
       private-key: ${APP_JWT_PRIVATE_KEY:}
