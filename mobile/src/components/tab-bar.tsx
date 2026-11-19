@@ -5,7 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 import type { IconName } from './ui';
 
@@ -77,5 +77,5 @@ const styles = StyleSheet.create({
   },
   btn: { height: 44, minWidth: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 10 },
   btnActive: { backgroundColor: colors.pink, paddingHorizontal: 16 },
-  label: { fontSize: 12, fontFamily: 'Montserrat_700Bold', color: colors.cardSolid },
+  label: { fontSize: 12, fontFamily: fonts.bold, color: colors.cardSolid },
 });

@@ -1,12 +1,12 @@
 import {
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  Montserrat_600SemiBold,
-  Montserrat_600SemiBold_Italic,
-  Montserrat_700Bold,
-  Montserrat_800ExtraBold,
+  NunitoSans_400Regular,
+  NunitoSans_500Medium,
+  NunitoSans_600SemiBold,
+  NunitoSans_600SemiBold_Italic,
+  NunitoSans_700Bold,
+  NunitoSans_800ExtraBold,
   useFonts,
-} from '@expo-google-fonts/montserrat';
+} from '@expo-google-fonts/nunito-sans';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -20,14 +20,14 @@ import { colors } from '@/theme';
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
-  // Montserrat (identidade Glammi); segura a splash até a fonte carregar
+  // Nunito Sans (identidade Glammi); segura a splash até a fonte carregar
   const [loaded, error] = useFonts({
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    Montserrat_600SemiBold_Italic,
-    Montserrat_700Bold,
-    Montserrat_800ExtraBold,
+    NunitoSans_400Regular,
+    NunitoSans_500Medium,
+    NunitoSans_600SemiBold,
+    NunitoSans_600SemiBold_Italic,
+    NunitoSans_700Bold,
+    NunitoSans_800ExtraBold,
   });
 
   useEffect(() => {

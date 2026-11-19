@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 import { STATUS_LABEL } from '@/domain/rules';
-import { colors, gradients, radius, space, type, withFont } from '@/theme';
+import { colors, fonts, gradients, radius, space, type, withFont } from '@/theme';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -200,7 +200,7 @@ export function Field({ label, style, ...props }: TextInputProps & { label: stri
   return (
     <View style={{ gap: 6 }}>
       <T v="overline" muted>{label}</T>
-      <TextInput placeholderTextColor={colors.textMuted} {...props} style={[styles.input, { fontFamily: 'Montserrat_400Regular' }, style]} />
+      <TextInput placeholderTextColor={colors.textMuted} {...props} style={[styles.input, { fontFamily: fonts.regular }, style]} />
     </View>
   );
 }

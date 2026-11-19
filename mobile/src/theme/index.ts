@@ -41,17 +41,17 @@ export const gradients = {
   splash: ['#F7A8D6', brand.pink, '#E0158F'] as const,
 };
 
-/** Montserrat (carregada em app/_layout.tsx). Os nomes "serif*" ficaram por compatibilidade e apontam para a Montserrat. */
+/** Nunito Sans (carregada em app/_layout.tsx). Os nomes "serif*" ficaram por compatibilidade e apontam para a Nunito Sans. */
 export const fonts = {
-  regular: 'Montserrat_400Regular',
-  medium: 'Montserrat_500Medium',
-  semibold: 'Montserrat_600SemiBold',
-  bold: 'Montserrat_700Bold',
-  extrabold: 'Montserrat_800ExtraBold',
-  serif: 'Montserrat_600SemiBold',
-  serifSemi: 'Montserrat_700Bold',
-  serifBold: 'Montserrat_800ExtraBold',
-  serifItalic: 'Montserrat_600SemiBold_Italic',
+  regular: 'NunitoSans_400Regular',
+  medium: 'NunitoSans_500Medium',
+  semibold: 'NunitoSans_600SemiBold',
+  bold: 'NunitoSans_700Bold',
+  extrabold: 'NunitoSans_800ExtraBold',
+  serif: 'NunitoSans_600SemiBold',
+  serifSemi: 'NunitoSans_700Bold',
+  serifBold: 'NunitoSans_800ExtraBold',
+  serifItalic: 'NunitoSans_600SemiBold_Italic',
 };
 
 const BY_WEIGHT: Record<string, string> = {
@@ -59,7 +59,7 @@ const BY_WEIGHT: Record<string, string> = {
   '500': fonts.medium, '600': fonts.semibold, '700': fonts.bold, bold: fonts.bold, '800': fonts.extrabold, '900': fonts.extrabold,
 };
 
-/** Troca fontWeight pela família Montserrat do peso certo (fonte própria + fontWeight falha em alguns Androids). */
+/** Troca fontWeight pela família Nunito Sans do peso certo (fonte própria + fontWeight falha em alguns Androids). */
 export function withFont(style: TextStyle | TextStyle[] | undefined | null | false): TextStyle {
   const s = (StyleSheet.flatten(style as TextStyle) ?? {}) as TextStyle;
   if (s.fontFamily) return s;
