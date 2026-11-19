@@ -1,10 +1,12 @@
 import {
-  PlayfairDisplay_500Medium,
-  PlayfairDisplay_600SemiBold,
-  PlayfairDisplay_700Bold,
-  PlayfairDisplay_500Medium_Italic,
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_600SemiBold_Italic,
+  Montserrat_700Bold,
+  Montserrat_800ExtraBold,
   useFonts,
-} from '@expo-google-fonts/playfair-display';
+} from '@expo-google-fonts/montserrat';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -18,12 +20,14 @@ import { colors } from '@/theme';
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
-  // Playfair Display nos títulos de destaque; segura a splash até a fonte carregar
+  // Montserrat (identidade Glammi); segura a splash até a fonte carregar
   const [loaded, error] = useFonts({
-    PlayfairDisplay_500Medium,
-    PlayfairDisplay_600SemiBold,
-    PlayfairDisplay_700Bold,
-    PlayfairDisplay_500Medium_Italic,
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_600SemiBold_Italic,
+    Montserrat_700Bold,
+    Montserrat_800ExtraBold,
   });
 
   useEffect(() => {

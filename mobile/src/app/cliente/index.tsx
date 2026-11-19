@@ -3,41 +3,38 @@ import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { patchClient } from '@/api/auth';
 import { professionalFromCard, professionalFromPublic, publicPage, serviceFromApi, trendingDesigns } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
-import { uploadImage } from '@/api/media';
 import { Bell } from '@/components/bell';
-import { StoriesRow, Thumb } from '@/components/media';
-import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  IconCircle,
-  ProgressBar,
-  Ring,
-  Row,
-  SectionTitle,
-  StatusBadge,
-  T,
-} from '@/components/ui';
-import {
-  NICHE_ICON,
-  brl,
-  daysBetween,
-  dreamsProgress,
-  fmtDate,
-  fmtDateTime,
-  lastDoneOf,
-} from '@/domain/rules';
+import { Thumb } from '@/components/media';
+import { Avatar, Badge, Button, Card, IconCircle, ProgressBar, Ring, Row, SectionTitle, T, type IconName } from '@/components/ui';
+import { CATEGORIES, NICHE_ICON, brl, daysBetween, fmtDate, fmtDateTime, lastDoneOf } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
-import { currentCoords } from '@/lib/location';
-import { pickImage } from '@/lib/pick-image';
-import { colors, fonts, gradients, radius, space } from '@/theme';
+import { currentCoords, currentPlaceLabel } from '@/lib/location';
+import { brand, colors, gradients, radius, space } from '@/theme';
+
+const LOGO = require('../../../assets/brand/glammi-white.png');
+const WEEKDAY = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const MONTH = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+/** "Quinta 10h" / "dia 23 de julho" */
+function whenParts(iso: string) {
+  const d = new Date(iso);
+  const time = d.getMinutes() ? `${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}` : `${d.getHours()}h`;
+  return { day: `${WEEKDAY[d.getDay()]} ${time}`, date: `dia ${d.getDate()} de ${MONTH[d.getMonth()]}` };
+}
+
+function StatusDot({ on, label }: { on: boolean; label: string }) {
+  return (
+    <Row gap={5}>
+      <View style={[styles.dot, on && styles.dotOn]}>{on ? <Ionicons name="checkmark" size={9} color={brand.wine} /> : null}</View>
+      <T style={{ fontSize: 8.5, fontWeight: '600' }} color={colors.cardSolid}>{label}</T>
+    </Row>
+  );
+}
 
 const ACTIVE = ['aguardando_sinal', 'sinal_enviado', 'confirmado', 'ajuste_pendente'];
 
@@ -71,7 +68,14 @@ export default function ClienteHome() {
     (a) => a.clientId === me.id && a.status === 'concluido' && !s.feedbacks.some((f) => f.appointmentId === a.id),
   );
   const myVouchers = s.vouchers.filter((v) => v.clientId === me.id && !v.used);
-  const dreamPct = dreamsProgress(me.dreams);
+  // metas do mês: procedimentos planejados para este mês (ou todos, se nenhum cai neste mês)
+  const monthDreams = me.dreams.filter((d) => { const t = new Date(d.targetDate); return t.getMonth() === now.getMonth() && t.getFullYear() === now.getFullYear(); });
+  const goals = monthDreams.length ? monthDreams : me.dreams;
+  const goalsDone = goals.filter((d) => d.done).length;
+  const goalsLeft = goals.length - goalsDone;
+  const goalPct = goals.length ? Math.round((goalsDone / goals.length) * 100) : 0;
+  const [place, setPlace] = useState<string | null>(null);
+  useEffect(() => { currentPlaceLabel().then(setPlace).catch(() => undefined); }, []);
   const favPros = me.favorites.filter((id) => s.professionals.some((p) => p.id === id)).map(L.pro);
   const loyaltyPros = Array.from(new Set([...s.loyaltyCards.map((c) => c.professionalId), ...favPros.map((p) => p.id)]))
     .filter((id) => s.professionals.some((p) => p.id === id))
@@ -118,240 +122,239 @@ export default function ClienteHome() {
     }
     router.push(`/agendar/${d.serviceId}?designId=${d.id}`);
   };
-  // Imagem do topo: a foto que a cliente escolheu (mesma da capa do perfil); sem ela, o fundo decorativo.
-  const heroImage = me.cover;
-  const [savingHero, setSavingHero] = useState(false);
-  const changeHero = async () => {
-    const uri = await pickImage();
-    if (!uri) return;
-    s.updateMe({ cover: uri }); // mostra na hora
-    if (!API_ENABLED) return;
-    setSavingHero(true);
-    try {
-      const { key } = await uploadImage('COVER', uri);
-      s.applyMe(await patchClient({ coverKey: key }), 'cliente');
-    } catch (e) {
-      notify('Não foi possível salvar a imagem', (e as Error).message);
-    } finally {
-      setSavingHero(false);
-    }
-  };
+  const nextWhen = next ? whenParts(next.startsAt) : null;
+  const depositPaid = next ? next.depositAmount === 0 || ['sinal_enviado', 'confirmado', 'ajuste_pendente'].includes(next.status) : false;
+  const confirmed = next?.status === 'confirmado';
 
   return (
-    <LinearGradient colors={gradients.screen} style={{ flex: 1 }}>
-    <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-      {/* ---------- Destaque (hero) ---------- */}
-      <View style={[styles.hero, { paddingTop: insets.top + space.sm }]}>
-        {heroImage ? (
-          <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
-        ) : (
-          <>
-            <View style={[styles.blob, { width: 260, height: 260, top: -60, right: -80, backgroundColor: '#6B3A55' }]} />
-            <View style={[styles.blob, { width: 180, height: 180, top: 120, right: 30, backgroundColor: '#8E4A6B', opacity: 0.35 }]} />
-            <View style={[styles.blob, { width: 140, height: 140, top: 40, left: -50, backgroundColor: '#4A2A3B' }]} />
-          </>
-        )}
-        <LinearGradient colors={['rgba(36,23,31,0.15)', 'rgba(36,23,31,0.85)']} style={StyleSheet.absoluteFill} />
-
-        <Row style={{ justifyContent: 'flex-end' }}>
-          <Pressable accessibilityLabel="Trocar foto do banner" onPress={changeHero} disabled={savingHero} style={styles.glassBtn}>
-            {savingHero ? <ActivityIndicator color={colors.cardSolid} /> : <Ionicons name="camera-outline" size={20} color={colors.cardSolid} />}
-          </Pressable>
-          <Bell style={styles.glassBtn} color={colors.cardSolid} />
-          <Pressable accessibilityLabel="Meu perfil" onPress={() => router.push('/cliente/perfil')}>
-            <Avatar name={me.name} color={me.avatar} photo={me.photo} />
-          </Pressable>
-        </Row>
-
-        <T v="display" style={styles.greeting}>
-          OLÁ,{'\n'}{me.name.split(' ')[0].toUpperCase()}! ✨
-        </T>
+    <View style={{ flex: 1, backgroundColor: colors.cardSolid }}>
+    <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      {/* ---------- Topo vinho ---------- */}
+      <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
+        <View style={styles.headerTop}>
+          <View style={{ width: 44 }} />
+          <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityLabel="glammi" />
+          <Bell style={styles.headerBtn} color={colors.cardSolid} />
+        </View>
+        <T style={styles.hello} color={colors.cardSolid}>Oi, {me.name.split(' ')[0]}!</T>
+        <T style={styles.question} color={colors.cardSolid}>Qual procedimento você vai agendar hoje?</T>
+        <Pressable onPress={() => currentPlaceLabel().then(setPlace)} accessibilityRole="button" style={{ marginTop: space.md }}>
+          <Row gap={6}>
+            <Ionicons name="location-sharp" size={17} color={colors.cardSolid} />
+            <T style={styles.question} color={colors.cardSolid}>{place ?? 'Perto de você'}</T>
+          </Row>
+        </Pressable>
       </View>
 
-      <View style={{ paddingHorizontal: space.lg, gap: space.md, marginTop: space.lg }}>
-      <StoriesRow />
-
-      {/* Seus próximos procedimentos */}
-      <Card>
-        <T v="overline" style={{ textAlign: 'center' }}>Seus próximos procedimentos</T>
-        <Row gap={space.lg} style={{ marginTop: space.sm }}>
-          <Ring percent={dreamPct} sub={`${me.dreams.filter((d) => d.done).length}/${me.dreams.length}`} />
-          <View style={{ flex: 1, gap: 6 }}>
-            {me.dreams.length === 0 ? (
-              <T muted>Quais são os seus próximos procedimentos, e até quando pretende realizá-los?</T>
-            ) : (
-              me.dreams.slice(0, 3).map((d) => (
-                <Row key={d.id} gap={6}>
-                  <Ionicons
-                    name={d.done ? 'checkmark-circle' : 'ellipse-outline'}
-                    size={16}
-                    color={d.done ? colors.lilacDeep : colors.textMuted}
-                  />
-                  <T v="small" style={{ flex: 1, textDecorationLine: d.done ? 'line-through' : 'none' }} numberOfLines={1}>
-                    {NICHE_ICON[d.niche]} {d.label}
-                  </T>
-                  <T v="small" muted>{fmtDate(d.targetDate).split(', ')[1]}</T>
-                </Row>
-              ))
-            )}
-            <Button small title={me.dreams.length ? 'Ver próximos' : 'Planejar procedimentos'} onPress={() => router.push('/proximos')} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
-          </View>
-        </Row>
-      </Card>
-
-      {/* Próximo horário */}
-      {next ? (
-        <Card onPress={() => router.push(`/agendamento/${next.id}`)}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <T v="overline">Meu próximo horário</T>
-            <StatusBadge status={next.status} />
-          </Row>
-          <T v="title">{L.service(next.serviceId).name}</T>
-          <T muted>{L.pro(next.professionalId).name} · {fmtDateTime(next.startsAt)}</T>
-          {next.status === 'aguardando_sinal' ? (
-            <Card tone="cream" style={{ padding: space.md }}>
-              <Row>
-                <Ionicons name="time-outline" size={18} color={colors.warning} />
-                <T v="small" style={{ flex: 1 }}>
-                  Pague o sinal de <T v="small" style={{ fontWeight: '800' }}>{brl(next.depositAmount)}</T> até{' '}
-                  {fmtDateTime(next.depositDueAt)} ou o horário será liberado.
+      <View style={styles.body}>
+        {/* ---------- Suas próximas metas ---------- */}
+        <View style={styles.box}>
+          <T style={styles.boxTitle}>Suas próximas metas</T>
+          <Row gap={space.lg} style={{ alignItems: 'center' }}>
+            <Ring percent={goalPct} size={106} stroke={15} sub={goals.length ? `${goalsDone}/${goals.length}` : undefined} />
+            <View style={{ flex: 1, gap: space.md }}>
+              {goals.length === 0 ? (
+                <T style={styles.boxText}>Monte seu plano: quais procedimentos você quer fazer este mês?</T>
+              ) : goalsLeft === 0 ? (
+                <T style={styles.boxText}>Objetivo do mês completo! Você arrasou. 💖</T>
+              ) : (
+                <T style={styles.boxText}>
+                  Faltam <T style={[styles.boxText, { fontWeight: '700' }]}>{goalsLeft} procedimento{goalsLeft > 1 ? 's' : ''}</T> para completar o seu objetivo desse mês. Let&apos;s go, girl!
                 </T>
-              </Row>
-            </Card>
-          ) : null}
-          {next.status === 'ajuste_pendente' && next.adjustment ? (
-            <Card tone="cream" style={{ padding: space.md }}>
-              <T v="small">A profissional sugeriu novo valor: <T v="small" style={{ fontWeight: '800' }}>{brl(next.adjustment.newPrice)}</T>. Toque para responder.</T>
-            </Card>
-          ) : null}
-        </Card>
-      ) : null}
-
-      {/* Último procedimento + reagendar */}
-      {lasts.slice(0, 2).map(({ appointment, service, nextAt }) => {
-        const ago = daysBetween(new Date(appointment.startsAt), now);
-        const until = daysBetween(now, nextAt);
-        return (
-          <Card key={service.id} tone="lilac">
-            <Row style={{ justifyContent: 'space-between' }}>
-              <T v="overline">Último: {service.name}</T>
-              <T v="small">{NICHE_ICON[service.niche]}</T>
-            </Row>
-            <Row style={{ alignItems: 'flex-end', justifyContent: 'space-between' }}>
-              <View>
-                <T v="display" style={{ fontSize: 30 }}>{fmtDate(appointment.startsAt).split(', ')[1]}</T>
-                <T v="small">há {ago} dias com {L.pro(appointment.professionalId).name}</T>
-              </View>
-              <Badge
-                label={until > 0 ? `manutenção em ${until}d` : `atrasado ${-until}d`}
-                tone={until > 7 ? 'muted' : until > 0 ? 'warning' : 'danger'}
-              />
-            </Row>
-            <Button
-              title="Reagendar procedimento"
-              icon="repeat"
-              onPress={() => router.push(`/agendar/${service.id}?repeat=${appointment.id}`)}
-            />
-          </Card>
-        );
-      })}
-
-      {/* Fidelidade */}
-      <SectionTitle title="Minha fidelidade" action="Ver tudo" onAction={() => router.push('/cliente/perfil')} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }}>
-        {loyaltyPros.map((p) => {
-          const lp = L.loyalty(p.id);
-          return (
-            <Card key={p.id} style={{ width: 230 }} onPress={() => router.push(`/profissional/${p.id}`)}>
-              <Row>
-                <Avatar name={p.name} color={p.avatar} photo={p.photo} size={34} />
-                <T v="small" style={{ flex: 1, fontWeight: '700' }} numberOfLines={1}>{p.name}</T>
-              </Row>
-              <T v="display" style={{ fontSize: 30 }}>{lp.percent}%</T>
-              <ProgressBar percent={lp.percent} />
-              <T v="small" muted>Faltam {brl(lp.remaining)} para {lp.discountPercent}% OFF</T>
-            </Card>
-          );
-        })}
-      </ScrollView>
-
-      {/* Vouchers */}
-      {myVouchers.length ? (
-        <Card tone="black">
-          <Row>
-            <IconCircle icon="gift" bg={colors.lilac} />
-            <View style={{ flex: 1 }}>
-              <T v="h3" color={colors.cardSolid}>Você tem {myVouchers.length} voucher{myVouchers.length > 1 ? 's' : ''}</T>
-              <T v="small" color={colors.offWhite}>{myVouchers.map((v) => `${v.percent}% · ${v.label}`).join('\n')}</T>
+              )}
+              <Pressable onPress={() => router.push('/proximos')} style={styles.pillBtn} accessibilityRole="button">
+                <T style={styles.pillText} color={colors.cardSolid} numberOfLines={1} adjustsFontSizeToFit>{goals.length ? 'Adicione mais procedimentos' : 'Planejar procedimentos'}</T>
+              </Pressable>
             </View>
           </Row>
-        </Card>
-      ) : null}
+        </View>
 
-      {/* Feedback */}
-      {pendingFeedback ? (
-        <Card tone="soft" onPress={() => router.push(`/feedback/${pendingFeedback.id}`)}>
-          <Row>
-            <IconCircle icon="star" bg={colors.card} />
-            <View style={{ flex: 1 }}>
-              <T v="h3">Como foi seu {L.service(pendingFeedback.serviceId).name.toLowerCase()}?</T>
-              <T v="small" muted>Avalie e ganhe um bônus do mês no app</T>
-            </View>
-            <Ionicons name="chevron-forward" size={18} />
-          </Row>
-        </Card>
-      ) : null}
-
-      {/* ---------- Trending Designs ---------- */}
-      <Row style={{ justifyContent: 'space-between', marginTop: space.sm }}>
-        <T style={{ fontSize: 22, fontFamily: fonts.serifSemi }}>Trending Designs</T>
-        <Pressable onPress={() => router.push('/cliente/explorar')} hitSlop={8}>
-          <T v="small" muted>Ver todos ›</T>
+        {/* ---------- Próximo horário ---------- */}
+        <Pressable onPress={() => (next ? router.push(`/agendamento/${next.id}`) : router.push('/cliente/explorar'))} style={styles.nextBox} accessibilityRole="button">
+          <T style={styles.nextTitle} color={colors.cardSolid}>Próximo horário</T>
+          {next && nextWhen ? (
+            <>
+              <Row gap={space.md} style={{ alignItems: 'flex-start' }}>
+                <View style={{ width: '40%' }}>
+                  <T style={styles.nextWhen} color={colors.cardSolid}>{nextWhen.day}</T>
+                  <T style={styles.nextWhen} color={colors.cardSolid}>{nextWhen.date}</T>
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <T style={styles.nextStudio} color={colors.cardSolid} numberOfLines={1}>{L.pro(next.professionalId).name}</T>
+                  <T style={styles.nextService} color={colors.cardSolid} numberOfLines={1}>{L.service(next.serviceId).name}</T>
+                  <Row gap={space.sm} style={{ marginTop: 6, flexWrap: 'wrap', rowGap: 4 }}>
+                    <StatusDot on={depositPaid} label={next.depositAmount === 0 ? 'Sem sinal' : 'Sinal pago'} />
+                    <StatusDot on={confirmed} label="Horário confirmado pela profissional" />
+                  </Row>
+                </View>
+              </Row>
+              {next.status === 'aguardando_sinal' ? (
+                <T v="small" color={colors.offWhite} style={{ marginTop: space.sm }}>
+                  Pague o sinal de {brl(next.depositAmount)} até {fmtDateTime(next.depositDueAt)} ou o horário será liberado.
+                </T>
+              ) : null}
+              {next.status === 'ajuste_pendente' && next.adjustment ? (
+                <T v="small" color={colors.offWhite} style={{ marginTop: space.sm }}>
+                  A profissional sugeriu novo valor: {brl(next.adjustment.newPrice)}. Toque para responder.
+                </T>
+              ) : null}
+            </>
+          ) : (
+            <T style={[styles.nextService, { textAlign: 'center' }]} color={colors.offWhite}>
+              Nenhum horário marcado. Toque para encontrar uma profissional.
+            </T>
+          )}
         </Pressable>
-      </Row>
-      {API_ENABLED && remoteTrending && trending.length === 0 ? (
-        <T v="small" muted>Ainda não há designs publicados perto de você.</T>
-      ) : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }} style={{ marginHorizontal: -space.lg }}>
-        <View style={{ width: space.lg - space.md }} />
-        {trending.map((d) => {
-          const pro = L.pro(d.professionalId);
-          const fav = me.favorites.includes(pro.id);
+
+        {/* ---------- Encontre profissionais perto de você ---------- */}
+        <View style={styles.box}>
+          <T style={styles.boxTitle}>Encontre profissionais perto de você</T>
+          <View style={styles.grid}>
+            {CATEGORIES.map((c) => (
+              <Pressable key={c.niche} onPress={() => router.push(`/cliente/explorar?niche=${c.niche}`)} style={styles.cat} accessibilityRole="button" accessibilityLabel={c.label}>
+                <LinearGradient colors={gradients.brand} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.catSquare}>
+                  <Ionicons name={c.icon as IconName} size={30} color={colors.cardSolid} />
+                </LinearGradient>
+                <T style={styles.catLabel} numberOfLines={2}>{c.label}</T>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* ---------- Último procedimento + reagendar ---------- */}
+        {lasts.slice(0, 2).map(({ appointment, service, nextAt }) => {
+          const ago = daysBetween(new Date(appointment.startsAt), now);
+          const until = daysBetween(now, nextAt);
           return (
-            <Pressable key={d.id} onPress={() => openDesign(d)} style={{ width: 140 }}>
-              <View>
-                <Thumb src={d.image} bg={colors.blush} style={{ width: 140, height: 170, borderRadius: 22 }} emojiSize={56} />
-                <Pressable onPress={() => s.toggleFavorite(pro.id)} hitSlop={8} accessibilityLabel="Favoritar" style={styles.heart}>
-                  <Ionicons name={fav ? 'heart' : 'heart-outline'} size={16} color={fav ? colors.danger : colors.black} />
-                </Pressable>
-              </View>
-              <T style={{ fontWeight: '700', marginTop: 8 }} numberOfLines={1}>{d.name}</T>
-              <T v="small" muted numberOfLines={1}>{pro.name.split(' ')[0]}{d.priceDelta ? ` · +${brl(d.priceDelta)}` : ''}</T>
-            </Pressable>
+            <View key={service.id} style={styles.box}>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <T style={styles.boxSmallTitle}>Último: {service.name}</T>
+                <T v="small">{NICHE_ICON[service.niche]}</T>
+              </Row>
+              <Row style={{ alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                <View>
+                  <T style={{ fontSize: 26, fontWeight: '800' }} color={colors.wine}>{fmtDate(appointment.startsAt).split(', ')[1]}</T>
+                  <T v="small" muted>{ago <= 0 ? 'hoje' : ago === 1 ? 'ontem' : `há ${ago} dias`} com {L.pro(appointment.professionalId).name}</T>
+                </View>
+                <Badge label={until > 0 ? `manutenção em ${until}d` : `atrasado ${-until}d`} tone={until > 7 ? 'muted' : until > 0 ? 'warning' : 'danger'} />
+              </Row>
+              <Button title="Reagendar procedimento" icon="repeat" onPress={() => router.push(`/agendar/${service.id}?repeat=${appointment.id}`)} />
+            </View>
           );
         })}
-        <View style={{ width: space.lg - space.md }} />
-      </ScrollView>
 
+        {/* ---------- Vouchers e avaliação ---------- */}
+        {myVouchers.length ? (
+          <Card tone="black">
+            <Row>
+              <IconCircle icon="gift" bg={colors.pink} color={colors.cardSolid} />
+              <View style={{ flex: 1 }}>
+                <T v="h3" color={colors.cardSolid}>Você tem {myVouchers.length} voucher{myVouchers.length > 1 ? 's' : ''}</T>
+                <T v="small" color={colors.offWhite}>{myVouchers.map((v) => `${v.percent}% · ${v.label}`).join('\n')}</T>
+              </View>
+            </Row>
+          </Card>
+        ) : null}
+        {pendingFeedback ? (
+          <Card tone="soft" onPress={() => router.push(`/feedback/${pendingFeedback.id}`)}>
+            <Row>
+              <IconCircle icon="star" bg={colors.card} color={colors.pink} />
+              <View style={{ flex: 1 }}>
+                <T v="h3">Como foi seu {L.service(pendingFeedback.serviceId).name.toLowerCase()}?</T>
+                <T v="small" muted>Avalie e ganhe um bônus do mês no app</T>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.wine} />
+            </Row>
+          </Card>
+        ) : null}
+
+        {/* ---------- Fidelidade ---------- */}
+        {loyaltyPros.length ? (
+          <>
+            <SectionTitle title="Minha fidelidade" action="Ver tudo" onAction={() => router.push('/cliente/perfil')} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }}>
+              {loyaltyPros.map((p) => {
+                const lp = L.loyalty(p.id);
+                return (
+                  <Card key={p.id} style={{ width: 230 }} onPress={() => router.push(`/profissional/${p.id}`)}>
+                    <Row>
+                      <Avatar name={p.name} color={p.avatar} photo={p.photo} size={34} />
+                      <T v="small" style={{ flex: 1, fontWeight: '700' }} numberOfLines={1}>{p.name}</T>
+                    </Row>
+                    <T style={{ fontSize: 28, fontWeight: '800' }} color={colors.wine}>{lp.percent}%</T>
+                    <ProgressBar percent={lp.percent} />
+                    <T v="small" muted>Faltam {brl(lp.remaining)} para {lp.discountPercent}% OFF</T>
+                  </Card>
+                );
+              })}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {/* ---------- Trending Designs ---------- */}
+        {trending.length ? (
+          <>
+            <SectionTitle title="Trending Designs" action="Ver todos" onAction={() => router.push('/cliente/explorar')} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.md }}>
+              {trending.map((d) => {
+                const pro = L.pro(d.professionalId);
+                const fav = me.favorites.includes(pro.id);
+                return (
+                  <Pressable key={d.id} onPress={() => openDesign(d)} style={{ width: 140 }}>
+                    <View>
+                      <Thumb src={d.image} bg={colors.blush} style={{ width: 140, height: 170, borderRadius: 22 }} emojiSize={56} />
+                      <Pressable onPress={() => s.toggleFavorite(pro.id)} hitSlop={8} accessibilityLabel="Favoritar" style={styles.heart}>
+                        <Ionicons name={fav ? 'heart' : 'heart-outline'} size={16} color={fav ? colors.pink : colors.wine} />
+                      </Pressable>
+                    </View>
+                    <T style={{ fontWeight: '700', marginTop: 8 }} numberOfLines={1}>{d.name}</T>
+                    <T v="small" muted numberOfLines={1}>{pro.name.split(' ')[0]}{d.priceDelta ? ` · +${brl(d.priceDelta)}` : ''}</T>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        ) : null}
+
+        <Pressable onPress={() => router.push('/cadastro?role=profissional')} style={{ alignItems: 'center', paddingVertical: space.lg }} accessibilityRole="link">
+          <T style={{ fontSize: 15, fontWeight: '500' }}>Criar um perfil profissional</T>
+        </Pressable>
       </View>
     </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  hero: {
-    backgroundColor: colors.plumDeep,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
-    paddingHorizontal: space.lg,
-    paddingBottom: space.xl,
-    overflow: 'hidden',
+  header: {
+    backgroundColor: brand.wine,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    paddingHorizontal: space.xl,
+    paddingBottom: space.xl + 4,
   },
-  blob: { position: 'absolute', borderRadius: 999, opacity: 0.55 },
-  glassBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
-  dot: { position: 'absolute', top: 11, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.pink },
-  greeting: { color: colors.cardSolid, fontSize: 40, lineHeight: 42, marginTop: 120, textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 8 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.lg },
+  logo: { width: 126, height: 40 },
+  headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  hello: { fontSize: 16, fontWeight: '700' },
+  question: { fontSize: 14.5, fontWeight: '400', lineHeight: 20 },
+  body: { paddingHorizontal: space.xl, paddingTop: space.xl, gap: space.lg + 4 },
+  box: { borderWidth: 1, borderColor: brand.pink, borderRadius: 24, paddingHorizontal: space.lg, paddingVertical: space.lg, gap: space.md, backgroundColor: colors.cardSolid },
+  boxTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  boxSmallTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6 },
+  boxText: { fontSize: 12.5, lineHeight: 16 },
+  pillBtn: { alignSelf: 'flex-start', backgroundColor: brand.wine, borderColor: brand.pink, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6 },
+  pillText: { fontSize: 10.5, fontWeight: '600' },
+  nextBox: { backgroundColor: brand.wine, borderColor: brand.pink, borderWidth: 2, borderRadius: 24, paddingHorizontal: space.xl, paddingVertical: space.lg, gap: space.sm },
+  nextTitle: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  nextWhen: { fontSize: 14, fontWeight: '700', lineHeight: 18 },
+  nextStudio: { fontSize: 13, fontWeight: '600' },
+  nextService: { fontSize: 12.5, fontWeight: '400' },
+  dot: { width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: colors.cardSolid, alignItems: 'center', justifyContent: 'center' },
+  dotOn: { backgroundColor: colors.cardSolid },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.lg },
+  cat: { width: '24%', alignItems: 'center', gap: 8 },
+  catSquare: { width: 56, height: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  catLabel: { fontSize: 10, textAlign: 'center', lineHeight: 12 },
   heart: { position: 'absolute', right: 8, bottom: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
 });

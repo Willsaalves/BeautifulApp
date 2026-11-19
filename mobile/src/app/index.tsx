@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
@@ -47,8 +48,9 @@ export default function Welcome() {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* topo */}
           <Row style={{ justifyContent: 'space-between' }}>
-            <View style={styles.brand}>
-              <T v="overline" style={{ fontSize: 10 }}>✦ Glammi</T>
+            <View>
+              <Image source={require('../../assets/brand/glammi-wine.png')} style={{ width: 112, height: 34 }} contentFit="contain" accessibilityLabel="glammi" />
+              <T v="small" style={{ fontSize: 10.5, marginTop: 2 }} color={colors.wine}>Profissionais de beleza perto de você.</T>
             </View>
             <View style={styles.roundBtn}>
               <Ionicons name="sparkles" size={18} color={colors.black} />

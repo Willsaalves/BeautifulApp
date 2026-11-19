@@ -1311,7 +1311,7 @@ export interface components {
         ServiceInput: {
             name: string;
             /** @enum {string} */
-            niche: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             /** Format: int32 */
             durationMin?: number;
             /** Format: int64 */
@@ -1343,7 +1343,7 @@ export interface components {
             professionalId?: string;
             name?: string;
             /** @enum {string} */
-            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             /** Format: int32 */
             durationMin?: number;
             /** Format: int64 */
@@ -1421,7 +1421,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             /** @enum {string} */
-            niche: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             label: string;
             /** Format: date */
             targetDate: string;
@@ -1550,7 +1550,7 @@ export interface components {
             coverKey?: string;
             studio?: string;
             /** @enum {string} */
-            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             neighborhood?: string;
             city?: string;
             pixKey?: string;
@@ -1593,7 +1593,7 @@ export interface components {
             studio?: string;
             handle?: string;
             /** @enum {string} */
-            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             bio?: string;
             photoKey?: string;
             photoUrl?: string;
@@ -1859,7 +1859,7 @@ export interface components {
             studio?: string;
             handle?: string;
             /** @enum {string} */
-            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             bio?: string;
             photoUrl?: string;
             coverUrl?: string;
@@ -1892,7 +1892,7 @@ export interface components {
             studio?: string;
             handle?: string;
             /** @enum {string} */
-            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+            niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
             bio?: string;
             photoUrl?: string;
             coverUrl?: string;
@@ -3540,7 +3540,7 @@ export interface operations {
     search: {
         parameters: {
             query?: {
-                niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+                niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
                 q?: string;
                 lat?: number;
                 lng?: number;
@@ -3948,7 +3948,7 @@ export interface operations {
     trending: {
         parameters: {
             query?: {
-                niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO";
+                niche?: "UNHA" | "CILIOS" | "SOBRANCELHA" | "ESTETICA" | "CABELO" | "DEPILACAO" | "MASSOTERAPIA" | "MAQUIAGEM";
                 lat?: number;
                 lng?: number;
                 limit?: number;

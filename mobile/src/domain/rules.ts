@@ -18,7 +18,21 @@ export const NICHE_LABEL: Record<string, string> = {
   estetica: 'Estética',
   cabelo: 'Cabelo',
   depilacao: 'Depilação',
+  massoterapia: 'Massoterapeuta',
+  maquiagem: 'Maquiadora',
 };
+
+/** Categorias da busca, na ordem e com os nomes do layout da home. */
+export const CATEGORIES: { niche: string; label: string; icon: string }[] = [
+  { niche: 'unha', label: 'Unhas', icon: 'hand-left-outline' },
+  { niche: 'sobrancelha', label: 'Sobrancelhas', icon: 'eye-outline' },
+  { niche: 'cilios', label: 'Cílios', icon: 'eye' },
+  { niche: 'cabelo', label: 'Cabelo', icon: 'cut-outline' },
+  { niche: 'estetica', label: 'Estética facial e corporal', icon: 'sparkles-outline' },
+  { niche: 'depilacao', label: 'Depilação', icon: 'flower-outline' },
+  { niche: 'massoterapia', label: 'Massoterapia e bem-estar', icon: 'leaf-outline' },
+  { niche: 'maquiagem', label: 'Maquiagem', icon: 'color-palette-outline' },
+];
 
 export const NICHE_ICON: Record<string, string> = {
   unha: '💅',
@@ -27,6 +41,8 @@ export const NICHE_ICON: Record<string, string> = {
   estetica: '💉',
   cabelo: '💇‍♀️',
   depilacao: '🌸',
+  massoterapia: '💆‍♀️',
+  maquiagem: '💄',
 };
 
 /** Preço final = base + acréscimos das opções escolhidas (formato, tamanho, decoração…). */

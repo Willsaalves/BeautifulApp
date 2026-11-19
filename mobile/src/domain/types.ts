@@ -1,6 +1,6 @@
 // Tipos de domínio — pensados para serem compartilhados com o backend depois.
 
-export type Niche = 'unha' | 'cilios' | 'sobrancelha' | 'estetica' | 'cabelo' | 'depilacao';
+export type Niche = 'unha' | 'cilios' | 'sobrancelha' | 'estetica' | 'cabelo' | 'depilacao' | 'massoterapia' | 'maquiagem';
 
 export type Unit = 'un' | 'ml' | 'g';
 

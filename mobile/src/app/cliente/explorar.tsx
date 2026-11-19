@@ -19,6 +19,10 @@ export default function Explorar() {
   const s = useStore();
   const L = useLookup();
   const [niche, setNiche] = useState<Niche | null>(params.niche ?? null);
+  // veio de uma categoria da home: aplica o filtro (a aba pode já estar aberta)
+  useEffect(() => {
+    if (params.niche) setNiche(params.niche);
+  }, [params.niche]);
   const [onlyFav, setOnlyFav] = useState(false);
   const [q, setQ] = useState('');
 

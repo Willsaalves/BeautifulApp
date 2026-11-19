@@ -1,3 +1,4 @@
 package com.beautifulapp.profile;
 
-public enum Niche { UNHA, CILIOS, SOBRANCELHA, ESTETICA, CABELO, DEPILACAO }
+/** Especialidades (guardadas como texto no banco: incluir uma nova não precisa de migração). */
+public enum Niche { UNHA, CILIOS, SOBRANCELHA, ESTETICA, CABELO, DEPILACAO, MASSOTERAPIA, MAQUIAGEM }

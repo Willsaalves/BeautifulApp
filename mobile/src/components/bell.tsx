@@ -13,7 +13,7 @@ export function Bell({ style, color = colors.text }: { style?: StyleProp<ViewSty
       <Ionicons name="notifications-outline" size={20} color={color} />
       {unread > 0 ? (
         <View style={{ position: 'absolute', top: 6, right: 6, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-          <Text style={{ color: colors.cardSolid, fontSize: 10, fontWeight: '800' }}>{unread > 9 ? '9+' : unread}</Text>
+          <Text style={{ color: colors.cardSolid, fontSize: 10, fontFamily: 'Montserrat_800ExtraBold' }}>{unread > 9 ? '9+' : unread}</Text>
         </View>
       ) : null}
     </Pressable>
