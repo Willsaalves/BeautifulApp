@@ -5,9 +5,10 @@ import { ActivityIndicator, TextInput, View } from 'react-native';
 
 import { adminAccounts, type AccountRow } from '@/api/admin';
 import { AccountBadges } from '@/components/admin';
-import { Card, Empty, Header, Row, Screen, T } from '@/components/ui';
+import { Card, Empty, Header, Row, Screen, T, inputReset } from '@/components/ui';
 import { fmtDate } from '@/domain/rules';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 // Buscar contas por nome, estúdio, @ ou celular.
 export default function AdminContas() {
@@ -27,8 +28,8 @@ export default function AdminContas() {
       <Header title="Contas" />
       <Row style={{ backgroundColor: colors.card, borderRadius: radius.pill, paddingHorizontal: space.lg, height: 48 }}>
         <Ionicons name="search" size={18} color={colors.textMuted} />
-        <TextInput value={q} onChangeText={setQ} placeholder="Nome, estúdio, @ ou celular" placeholderTextColor={colors.textMuted}
-          style={{ flex: 1, color: colors.text, height: 48 }} autoCapitalize="none" accessibilityLabel="Buscar contas" />
+        <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} value={q} onChangeText={setQ} placeholder="Nome, estúdio, @ ou celular" placeholderTextColor={colors.textMuted}
+          style={[inputReset, { flex: 1, color: colors.text, height: 48 }]} autoCapitalize="none" accessibilityLabel="Buscar contas" />
       </Row>
       {error ? <T color={colors.danger}>{error}</T> : null}
       {list === null && !error ? <ActivityIndicator style={{ marginTop: 24 }} /> : null}

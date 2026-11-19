@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,6 +27,10 @@ export default function StoryViewer() {
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const [i, setI] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  useFocusEffect(useCallback(() => {
+    setStatusBarStyle('light');
+    return () => setStatusBarStyle('dark');
+  }, []));
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const next = () => { if (i < list.length - 1) { setI(i + 1); setElapsed(0); } else close(); };

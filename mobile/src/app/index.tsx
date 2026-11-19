@@ -1,14 +1,15 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { fetchMe, hasSession } from '@/api/auth';
 import { API_ENABLED } from '@/api/client';
 import { T } from '@/components/ui';
+import { useLayout } from '@/lib/responsive';
 import { useStore } from '@/store/app-store';
 import { brand, colors, gradients, radius, space } from '@/theme';
 
@@ -17,6 +18,12 @@ const LOGO = require('../../assets/brand/glammi-white.png');
 // Entrada: só a marca e o que fazer (criar conta ou entrar), no degradê rosa da abertura da marca.
 export default function Welcome() {
   const store = useStore();
+  const { s: sz, short } = useLayout();
+  // fundo rosa: ícones da barra de status em branco só enquanto esta tela está na frente
+  useFocusEffect(useCallback(() => {
+    setStatusBarStyle('light');
+    return () => setStatusBarStyle('dark');
+  }, []));
   // Com a API ligada: se já existe sessão salva, entra direto.
   useEffect(() => {
     if (!API_ENABLED) return;
@@ -36,14 +43,13 @@ export default function Welcome() {
 
   return (
     <LinearGradient colors={gradients.splash} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
-      <StatusBar style="light" />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.center}>
-          <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityLabel="glammi" />
+          <Image source={LOGO} style={{ width: sz(230), height: sz(72) }} contentFit="contain" accessibilityLabel="glammi" />
           <T style={styles.tagline} color={colors.cardSolid}>Profissionais de beleza perto de você.</T>
         </View>
 
-        <View style={styles.actions}>
+        <View style={[styles.actions, short && { paddingBottom: space.md }]}>
           <Pressable onPress={() => router.push('/cadastro?role=cliente')} style={({ pressed }) => [styles.primary, pressed && styles.pressed]} accessibilityRole="button">
             <T style={styles.primaryText} color={brand.wine}>Criar conta</T>
           </Pressable>
@@ -60,7 +66,7 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, paddingHorizontal: space.xl },
+  safe: { flex: 1, paddingHorizontal: space.xl, width: '100%', maxWidth: 480, alignSelf: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
   logo: { width: 230, height: 72 },
   tagline: { fontSize: 15, fontWeight: '600', textAlign: 'center' },

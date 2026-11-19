@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 
 import { useProStats } from '@/api/use-pro-stats';
-import { Avatar, Badge, Card, Chip, ProgressBar, Row, Screen, T } from '@/components/ui';
+import { Avatar, Badge, Card, Chip, ProgressBar, Row, Screen, T, inputReset } from '@/components/ui';
 import { fmtDate, lastDoneOf, loyaltyProgress } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 export default function ProClientes() {
   const s = useStore();
@@ -28,7 +29,7 @@ export default function ProClientes() {
       <T v="display" style={{ marginTop: space.sm }}>CLIENTES</T>
       <Row style={{ backgroundColor: colors.card, borderRadius: radius.pill, paddingHorizontal: space.lg, height: 48 }}>
         <Ionicons name="search" size={18} color={colors.textMuted} />
-        <TextInput value={q} onChangeText={setQ} placeholder="Buscar cliente" placeholderTextColor={colors.textMuted} style={{ flex: 1, fontSize: 15, color: colors.text }} />
+        <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} value={q} onChangeText={setQ} placeholder="Buscar cliente" placeholderTextColor={colors.textMuted} style={[inputReset, { flex: 1, fontSize: 15, color: colors.text }]} />
       </Row>
       <Row>
         <Chip label="Todas" selected={!onlyLate} onPress={() => setOnlyLate(false)} />

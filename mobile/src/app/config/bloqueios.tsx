@@ -4,11 +4,12 @@ import { Pressable, ScrollView, TextInput, View } from 'react-native';
 
 import { API_ENABLED } from '@/api/client';
 import { addBlock, removeBlock } from '@/api/scheduling';
-import { Button, Card, Chip, Empty, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { Button, Card, Chip, Empty, Header, Row, Screen, SectionTitle, T, inputReset } from '@/components/ui';
 import { fmtDate, fmtDateTime, fmtTime } from '@/domain/rules';
 import type { TimeBlock } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const REASONS = ['Almoço', 'Folga', 'Compromisso', 'Férias', 'Curso'];
@@ -121,8 +122,8 @@ export default function Bloqueios() {
             {([['De', start, setStart], ['Até', end, setEnd]] as const).map(([label, value, set]) => (
               <View key={label} style={{ flex: 1, gap: 4 }}>
                 <T v="overline" muted>{label}</T>
-                <TextInput value={value} onChangeText={set} keyboardType="numbers-and-punctuation" accessibilityLabel={label}
-                  style={{ backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 10, textAlign: 'center', fontSize: 16, color: colors.text }} />
+                <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} value={value} onChangeText={set} keyboardType="numbers-and-punctuation" accessibilityLabel={label}
+                  style={[inputReset, { backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 10, textAlign: 'center', fontSize: 16, color: colors.text }]} />
               </View>
             ))}
           </Row>

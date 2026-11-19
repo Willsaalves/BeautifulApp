@@ -4,6 +4,8 @@ import { Pressable, TextInput, View } from 'react-native';
 import { colors, radius, space } from '@/theme';
 
 import { T } from './ui';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
+import { inputReset } from '@/components/ui';
 
 /** (11) 98765-4321 */
 export function maskPhone(v: string) {
@@ -20,7 +22,7 @@ export function PhoneField({ value, onChange, autoFocus }: { value: string; onCh
       <T v="overline" muted>Celular (WhatsApp)</T>
       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: space.lg }}>
         <T style={{ fontSize: 15, marginRight: 8 }}>🇧🇷 +55</T>
-        <TextInput
+        <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
           autoFocus={autoFocus}
           value={value}
           onChangeText={(v) => onChange(maskPhone(v))}
@@ -29,7 +31,7 @@ export function PhoneField({ value, onChange, autoFocus }: { value: string; onCh
           autoComplete="tel"
           placeholder="(11) 98765-4321"
           placeholderTextColor={colors.textMuted}
-          style={{ flex: 1, paddingVertical: 14, fontSize: 16, color: colors.text }}
+          style={[inputReset, { flex: 1, paddingVertical: 14, fontSize: 16, color: colors.text }]}
         />
       </View>
     </View>
@@ -49,7 +51,7 @@ export function OtpInput({ value, onChange, length = 6 }: { value: string; onCha
           </View>
         );
       })}
-      <TextInput
+      <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
         ref={ref}
         autoFocus
         value={value}
@@ -59,7 +61,7 @@ export function OtpInput({ value, onChange, length = 6 }: { value: string; onCha
         autoComplete="sms-otp"
         maxLength={length}
         accessibilityLabel="Código de verificação"
-        style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%' }}
+        style={[inputReset, { position: 'absolute', opacity: 0, width: '100%', height: '100%' }]}
       />
     </Pressable>
   );

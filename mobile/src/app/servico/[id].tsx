@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
-import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { Button, Card, Chip, Field, Header, Row, Screen, SectionTitle, T, inputReset } from '@/components/ui';
 import { setConsumption as saveConsumption } from '@/api/business';
 import { createService, deleteService, serviceFromApi, updateService } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
@@ -11,6 +11,7 @@ import { NICHE_ICON, NICHE_LABEL } from '@/domain/rules';
 import type { Consumption, Niche, Service } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 const num = (v: string) => Number(v.replace(',', '.')) || 0;
 
@@ -129,13 +130,13 @@ export default function EditarServico() {
           </Row>
           {o.choices.map((c, k) => (
             <Row key={c.id}>
-              <TextInput value={c.label} onChangeText={(v) => setChoice(i, k, { label: v })} placeholder="Escolha (ex: Stiletto)"
+              <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} value={c.label} onChangeText={(v) => setChoice(i, k, { label: v })} placeholder="Escolha (ex: Stiletto)"
                 placeholderTextColor={colors.textMuted}
-                style={{ flex: 1, backgroundColor: colors.bg, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, color: colors.text }} />
+                style={[inputReset, { flex: 1, backgroundColor: colors.bg, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, color: colors.text }]} />
               <T v="small" muted>+R$</T>
-              <TextInput value={c.priceText} onChangeText={(v) => setChoice(i, k, { priceText: v })} keyboardType="decimal-pad"
+              <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} value={c.priceText} onChangeText={(v) => setChoice(i, k, { priceText: v })} keyboardType="decimal-pad"
                 accessibilityLabel="Acréscimo"
-                style={{ width: 70, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 10, color: colors.text }} />
+                style={[inputReset, { width: 70, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 10, color: colors.text }]} />
               <Pressable disabled={o.choices.length === 1} onPress={() => setOpt(i, { choices: o.choices.filter((_, j) => j !== k) })} hitSlop={8}
                 accessibilityLabel="Remover escolha" style={{ opacity: o.choices.length === 1 ? 0.3 : 1 }}>
                 <Ionicons name="close-circle" size={20} color={colors.textMuted} />
@@ -156,11 +157,11 @@ export default function EditarServico() {
           return (
             <Row key={c.productId}>
               <T style={{ flex: 1 }}>{p?.name}</T>
-              <TextInput
+              <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
                 keyboardType="decimal-pad"
                 value={String(c.amount)}
                 onChangeText={(v) => setConsumption(consumption.map((x) => (x.productId === c.productId ? { ...x, amount: num(v) } : x)))}
-                style={{ width: 70, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 8, color: colors.text }}
+                style={[inputReset, { width: 70, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 8, color: colors.text }]}
               />
               <T v="small" muted style={{ width: 22 }}>{p?.unit}</T>
               <Pressable hitSlop={8} onPress={() => setConsumption(consumption.filter((x) => x.productId !== c.productId))} accessibilityLabel="Remover produto">

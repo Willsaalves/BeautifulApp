@@ -5,12 +5,13 @@ import { Pressable, ScrollView, TextInput, View } from 'react-native';
 
 import { professionalFromCard, searchProfessionals } from '@/api/catalog';
 import { API_ENABLED } from '@/api/client';
-import { Avatar, Card, Chip, Empty, Row, Screen, T } from '@/components/ui';
+import { Avatar, Card, Chip, Empty, Row, Screen, T, inputReset } from '@/components/ui';
 import { NICHE_ICON, NICHE_LABEL, brl } from '@/domain/rules';
 import type { Niche } from '@/domain/types';
 import { currentCoords, type Coords } from '@/lib/location';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 const NICHES = Object.keys(NICHE_LABEL) as Niche[];
 
@@ -74,12 +75,12 @@ export default function Explorar() {
       <T v="display" style={{ marginTop: space.sm }}>ENCONTRE{'\n'}PERTO DE VOCÊ</T>
       <Row style={{ backgroundColor: colors.card, borderRadius: radius.pill, paddingHorizontal: space.lg, height: 50 }}>
         <Ionicons name="search" size={18} color={colors.textMuted} />
-        <TextInput
+        <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
           value={q}
           onChangeText={setQ}
           placeholder="Ex: nail designer perto de mim"
           placeholderTextColor={colors.textMuted}
-          style={{ flex: 1, fontSize: 15, color: colors.text }}
+          style={[inputReset, { flex: 1, fontSize: 15, color: colors.text }]}
         />
         <Ionicons name="location" size={18} color={colors.lilacDeep} />
       </Row>

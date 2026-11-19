@@ -4,9 +4,10 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
 
 import { adminReports, ago, REASON_LABEL, resolveReport, TARGET_LABEL, type Decision, type ReportGroup } from '@/api/admin';
-import { Badge, Button, Card, Empty, Header, Row, Screen, T } from '@/components/ui';
+import { Badge, Button, Card, Empty, Header, Row, Screen, T, inputReset } from '@/components/ui';
 import { confirmAction } from '@/lib/confirm';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 const CONTENT = ['STORY', 'REVIEW', 'MESSAGE'];
 const DAY = 24 * 3600 * 1000;
@@ -63,8 +64,8 @@ function ReportCard({ g, onDone }: { g: ReportGroup; onDone: () => void }) {
       </View>
       {(g.details ?? []).slice(0, 3).map((d, i) => <T key={i} v="small" muted>• {d}</T>)}
 
-      <TextInput value={note} onChangeText={setNote} placeholder="Observação (fica no histórico)" placeholderTextColor={colors.textMuted}
-        style={{ backgroundColor: colors.bg, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, color: colors.text }} />
+      <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} value={note} onChangeText={setNote} placeholder="Observação (fica no histórico)" placeholderTextColor={colors.textMuted}
+        style={[inputReset, { backgroundColor: colors.bg, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, color: colors.text }]} />
       {error ? <T v="small" color={colors.danger}>{error}</T> : null}
       <Row style={{ flexWrap: 'wrap' }}>
         <Button small variant="outline" title="Manter" icon="checkmark" disabled={busy} onPress={() => decide('DISMISS')} />

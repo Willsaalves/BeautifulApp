@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.glammi.app"
+      "package": "com.glammi.app",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "single",

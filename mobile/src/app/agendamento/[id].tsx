@@ -21,11 +21,12 @@ import {
 import { listMessages, sendMessage } from '@/api/social';
 import { refreshStock } from '@/api/use-pro-sync';
 import { maskPhone } from '@/components/auth';
-import { Avatar, Button, Card, Divider, Empty, Field, Header, Row, Screen, SectionTitle, StatusBadge, T } from '@/components/ui';
+import { Avatar, Button, Card, Divider, Empty, Field, Header, Row, Screen, SectionTitle, StatusBadge, T, inputReset } from '@/components/ui';
 import { brl, fmtDateTime, fmtTime, isLowStock } from '@/domain/rules';
 import { pickImage } from '@/lib/pick-image';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 function notify(title: string, msg?: string) {
   if (Platform.OS === 'web') window.alert(msg ? `${title}\n\n${msg}` : title);
@@ -369,12 +370,12 @@ export default function Agendamento() {
               );
             })}
             <Row>
-              <TextInput
+              <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
                 value={msg}
                 onChangeText={setMsg}
                 placeholder="Escreva uma mensagem"
                 placeholderTextColor={colors.textMuted}
-                style={{ flex: 1, backgroundColor: colors.bg, borderRadius: radius.pill, paddingHorizontal: space.lg, height: 44, color: colors.text }}
+                style={[inputReset, { flex: 1, backgroundColor: colors.bg, borderRadius: radius.pill, paddingHorizontal: space.lg, height: 44, color: colors.text }]}
               />
               <Pressable
                 accessibilityLabel="Enviar"

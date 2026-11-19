@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +15,7 @@ import { Avatar, Badge, Button, Card, IconCircle, ProgressBar, Ring, Row, Sectio
 import { CATEGORIES, NICHE_ICON, brl, daysBetween, fmtDate, fmtDateTime, lastDoneOf } from '@/domain/rules';
 import { useLookup, useStore } from '@/store/app-store';
 import { currentCoords, currentPlaceLabel } from '@/lib/location';
+import { MAX_CONTENT_WIDTH, useLayout } from '@/lib/responsive';
 import { brand, colors, gradients, radius, space } from '@/theme';
 
 const LOGO = require('../../../assets/brand/glammi-white.png');
@@ -29,9 +31,9 @@ function whenParts(iso: string) {
 
 function StatusDot({ on, label }: { on: boolean; label: string }) {
   return (
-    <Row gap={5}>
-      <View style={[styles.dot, on && styles.dotOn]}>{on ? <Ionicons name="checkmark" size={9} color={brand.wine} /> : null}</View>
-      <T style={{ fontSize: 8.5, fontWeight: '600' }} color={colors.cardSolid}>{label}</T>
+    <Row gap={5} style={{ flexShrink: 1, alignItems: 'flex-start' }}>
+      <View style={[styles.dot, on && styles.dotOn, { marginTop: 1 }]}>{on ? <Ionicons name="checkmark" size={9} color={brand.wine} /> : null}</View>
+      <T style={{ fontSize: 8.5, fontWeight: '600', flexShrink: 1 }} color={colors.cardSolid}>{label}</T>
     </Row>
   );
 }
@@ -50,6 +52,12 @@ export default function ClienteHome() {
   const me = L.me;
   const now = new Date();
   const insets = useSafeAreaInsets();
+  const { s: sz, small } = useLayout();
+  // topo vinho: ícones da barra de status em branco enquanto a home está na tela
+  useFocusEffect(useCallback(() => {
+    setStatusBarStyle('light');
+    return () => setStatusBarStyle('dark');
+  }, []));
 
   const upcoming = s.appointments
     .filter((a) => a.clientId === me.id && ACTIVE.includes(a.status))
@@ -130,28 +138,30 @@ export default function ClienteHome() {
     <View style={{ flex: 1, backgroundColor: colors.cardSolid }}>
     <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
       {/* ---------- Topo vinho ---------- */}
-      <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + space.md }, small && { paddingHorizontal: space.lg }]}>
+        <View style={styles.column}>
         <View style={styles.headerTop}>
           <View style={{ width: 44 }} />
-          <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityLabel="glammi" />
+          <Image source={LOGO} style={{ width: sz(126), height: sz(40) }} contentFit="contain" accessibilityLabel="glammi" />
           <Bell style={styles.headerBtn} color={colors.cardSolid} />
         </View>
-        <T style={styles.hello} color={colors.cardSolid}>Oi, {me.name.split(' ')[0]}!</T>
-        <T style={styles.question} color={colors.cardSolid}>Qual procedimento você vai agendar hoje?</T>
+        <T style={[styles.hello, { fontSize: sz(16) }]} color={colors.cardSolid}>Oi, {me.name.split(' ')[0]}!</T>
+        <T style={[styles.question, { fontSize: sz(14.5), lineHeight: sz(20) }]} color={colors.cardSolid}>Qual procedimento você vai agendar hoje?</T>
         <Pressable onPress={() => currentPlaceLabel().then(setPlace)} accessibilityRole="button" style={{ marginTop: space.md }}>
           <Row gap={6}>
             <Ionicons name="location-sharp" size={17} color={colors.cardSolid} />
-            <T style={styles.question} color={colors.cardSolid}>{place ?? 'Perto de você'}</T>
+            <T style={[styles.question, { fontSize: sz(14.5) }]} color={colors.cardSolid}>{place ?? 'Perto de você'}</T>
           </Row>
         </Pressable>
+        </View>
       </View>
 
-      <View style={styles.body}>
+      <View style={[styles.body, small && { paddingHorizontal: space.lg }]}>
         {/* ---------- Suas próximas metas ---------- */}
         <View style={styles.box}>
           <T style={styles.boxTitle}>Suas próximas metas</T>
           <Row gap={space.lg} style={{ alignItems: 'center' }}>
-            <Ring percent={goalPct} size={106} stroke={15} sub={goals.length ? `${goalsDone}/${goals.length}` : undefined} />
+            <Ring percent={goalPct} size={sz(106)} stroke={sz(15)} sub={goals.length ? `${goalsDone}/${goals.length}` : undefined} />
             <View style={{ flex: 1, gap: space.md }}>
               {goals.length === 0 ? (
                 <T style={styles.boxText}>Monte seu plano: quais procedimentos você quer fazer este mês?</T>
@@ -212,10 +222,11 @@ export default function ClienteHome() {
           <View style={styles.grid}>
             {CATEGORIES.map((c) => (
               <Pressable key={c.niche} onPress={() => router.push(`/cliente/explorar?niche=${c.niche}`)} style={styles.cat} accessibilityRole="button" accessibilityLabel={c.label}>
-                <LinearGradient colors={gradients.brand} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.catSquare}>
-                  <Ionicons name={c.icon as IconName} size={30} color={colors.cardSolid} />
+                <LinearGradient colors={gradients.brand} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+                  style={[styles.catSquare, { width: sz(56), height: sz(56), borderRadius: sz(14) }]}>
+                  <Ionicons name={c.icon as IconName} size={sz(28)} color={colors.cardSolid} />
                 </LinearGradient>
-                <T style={styles.catLabel} numberOfLines={2}>{c.label}</T>
+                <T style={[styles.catLabel, small && { fontSize: 9.5 }]} numberOfLines={3}>{c.label}</T>
               </Pressable>
             ))}
           </View>
@@ -338,7 +349,8 @@ const styles = StyleSheet.create({
   headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   hello: { fontSize: 16, fontWeight: '700' },
   question: { fontSize: 14.5, fontWeight: '400', lineHeight: 20 },
-  body: { paddingHorizontal: space.xl, paddingTop: space.xl, gap: space.lg + 4 },
+  body: { paddingHorizontal: space.xl, paddingTop: space.xl, gap: space.lg + 4, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
+  column: { width: '100%', maxWidth: MAX_CONTENT_WIDTH - 2 * space.xl, alignSelf: 'center' },
   box: { borderWidth: 1, borderColor: brand.pink, borderRadius: 24, paddingHorizontal: space.lg, paddingVertical: space.lg, gap: space.md, backgroundColor: colors.cardSolid },
   boxTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
   boxSmallTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6 },

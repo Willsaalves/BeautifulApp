@@ -4,10 +4,11 @@ import { Pressable, TextInput, View } from 'react-native';
 
 import { API_ENABLED } from '@/api/client';
 import { saveWorkHours } from '@/api/scheduling';
-import { Button, Card, Header, Row, Screen, T } from '@/components/ui';
+import { Button, Card, Header, Row, Screen, T, inputReset } from '@/components/ui';
 import type { WorkDay } from '@/domain/types';
 import { useLookup, useStore } from '@/store/app-store';
 import { colors, radius, space } from '@/theme';
+import { MAX_FONT_SCALE } from '@/lib/responsive';
 
 const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -69,14 +70,14 @@ export default function Expediente() {
             {r.on ? (
               <Row gap={6}>
                 {(['start', 'end'] as const).map((k) => (
-                  <TextInput
+                  <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
                     key={k}
                     value={r[k]}
                     onChangeText={(v) => update(r.weekday, { [k]: v })}
                     onBlur={() => update(r.weekday, { [k]: normalizeTime(r[k]) })}
                     keyboardType="numbers-and-punctuation"
                     accessibilityLabel={`${DAYS[r.weekday]} ${k === 'start' ? 'início' : 'fim'}`}
-                    style={{ width: 64, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 8, color: colors.text, fontSize: 15 }}
+                    style={[inputReset, { width: 64, textAlign: 'center', backgroundColor: colors.bg, borderRadius: radius.sm, paddingVertical: 8, color: colors.text, fontSize: 15 }]}
                   />
                 ))}
               </Row>

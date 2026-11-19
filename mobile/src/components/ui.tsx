@@ -4,6 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 import { STATUS_LABEL } from '@/domain/rules';
+import { MAX_CONTENT_WIDTH, MAX_FONT_SCALE } from '@/lib/responsive';
 import { colors, fonts, gradients, radius, space, type, withFont } from '@/theme';
 
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -35,8 +38,9 @@ export function T({
 }: TextProps & { v?: Variant; muted?: boolean; color?: string }) {
   return (
     <Text
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
       {...rest}
-      style={withFont([{ color: color ?? (muted ? colors.textMuted : colors.text) }, type[v], style as never])}
+      style={withFont([{ color: color ?? (muted ? colors.textMuted : colors.text), includeFontPadding: false }, type[v], style as never])}
     />
   );
 }
@@ -55,10 +59,12 @@ export function Screen({
   bottomInset?: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const inner = [padded && { paddingHorizontal: space.lg }, { gap: space.md }, style];
+  const inner = [padded && { paddingHorizontal: space.lg }, { gap: space.md, width: '100%' as const, maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' as const }, style];
   return (
     <LinearGradient colors={gradients.screen} style={{ flex: 1 }}>
-    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      {/* iPhone: o teclado empurra o conteúdo; Android já redimensiona a tela (softwareKeyboardLayoutMode) */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={[inner, { paddingBottom: bottomInset, paddingTop: space.sm }]}
@@ -69,6 +75,7 @@ export function Screen({
       ) : (
         <View style={[{ flex: 1 }, inner]}>{children}</View>
       )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
     </LinearGradient>
   );
@@ -170,7 +177,7 @@ export function Button({
         style,
       ]}>
       {icon ? <Ionicons name={icon} size={small ? 14 : 18} color={fg} /> : null}
-      <Text style={withFont([styles.btnText, small && { fontSize: 11 }, { color: fg }] as never)}>{title}</Text>
+      <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={withFont([styles.btnText, small && { fontSize: 11 }, { color: fg, includeFontPadding: false }] as never)}>{title}</Text>
     </Pressable>
   );
 }
@@ -191,7 +198,7 @@ export function Chip({
       onPress={onPress}
       style={[styles.chip, selected && { backgroundColor: colors.black, borderColor: colors.black }]}>
       {icon ? <Text style={{ fontSize: 13 }}>{icon}</Text> : null}
-      <Text style={withFont([type.small, { color: selected ? colors.cardSolid : colors.text, fontWeight: '600' }])}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.2} style={withFont([type.small, { color: selected ? colors.cardSolid : colors.text, fontWeight: '600', includeFontPadding: false }])}>{label}</Text>
     </Pressable>
   );
 }
@@ -200,7 +207,7 @@ export function Field({ label, style, ...props }: TextInputProps & { label: stri
   return (
     <View style={{ gap: 6 }}>
       <T v="overline" muted>{label}</T>
-      <TextInput placeholderTextColor={colors.textMuted} {...props} style={[styles.input, { fontFamily: fonts.regular }, style]} />
+      <TextInput placeholderTextColor={colors.textMuted} maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} style={[styles.input, inputReset, { fontFamily: fonts.regular }, style]} />
     </View>
   );
 }
@@ -287,7 +294,7 @@ export function Badge({ label, tone = 'lilac' }: { label: string; tone?: keyof t
   const c = toneColor[tone];
   return (
     <View style={{ backgroundColor: c.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, alignSelf: 'flex-start' }}>
-      <Text style={withFont({ color: c.fg, fontSize: 11, fontWeight: '700' })}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.2} style={withFont({ color: c.fg, fontSize: 11, fontWeight: '700', includeFontPadding: false })}>{label}</Text>
     </View>
   );
 }
@@ -327,6 +334,9 @@ export function Stat({ label, value, sub }: { label: string; value: string; sub?
 export function Divider() {
   return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: space.xs }} />;
 }
+
+/** No navegador, tira a borda preta de foco do campo (no celular não existe). */
+export const inputReset = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {};
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
